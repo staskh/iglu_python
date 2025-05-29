@@ -7,22 +7,26 @@ import iglu_python as iglu
 
 method_name = 'range_glu'
 
-@pytest.fixture
-def test_data():
+def get_test_scenarios():
+    """Get test scenarios for range_glu calculations"""
     # Load expected results
     with open('tests/expected_results.json', 'r') as f:
         expected_results = json.load(f)
 
-    method_scenarios = [scenario for scenario in expected_results if scenario['method'] == method_name]
+    # Filter scenarios for range_glu method
+    return [scenario for scenario in expected_results if scenario['method'] == method_name]
 
-    for scenario in method_scenarios:
-        yield scenario
+@pytest.fixture
+def test_data():
+    """Fixture that provides test data for range_glu calculations"""
+    return get_test_scenarios()
 
-def test_range_glu_calculation(test_data):
+@pytest.mark.parametrize('scenario', get_test_scenarios())
+def test_range_glu_calculation(scenario):
     """Test range_glu calculation against expected results"""
     
-    input_file_name = test_data['input_file_name']
-    kwargs = test_data['kwargs']
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
     
     # Read CSV and convert time column to datetime
     df = pd.read_csv(input_file_name, index_col=0)
@@ -33,7 +37,7 @@ def test_range_glu_calculation(test_data):
     
     assert result_df is not None
     
-    expected_results = test_data['results']
+    expected_results = scenario['results']
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
     

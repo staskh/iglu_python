@@ -5,22 +5,25 @@ import iglu_python as iglu
 
 method_name = 'above_percent'
 
-@pytest.fixture
-def test_data():
+def get_test_scenarios():
+    """Get test scenarios for above_percent calculations"""
     # Load expected results
     with open('tests/expected_results.json', 'r') as f:
         expected_results = json.load(f)
+    # Filter scenarios for above_percent method
+    return [scenario for scenario in expected_results if scenario['method'] == method_name]
 
-    method_scenarios = [scenario for scenario in expected_results if scenario['method'] == method_name]
+@pytest.fixture
+def test_data():
+    """Fixture that provides test data for above_percent calculations"""
+    return get_test_scenarios()
 
-    for scenario in method_scenarios:
-        yield scenario
-
-def test_above_percent_calculation(test_data):
+@pytest.mark.parametrize('scenario', get_test_scenarios())
+def test_above_percent_calculation(scenario):
     """Test above_percent calculation against expected results"""
     
-    input_file_name = test_data['input_file_name']
-    kwargs = test_data['kwargs']
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
     
     # Read CSV and convert time column to datetime
     df = pd.read_csv(input_file_name, index_col=0)
@@ -31,7 +34,7 @@ def test_above_percent_calculation(test_data):
     
     assert result_df is not None
     
-    expected_results = test_data['results']
+    expected_results = scenario['results']
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
     
