@@ -16,6 +16,9 @@ import pandas as pd
 import numpy as np
 import iglu_py as iglu
 from datetime import datetime
+from tzlocal import get_localzone
+from importlib.metadata import version
+import rpy2.robjects as robjects
 
 
 def convert_timestamps_to_str(obj):
@@ -66,35 +69,54 @@ def run_scenario(scenarios: list[str], input_file_name: str):
 def main():
     scenarios = [
         ["above_percent"],
+        ["above_percent", {"targets_above": [50, 100, 250]}],
         ["active_percent"],
         ["active_percent", {"dt0": 5, "tz": 'GMT'}],
         ["adrr"],
         ["auc"],
-        ["range_glu"],
-        ["iqr_glu"],
-        ["conga"],
-        ["mad_glu"],
-        ["mag"],
-        ["mage"],
-        ["modd"],
-        ["j_index"],
-        ["igc"],
+        ["auc", {"tz": 'GMT'}],
+        ["below_percent"],
+        ["below_percent", {"targets_below": [30, 100]}],
+        #["cgm2daybyday"],
         ["cogi"],
-        ["m_value"],
-        ["grade"],
-        ["grade_eugly"],
-        ["grade_hyper"],
-        ["grade_hypo"],
-        ["hyper_index"],
-        ["hypo_index"],
-        ["ea1c"],
-        ["gvp"],
-        ["hbgi"],
-        ["lbgi"],
-        ["sd_roc"],
-        ["mean_glu"],
-        ["mage"],
+        ["cogi", {"targets" : [80, 180]}],
+        ["conga"],
+        ["conga", {"n":48, "tz": 'GMT'}],
+        ['cv_glu'],
+        ['cv_measures'],
+        #['epicalc_profile'],
+        ['episode_calculation'],
+        ['gmi'],
+        ['grade'],
+        ['grade_eugly'],
+        ['grade_hyper'],
+        ['grade_hypo'],
+        ['gri'],
+        ['gvp'],
+        ['hbgi'],
+        ['hyper_index'],
+        ['hypo_index'],
+        ['igc'],
+        ['in_range_percent'],
+        ['iqr_glu'],
+        ['j_index'],
+        ['lbgi'],
+        ['m_value'],
+        ['mad_glu'],
+        ['mag'],
+        ['mage'],
         ["mage", {"short_ma": 3, "long_ma": 35}],
+        ['mean_glu'],
+        ['median_glu'],
+        #['metrics'],
+        ['modd'],
+        ['pgs'],
+        ['quantile_glu'],
+        ['range_glu'],
+        ['roc'],
+        ['sd_glu'],
+        ['sd_measures'],
+        ['sd_roc'],
     ]
 
     input_files = [
@@ -102,14 +124,27 @@ def main():
         "tests/data/example_data_5_subject.csv",
     ]
 
+    # record config
+    config = {
+        "local_tz": get_localzone().key,
+        "iglu-py": version('iglu-py'),
+        "iglu": str(robjects.r('packageVersion("iglu")')),
+        "R": str(robjects.r('R.version.string')[0])
+    }
+
     runs = []
     for input_file in input_files:
         run_results = run_scenario(scenarios, input_file)
         runs += run_results
 
+    expected_results = {
+        "config": config,
+        "test_runs": runs
+    }
+
     # save to json file
     with open('tests/expected_results.json', 'w') as f:
-        json.dump(runs, f, indent=4)
+        json.dump(expected_results, f, indent=4)
 
 
 if __name__ == "__main__":
