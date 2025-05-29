@@ -3,6 +3,7 @@ import numpy as np
 from typing import Tuple, Optional
 import warnings
 from tzlocal import get_localzone
+from zoneinfo import ZoneInfo
 from datetime import datetime
 
 local_tz = get_localzone() # get the local timezone
@@ -15,6 +16,16 @@ def localize_naive_timestamp(timestamp: datetime) -> datetime:
         return timestamp.tz_localize(local_tz)
     else:
         return timestamp
+
+def set_local_tz(tz: str) -> None:
+    """
+    Set the local timezone.
+    It used ONLY in the unittests to fix configuration as in expected results.
+    """
+    global local_tz
+    local_tz = ZoneInfo(tz)
+
+
 
 def check_data_columns(data: pd.DataFrame) -> pd.DataFrame:
     """
