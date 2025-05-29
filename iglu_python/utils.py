@@ -58,6 +58,10 @@ def check_data_columns(data: pd.DataFrame) -> pd.DataFrame:
     if not pd.api.types.is_string_dtype(data['id']):
         data['id'] = data['id'].astype(str)
     
+    # Check if data contains no glucose values
+    if data['gl'].isna().all():
+        raise ValueError("Data contains no glucose values")
+    
     # Check for missing values
     if data['gl'].isna().any():
         warnings.warn("Data contains missing glucose values")
