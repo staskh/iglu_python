@@ -2,6 +2,19 @@ import pandas as pd
 import numpy as np
 from typing import Tuple, Optional
 import warnings
+from tzlocal import get_localzone
+from datetime import datetime
+
+local_tz = get_localzone() # get the local timezone
+
+def localize_naive_timestamp(timestamp: datetime) -> datetime:
+    """
+    Localize a naive timestamp to the local timezone.
+    """
+    if timestamp.tzinfo is None:
+        return timestamp.tz_localize(local_tz)
+    else:
+        return timestamp
 
 def check_data_columns(data: pd.DataFrame) -> pd.DataFrame:
     """
