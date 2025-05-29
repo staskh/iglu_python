@@ -60,7 +60,7 @@ def test_in_range_percent_custom_targets():
     })
     
     # Test with custom targets
-    result = in_range_percent(data, targets=[[75, 95], [85, 105]])
+    result = in_range_percent(data, target_ranges=[[75, 95], [85, 105]])
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -153,7 +153,7 @@ def test_in_range_percent_multiple_subjects():
     data = pd.DataFrame({
         'id': ['subject1', 'subject1', 'subject2', 'subject2', 'subject3', 'subject3'],
         'time': pd.date_range(start='2020-01-01', periods=6, freq='5min'),
-        'gl': [80, 90, 130, 190, 140, 140]
+        'gl': [80, 90, 130, 190, 140, 190]
     })
     
     # Calculate in_range_percent
