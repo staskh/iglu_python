@@ -1,0 +1,119 @@
+import pytest
+import pandas as pd
+import numpy as np
+from iglu_python.mean_glu import mean_glu
+
+def test_mean_glu_basic():
+    """Test basic mean_glu calculation with known values."""
+    # Create test data with known glucose values
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1', 'subject2', 'subject2', 'subject2'],
+        'time': pd.date_range(start='2020-01-01', periods=6, freq='5min'),
+        'gl': [150, 200, 180, 130, 190, 160]
+    })
+    
+    # Calculate mean_glu
+    result = mean_glu(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'mean_glu' in result.columns
+    assert len(result) == 2  # Two subjects
+    
+    # Check that mean values are correct
+    subject1_mean = result[result['id'] == 'subject1']['mean_glu'].iloc[0]
+    subject2_mean = result[result['id'] == 'subject2']['mean_glu'].iloc[0]
+    assert abs(subject1_mean - 176.67) < 0.01  # 176.67 is the expected mean
+    assert abs(subject2_mean - 160.0) < 0.01  # 160.0 is the expected mean
+
+def test_mean_glu_series_input():
+    """Test mean_glu calculation with Series input."""
+    # Create test data as Series
+    data = pd.Series([150, 200, 180, 130, 190, 160])
+    
+    # Calculate mean_glu
+    result = mean_glu(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'mean_glu' in result.columns
+    assert 'id' not in result.columns
+    assert len(result) == 1
+    
+    # Check that mean value is correct
+    assert abs(result['mean_glu'].iloc[0] - 168.33) < 0.01  # 168.33 is the expected mean
+
+def test_mean_glu_empty_data():
+    """Test mean_glu calculation with empty data."""
+    # Create empty DataFrame
+    data = pd.DataFrame(columns=['id', 'time', 'gl'])
+    
+    # Test that function raises appropriate error
+    with pytest.raises(ValueError):
+        mean_glu(data)
+
+def test_mean_glu_missing_values():
+    """Test mean_glu calculation with missing values."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1'],
+        'time': pd.date_range(start='2020-01-01', periods=3, freq='5min'),
+        'gl': [150, np.nan, 180]
+    })
+    
+    # Calculate mean_glu
+    result = mean_glu(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'mean_glu' in result.columns
+    assert len(result) == 1
+    
+    # Check that mean value is correct (should ignore NaN)
+    assert abs(result['mean_glu'].iloc[0] - 165.0) < 0.01  # 165.0 is the expected mean
+
+def test_mean_glu_constant_values():
+    """Test mean_glu calculation with constant values."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1'],
+        'time': pd.date_range(start='2020-01-01', periods=3, freq='5min'),
+        'gl': [150, 150, 150]  # All values are the same
+    })
+    
+    # Calculate mean_glu
+    result = mean_glu(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'mean_glu' in result.columns
+    assert len(result) == 1
+    
+    # Check that mean value is correct
+    assert result['mean_glu'].iloc[0] == 150.0
+
+def test_mean_glu_multiple_subjects():
+    """Test mean_glu calculation with multiple subjects."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject2', 'subject2', 'subject3', 'subject3'],
+        'time': pd.date_range(start='2020-01-01', periods=6, freq='5min'),
+        'gl': [150, 200, 130, 190, 140, 140]
+    })
+    
+    # Calculate mean_glu
+    result = mean_glu(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'mean_glu' in result.columns
+    assert len(result) == 3  # Three subjects
+    
+    # Check that mean values are correct
+    subject1_mean = result[result['id'] == 'subject1']['mean_glu'].iloc[0]
+    subject2_mean = result[result['id'] == 'subject2']['mean_glu'].iloc[0]
+    subject3_mean = result[result['id'] == 'subject3']['mean_glu'].iloc[0]
+    assert abs(subject1_mean - 175.0) < 0.01  # 175.0 is the expected mean
+    assert abs(subject2_mean - 160.0) < 0.01  # 160.0 is the expected mean
+    assert abs(subject3_mean - 140.0) < 0.01  # 140.0 is the expected mean 

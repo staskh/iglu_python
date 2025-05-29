@@ -1,0 +1,178 @@
+import pytest
+import pandas as pd
+import numpy as np
+from iglu_python.in_range_percent import in_range_percent
+
+def test_in_range_percent_basic():
+    """Test basic in_range_percent calculation with known values."""
+    # Create test data with known glucose values
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1', 'subject2', 'subject2', 'subject2'],
+        'time': pd.date_range(start='2020-01-01', periods=6, freq='5min'),
+        'gl': [80, 90, 100, 130, 190, 160]
+    })
+    
+    # Calculate in_range_percent
+    result = in_range_percent(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'in_range_70_180' in result.columns
+    assert 'in_range_63_140' in result.columns
+    assert len(result) == 2  # Two subjects
+    
+    # Check that percentages are between 0 and 100
+    assert all((result['in_range_70_180'] >= 0) & (result['in_range_70_180'] <= 100))
+    assert all((result['in_range_63_140'] >= 0) & (result['in_range_63_140'] <= 100))
+    
+    # Check that subject1 has higher percentages than subject2
+    # (since subject1 has more values in range)
+    subject1_in_range = result[result['id'] == 'subject1']['in_range_70_180'].iloc[0]
+    subject2_in_range = result[result['id'] == 'subject2']['in_range_70_180'].iloc[0]
+    assert subject1_in_range > subject2_in_range
+
+def test_in_range_percent_series_input():
+    """Test in_range_percent calculation with Series input."""
+    # Create test data as Series
+    data = pd.Series([80, 90, 100, 130, 190, 160])
+    
+    # Calculate in_range_percent
+    result = in_range_percent(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'in_range_70_180' in result.columns
+    assert 'in_range_63_140' in result.columns
+    assert 'id' not in result.columns
+    assert len(result) == 1
+    
+    # Check that percentages are between 0 and 100
+    assert (result['in_range_70_180'].iloc[0] >= 0) and (result['in_range_70_180'].iloc[0] <= 100)
+    assert (result['in_range_63_140'].iloc[0] >= 0) and (result['in_range_63_140'].iloc[0] <= 100)
+
+def test_in_range_percent_custom_targets():
+    """Test in_range_percent calculation with custom targets."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1'],
+        'time': pd.date_range(start='2020-01-01', periods=3, freq='5min'),
+        'gl': [80, 90, 100]
+    })
+    
+    # Test with custom targets
+    result = in_range_percent(data, targets=[[75, 95], [85, 105]])
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'in_range_75_95' in result.columns
+    assert 'in_range_85_105' in result.columns
+    assert len(result) == 1
+    
+    # Check that percentages are between 0 and 100
+    assert (result['in_range_75_95'].iloc[0] >= 0) and (result['in_range_75_95'].iloc[0] <= 100)
+    assert (result['in_range_85_105'].iloc[0] >= 0) and (result['in_range_85_105'].iloc[0] <= 100)
+
+def test_in_range_percent_empty_data():
+    """Test in_range_percent calculation with empty data."""
+    # Create empty DataFrame
+    data = pd.DataFrame(columns=['id', 'time', 'gl'])
+    
+    # Test that function raises appropriate error
+    with pytest.raises(ValueError):
+        in_range_percent(data)
+
+def test_in_range_percent_missing_values():
+    """Test in_range_percent calculation with missing values."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1'],
+        'time': pd.date_range(start='2020-01-01', periods=3, freq='5min'),
+        'gl': [80, np.nan, 100]
+    })
+    
+    # Calculate in_range_percent
+    result = in_range_percent(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'in_range_70_180' in result.columns
+    assert 'in_range_63_140' in result.columns
+    assert len(result) == 1
+    
+    # Check that percentages are between 0 and 100
+    assert (result['in_range_70_180'].iloc[0] >= 0) and (result['in_range_70_180'].iloc[0] <= 100)
+    assert (result['in_range_63_140'].iloc[0] >= 0) and (result['in_range_63_140'].iloc[0] <= 100)
+
+def test_in_range_percent_all_out_of_range():
+    """Test in_range_percent calculation with all values out of range."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1'],
+        'time': pd.date_range(start='2020-01-01', periods=3, freq='5min'),
+        'gl': [50, 60, 200]  # All values outside [70, 180]
+    })
+    
+    # Calculate in_range_percent
+    result = in_range_percent(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'in_range_70_180' in result.columns
+    assert 'in_range_63_140' in result.columns
+    assert len(result) == 1
+    
+    # Check that percentages are 0 for all ranges
+    assert result['in_range_70_180'].iloc[0] == 0
+    assert result['in_range_63_140'].iloc[0] == 0
+
+def test_in_range_percent_all_in_range():
+    """Test in_range_percent calculation with all values in range."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1'],
+        'time': pd.date_range(start='2020-01-01', periods=3, freq='5min'),
+        'gl': [80, 90, 100]  # All values within [70, 180]
+    })
+    
+    # Calculate in_range_percent
+    result = in_range_percent(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'in_range_70_180' in result.columns
+    assert 'in_range_63_140' in result.columns
+    assert len(result) == 1
+    
+    # Check that percentages are 100 for all ranges
+    assert result['in_range_70_180'].iloc[0] == 100
+    assert result['in_range_63_140'].iloc[0] == 100
+
+def test_in_range_percent_multiple_subjects():
+    """Test in_range_percent calculation with multiple subjects."""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject2', 'subject2', 'subject3', 'subject3'],
+        'time': pd.date_range(start='2020-01-01', periods=6, freq='5min'),
+        'gl': [80, 90, 130, 190, 140, 140]
+    })
+    
+    # Calculate in_range_percent
+    result = in_range_percent(data)
+    
+    # Check output format
+    assert isinstance(result, pd.DataFrame)
+    assert 'id' in result.columns
+    assert 'in_range_70_180' in result.columns
+    assert 'in_range_63_140' in result.columns
+    assert len(result) == 3  # Three subjects
+    
+    # Check that percentages are between 0 and 100
+    assert all((result['in_range_70_180'] >= 0) & (result['in_range_70_180'] <= 100))
+    assert all((result['in_range_63_140'] >= 0) & (result['in_range_63_140'] <= 100))
+    
+    # Check that subject1 has higher percentages than others
+    subject1_in_range = result[result['id'] == 'subject1']['in_range_70_180'].iloc[0]
+    subject2_in_range = result[result['id'] == 'subject2']['in_range_70_180'].iloc[0]
+    subject3_in_range = result[result['id'] == 'subject3']['in_range_70_180'].iloc[0]
+    assert subject1_in_range > subject2_in_range
+    assert subject1_in_range > subject3_in_range 
