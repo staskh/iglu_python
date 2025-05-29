@@ -50,6 +50,8 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     data = check_data_columns(data)
     
     # Calculate IQR for each subject
+    # drop all rows with missing values
+    data = data.dropna()
     result = data.groupby('id').agg(
         IQR=('gl', lambda x: np.percentile(x, 75) - np.percentile(x, 25))
     ).reset_index()

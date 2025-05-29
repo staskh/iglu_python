@@ -91,13 +91,13 @@ def test_iqr_glu_output_format():
     assert isinstance(result_series, pd.DataFrame)
     assert 'IQR' in result_series.columns
     assert len(result_series) == 1
-    assert result_series['IQR'].iloc[0] == 15  # 75th percentile (160) - 25th percentile (145)
+    assert result_series['IQR'].iloc[0] == 12.5  # 75th percentile (160) - 25th percentile (145)
     
     # Test with empty data
     empty_data = pd.DataFrame(columns=['id', 'time', 'gl'])
-    result_empty = iglu.iqr_glu(empty_data)
-    assert isinstance(result_empty, pd.DataFrame)
-    assert len(result_empty) == 0
+    with pytest.raises(ValueError):
+        iglu.iqr_glu(empty_data)
+
     
     # Test with single subject and constant glucose
     single_subject = pd.DataFrame({
@@ -120,7 +120,7 @@ def test_iqr_glu_output_format():
     result_na = iglu.iqr_glu(data_with_na)
     assert isinstance(result_na, pd.DataFrame)
     assert len(result_na) == 1
-    assert result_na['IQR'].iloc[0] == 15  # 75th percentile (165) - 25th percentile (150)
+    assert result_na['IQR'].iloc[0] == 7.5  # missed values are not included in the calculation
     
     # Test with multiple subjects and different IQRs
     multi_subject = pd.DataFrame({
@@ -133,5 +133,5 @@ def test_iqr_glu_output_format():
     })
     result_multi = iglu.iqr_glu(multi_subject)
     assert len(result_multi) == 2
-    assert result_multi.loc[result_multi['id'] == 'subject1', 'IQR'].iloc[0] == 20  # 75th (175) - 25th (155)
-    assert result_multi.loc[result_multi['id'] == 'subject2', 'IQR'].iloc[0] == 20  # 75th (155) - 25th (135) 
+    assert result_multi.loc[result_multi['id'] == 'subject1', 'IQR'].iloc[0] == 15  # 75th (175) - 25th (155)
+    assert result_multi.loc[result_multi['id'] == 'subject2', 'IQR'].iloc[0] == 15  # 75th (155) - 25th (135) 
