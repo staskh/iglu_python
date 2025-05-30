@@ -12,9 +12,10 @@ def get_test_scenarios():
     # Load expected results
     with open('tests/expected_results.json', 'r') as f:
         expected_results = json.load(f)
-
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results['config']['local_tz'])
     # Filter scenarios for AUC method
-    return [scenario for scenario in expected_results if scenario['method'] == method_name]
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.fixture
 def test_data():

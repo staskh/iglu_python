@@ -1,7 +1,65 @@
 import pytest
 import pandas as pd
 import numpy as np
-from iglu_python.below_percent import below_percent
+import json
+
+import iglu_python as iglu
+
+
+method_name = 'below_percent'
+
+def get_test_scenarios():
+    """Get test scenarios for above_percent calculations"""
+    # Load expected results
+    with open('tests/expected_results.json', 'r') as f:
+        expected_results = json.load(f)
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results['config']['local_tz'])
+    # Filter scenarios for above_percent method
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
+
+@pytest.fixture
+def test_data():
+    """Fixture that provides test data for above_percent calculations"""
+    return get_test_scenarios()
+
+@pytest.mark.parametrize('scenario', get_test_scenarios())
+def test_below_percent_calculation(scenario):
+    """Test below_percent calculation against expected results"""
+    
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
+    
+    # Read CSV and convert time column to datetime
+    df = pd.read_csv(input_file_name, index_col=0)
+    if 'time' in df.columns:
+        df['time'] = pd.to_datetime(df['time'])
+    
+    result_df = iglu.below_percent(df, **kwargs)
+    
+    assert result_df is not None
+    
+    expected_results = scenario['results']
+    expected_df = pd.DataFrame(expected_results)
+    expected_df = expected_df.reset_index(drop=True)
+    
+    # Compare DataFrames with precision to 0.001
+    pd.testing.assert_frame_equal(
+        result_df.round(3),
+        expected_df.round(3),
+        check_dtype=False,  # Don't check dtypes since we might have different numeric types
+        check_index_type=True,
+        check_column_type=True,
+        check_frame_type=True,
+        check_names=True,
+        check_datetimelike_compat=True,
+        check_categorical=True,
+        check_like=True,
+        check_freq=True,
+        check_flags=True,
+        check_exact=False,
+        rtol=0.01
+    )
 
 def test_below_percent_basic():
     """Test basic below_percent calculation with known values."""
@@ -13,7 +71,7 @@ def test_below_percent_basic():
     })
     
     # Calculate below_percent
-    result = below_percent(data)
+    result = iglu.below_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -38,7 +96,7 @@ def test_below_percent_series_input():
     data = pd.Series([50, 60, 65, 130, 190, 160])
     
     # Calculate below_percent
-    result = below_percent(data)
+    result = iglu.below_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -60,7 +118,7 @@ def test_below_percent_custom_targets():
     })
     
     # Test with custom targets
-    result = below_percent(data, targets_below=[55, 65])
+    result = iglu.below_percent(data, targets_below=[55, 65])
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -80,7 +138,7 @@ def test_below_percent_empty_data():
     
     # Test that function raises appropriate error
     with pytest.raises(ValueError):
-        below_percent(data)
+        iglu.below_percent(data)
 
 def test_below_percent_missing_values():
     """Test below_percent calculation with missing values."""
@@ -91,7 +149,7 @@ def test_below_percent_missing_values():
     })
     
     # Calculate below_percent
-    result = below_percent(data)
+    result = iglu.below_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -113,7 +171,7 @@ def test_below_percent_all_above():
     })
     
     # Calculate below_percent
-    result = below_percent(data)
+    result = iglu.below_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -135,7 +193,7 @@ def test_below_percent_all_below():
     })
     
     # Calculate below_percent
-    result = below_percent(data)
+    result = iglu.below_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -157,7 +215,7 @@ def test_below_percent_multiple_subjects():
     })
     
     # Calculate below_percent
-    result = below_percent(data)
+    result = iglu.below_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
