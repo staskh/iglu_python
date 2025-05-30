@@ -27,7 +27,7 @@ def set_local_tz(tz: str) -> None:
 
 
 
-def check_data_columns(data: pd.DataFrame) -> pd.DataFrame:
+def check_data_columns(data: pd.DataFrame, tz = "") -> pd.DataFrame:
     """
     Check if the input DataFrame has the required columns and correct data types.
     
@@ -35,7 +35,10 @@ def check_data_columns(data: pd.DataFrame) -> pd.DataFrame:
     ----------
     data : pd.DataFrame
         Input DataFrame to check
-        
+    tz : str, default=""
+        Time zone to use for calculations
+        If tz is not "", the time column is converted to the specified timezone
+
     Returns
     -------
     pd.DataFrame
@@ -69,6 +72,10 @@ def check_data_columns(data: pd.DataFrame) -> pd.DataFrame:
     if not pd.api.types.is_string_dtype(data['id']):
         data['id'] = data['id'].astype(str)
     
+    # check if data frame empty
+    if data.empty:
+        raise ValueError("Data frame is empty")
+    
     # Check if data contains no glucose values
     if data['gl'].isna().all():
         raise ValueError("Data contains no glucose values")
@@ -86,39 +93,55 @@ def CGMS2DayByDay(
     tz: str = ""
 ) -> Tuple[np.ndarray, list, int, list]:
     """
-    Interpolate CGM data to a regular time grid.
+    Interpolate glucose values onto an equally spaced grid from day to day.
     
-    Parameters
-    ----------
+    The function takes CGM data and interpolates it onto a uniform time grid,
+    with each row representing a day and each column representing a time point.
+    Missing values are linearly interpolated when close enough to non-missing values.
+
     data : pd.DataFrame
-        DataFrame with columns 'id', 'time', and 'gl'
-    dt0 : pd.Timestamp, optional
-        Start time for interpolation
+        DataFrame with columns 'id', 'time', and 'gl'. Should only be data for 1 subject.
+        In case multiple subject ids are detected, a warning is produced and only 1st subject is used.
+    dt0 : int, optional
+        The time frequency for interpolation in minutes. If None, will match the CGM meter's frequency
+        (e.g., 5 min for Dexcom).
     inter_gap : int, default=45
-        Maximum gap (in minutes) between measurements to interpolate
+        The maximum allowable gap (in minutes) for interpolation. Values will not be interpolated
+        between glucose measurements that are more than inter_gap minutes apart.
     tz : str, default=""
-        Time zone to use for calculations
+        Time zone to use for datetime conversion. Empty string means use local time zone.
         
     Returns
     -------
     Tuple[np.ndarray, list, int, list]
-        - Interpolated glucose values (2D array)
-        - List of actual dates
-        - Time step in minutes
-        - List of gap indices
+        A tuple containing:
+        - gd2d: A 2D numpy array of glucose values with each row corresponding to a new day,
+               and each column corresponding to time
+        - actual_dates: A list of dates corresponding to the rows of gd2d
+        - dt0: Time frequency of the resulting grid, in minutes
+    Examples
+    --------
+    >>> data = pd.DataFrame({
+    ...     'id': ['subject1'] * 4,
+    ...     'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00',
+    ...                            '2020-01-01 00:10:00', '2020-01-01 00:15:00']),
+    ...     'gl': [150, 200, 180, 160]
+    ... })
+    >>> gd2d, dates, dt = CGMS2DayByDay(data)
+    >>> print(gd2d.shape)  # Shape will be (1, 288) for one day with 5-min intervals
+    (1, 288)
     """
     # Check data format
-    data = check_data_columns(data)
+    data = check_data_columns(data,tz)
     
-    # Convert timezone if specified
-    if tz:
-        data['time'] = data['time'].dt.tz_localize(tz)
+    # # Convert timezone if specified
+    # if tz and tz!= "":
+    #     data['time'] = data['time'].dt.tz_localize(tz)
     
     # Get unique subjects
     subjects = data['id'].unique()
     if len(subjects) > 1:
-        warnings.warn("Multiple subjects detected. Using first subject only.")
-        data = data[data['id'] == subjects[0]]
+        raise ValueError("Multiple subjects detected. Please provide a single subject.")
     
     # Sort by time
     data = data.sort_values('time')
@@ -130,32 +153,55 @@ def CGMS2DayByDay(
         dt0 = int(time_diffs.mode().iloc[0].total_seconds() / 60)
     
     # Create time grid
-    start_time = data['time'].min().floor('D')
+    start_time = data['time'].min().floor('D') 
     end_time = data['time'].max().ceil('D')
-    time_grid = pd.date_range(start=start_time, end=end_time, freq=f'{dt0}T')
+    time_grid = pd.date_range(start=start_time+ pd.Timedelta(minutes=dt0), end=end_time, freq=f'{dt0}T')
+    # remove last time point
+    #time_grid = time_grid[:-1]
+
+    # find gaps in the data
+    gaps = []
+    for i in range(len(data) - 1):
+        if (data['time'].iloc[i+1] - data['time'].iloc[i]).total_seconds() > inter_gap * 60:
+            gaps.append((i, i+1))
     
     # Interpolate glucose values
     interp_data = np.interp(
         (time_grid - start_time).total_seconds() / 60,
-        (data['time'] - start_time).total_seconds() / 60,
-        data['gl']
+        (data['time'] - start_time).dt.total_seconds() / 60,
+        data['gl'],
+        left=np.nan,
+        right=np.nan
     )
+
+    # put nan in the gaps
+    for gap in gaps:
+        gap_start_idx = gap[0]
+        gap_start_time = data['time'].iloc[gap_start_idx]
+        # find the index of the gap start in the time grid
+        gap_start_idx_in_time_grid = int(np.floor((gap_start_time - start_time).total_seconds() / (60 * dt0)))
+        gap_end_idx = gap[1]
+        gap_end_time = data['time'].iloc[gap_end_idx]
+        # find the index of the gap end in the time grid
+        gap_end_idx_in_time_grid = int(np.floor((gap_end_time - start_time).total_seconds() / (60 * dt0)))
+        # put nan in the gap
+        interp_data[gap_start_idx_in_time_grid:gap_end_idx_in_time_grid] = np.nan
+
+
+    # for compatibility with the R package, set values to nan before data['time'].min() and after data['time'].max()
+    # find index of timegrid before data['time'].min() and after data['time'].max()
+    # head_min_idx = np.where(time_grid >= data['time'].min())[0][0] 
+    # tail_max_idx = np.where(time_grid <= data['time'].max())[0][-1] + 1
+    # interp_data[:head_min_idx] = np.nan
+    # interp_data[tail_max_idx:] = np.nan
     
+
     # Reshape to days
     n_days = (end_time - start_time).days
     n_points_per_day = 24 * 60 // dt0
     interp_data = interp_data.reshape(n_days, n_points_per_day)
-    
-    # Find gaps
-    gaps = []
-    for i in range(n_days):
-        day_data = interp_data[i]
-        # Find indices where gap is larger than inter_gap
-        gap_indices = np.where(np.diff(day_data) > inter_gap)[0]
-        if len(gap_indices) > 0:
-            gaps.append((i, gap_indices))
-    
+
     # Get actual dates
     actual_dates = [start_time + pd.Timedelta(days=i) for i in range(n_days)]
     
-    return interp_data, actual_dates, dt0, gaps 
+    return interp_data, actual_dates, dt0 

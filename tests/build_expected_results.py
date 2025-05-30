@@ -218,7 +218,7 @@ def main():
         ["auc", {"tz": 'GMT'}],
         ["below_percent"],
         ["below_percent", {"targets_below": [30, 100]}],
-        #["cgm2daybyday"],
+        #["CGMS2DayByDay"],
         ["cogi"],
         ["cogi", {"targets" : [80, 180]}],
         ["conga"],
@@ -267,7 +267,7 @@ def main():
     single_subject_scenarios = [
         ['CGMS2DayByDay'],
         ['CGMS2DayByDay', {"tz": 'GMT'}],
-        ['CGMS2DayByDay', {"tz": 'GMT', "dt0": 10}],
+        ['CGMS2DayByDay', {"dt0": 10}],
         ['CGMS2DayByDay', {"dt0": 5, 'inter_gap': 15}],
     ]
 
