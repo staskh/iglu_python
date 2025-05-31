@@ -23,6 +23,7 @@ from .lbgi import lbgi
 from .mad_glu import mad_glu
 from .mag import mag
 from .mage import mage
+from .m_value import m_value
 from .mean_glu import mean_glu
 from .modd import modd
 from .range_glu import range_glu
@@ -58,6 +59,7 @@ __all__ = [
     'mad_glu',
     'mag',
     'mage',
+    'm_value',
     'mean_glu',
     'modd',
     'range_glu',

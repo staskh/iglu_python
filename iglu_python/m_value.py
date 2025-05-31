@@ -10,6 +10,13 @@ def m_value(data: Union[pd.DataFrame, pd.Series], r: float = 90) -> pd.DataFrame
     The M-value is the mean of the logarithmic transformation of the deviation
     from a reference value. Produces a DataFrame with subject id and M-values.
     
+    A reference value corresponding to basal glycemia in normal
+    subjects; default is 90 mg/dL.
+    
+    M-value is calculated by \eqn{1000 * mean(abs(log10(gl / r)) ** 3)},
+    where gl is the glucose measurement, and r is the reference value.
+    
+
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series]
