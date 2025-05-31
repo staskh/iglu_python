@@ -62,9 +62,25 @@ def igc(data: Union[pd.DataFrame, pd.Series], LLTR: int = 80, ULTR: int = 140,
        IGC
     0  0.106
     """
+    # Handle Series input
+    is_vector = False
+    if isinstance(data, (list, np.ndarray)):
+        data = pd.Series(data)
+    if isinstance(data, pd.Series):
+        is_vector = True
+        data = data.dropna()    
+        if len(data) == 0:
+            return pd.DataFrame({'GVP': [np.nan]})
+            
+        # Convert to DataFrame format for processing
+        data = pd.DataFrame({
+            'id': ['subject1'] * len(data),
+            'time': pd.date_range(start='2020-01-01', periods=len(data), freq='5min'),
+            'gl': data.values
+        })
+
     # Check and prepare data
     data = check_data_columns(data)
-    is_vector = getattr(data, 'is_vector', False)
     
     # Calculate hyper_index and hypo_index
     out_hyper = hyper_index(data, ULTR=ULTR, a=a, c=c)
