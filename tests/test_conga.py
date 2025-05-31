@@ -14,7 +14,7 @@ def get_test_scenarios():
         expected_results = json.load(f)
 
     # Filter scenarios for CONGA method
-    return [scenario for scenario in expected_results if scenario['method'] == method_name]
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.fixture
 def test_data():

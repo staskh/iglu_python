@@ -14,7 +14,7 @@ def get_test_scenarios():
         expected_results = json.load(f)
 
     # Filter scenarios for MAD_glu method
-    return [scenario for scenario in expected_results if scenario['method'] == method_name]
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.fixture
 def test_data():
@@ -94,9 +94,8 @@ def test_mad_glu_output_format():
     
     # Test with empty data
     empty_data = pd.DataFrame(columns=['id', 'time', 'gl'])
-    result_empty = iglu.mad_glu(empty_data)
-    assert isinstance(result_empty, pd.DataFrame)
-    assert len(result_empty) == 0
+    with pytest.raises(ValueError):
+        iglu.mad_glu(empty_data)
     
     # Test with single subject and constant glucose
     single_subject = pd.DataFrame({

@@ -13,7 +13,7 @@ def get_test_scenarios():
     with open('tests/expected_results.json', 'r') as f:
         expected_results = json.load(f)
     # Filter scenarios for modd method
-    return [scenario for scenario in expected_results if scenario['method'] == method_name]
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.fixture
 def test_data():

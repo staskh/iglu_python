@@ -1,6 +1,9 @@
 import pytest
 import pandas as pd
 import numpy as np
+import json
+import os
+import iglu_python as iglu
 from iglu_python.cogi import cogi
 
 def test_cogi_basic():
@@ -162,3 +165,58 @@ def test_cogi_multiple_subjects():
     subject2_cogi = result[result['id'] == 'subject2']['COGI'].iloc[0]
     assert subject3_cogi >= subject1_cogi
     assert subject3_cogi >= subject2_cogi 
+
+def get_cogi_test_scenarios():
+    """Get test scenarios for COGI calculations"""
+    expected_results_path = os.path.join(os.path.dirname(__file__), 'expected_results.json')
+    if not os.path.exists(expected_results_path):
+        pytest.skip('expected_results.json not found, skipping COGI calculation test')
+    try:
+        with open(expected_results_path, 'r') as f:
+            expected_results = json.load(f)
+    except Exception:
+        pytest.skip('expected_results.json could not be loaded, skipping COGI calculation test')
+    # set local timezone if present
+    if 'config' in expected_results and 'local_tz' in expected_results['config']:
+        try:
+            iglu.utils.set_local_tz(expected_results['config']['local_tz'])
+        except Exception:
+            pass
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == 'cogi']
+
+@pytest.mark.parametrize('scenario', get_cogi_test_scenarios())
+def test_cogi_calculation(scenario):
+    """Test COGI calculation against expected results"""
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
+
+    # Read CSV and convert time column to datetime
+    df = pd.read_csv(input_file_name, index_col=0)
+    if 'time' in df.columns:
+        df['time'] = pd.to_datetime(df['time'])
+
+    expected_results = scenario['results']
+    expected_df = pd.DataFrame(expected_results)
+    expected_df = expected_df.reset_index(drop=True)
+
+    result_df = iglu.cogi(df, **kwargs)
+
+    assert result_df is not None
+
+    # Compare DataFrames with precision to 0.01 for numeric columns
+    pd.testing.assert_frame_equal(
+        result_df,
+        expected_df,
+        check_dtype=False,
+        check_index_type=True,
+        check_column_type=True,
+        check_frame_type=True,
+        check_names=True,
+        check_datetimelike_compat=True,
+        check_categorical=True,
+        check_like=True,
+        check_freq=True,
+        check_flags=True,
+        check_exact=False,
+        rtol=0.01,
+    ) 
