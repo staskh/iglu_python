@@ -3,7 +3,7 @@ import numpy as np
 from typing import Union
 from .utils import check_data_columns
 
-def ea1c(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def ea1c(data: Union[pd.DataFrame, pd.Series, list]) -> pd.DataFrame:
     """
     Calculate estimated A1C (eA1C) values.
     
