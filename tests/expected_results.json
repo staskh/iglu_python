@@ -248,6 +248,19 @@
             }
         },
         {
+            "method": "ea1c",
+            "input_file_name": "tests/data/simple_test_1.csv",
+            "kwargs": {},
+            "results": {
+                "id": {
+                    "0": "subject1"
+                },
+                "eA1C": {
+                    "0": 5.634146341463414
+                }
+            }
+        },
+        {
             "method": "episode_calculation",
             "input_file_name": "tests/data/simple_test_1.csv",
             "kwargs": {},
@@ -558,22 +571,6 @@
             "method": "mage",
             "input_file_name": "tests/data/simple_test_1.csv",
             "kwargs": {},
-            "results": {
-                "id": {
-                    "0": "subject1"
-                },
-                "MAGE": {
-                    "0": null
-                }
-            }
-        },
-        {
-            "method": "mage",
-            "input_file_name": "tests/data/simple_test_1.csv",
-            "kwargs": {
-                "short_ma": 3,
-                "long_ma": 35
-            },
             "results": {
                 "id": {
                     "0": "subject1"
@@ -2296,6 +2293,27 @@
             }
         },
         {
+            "method": "ea1c",
+            "input_file_name": "tests/data/example_data_5_subject.csv",
+            "kwargs": {},
+            "results": {
+                "id": {
+                    "0": "Subject 1",
+                    "1": "Subject 2",
+                    "2": "Subject 3",
+                    "3": "Subject 4",
+                    "4": "Subject 5"
+                },
+                "eA1C": {
+                    "0": 5.936080946205198,
+                    "1": 9.238773873877202,
+                    "2": 6.994486000213651,
+                    "3": 6.1454494621365425,
+                    "4": 7.711063462282975
+                }
+            }
+        },
+        {
             "method": "episode_calculation",
             "input_file_name": "tests/data/example_data_5_subject.csv",
             "kwargs": {},
@@ -2963,30 +2981,6 @@
                     "1": 118.07350904396523,
                     "2": 115.77725072028778,
                     "3": 70.85820686807801,
-                    "4": 142.28929272793408
-                }
-            }
-        },
-        {
-            "method": "mage",
-            "input_file_name": "tests/data/example_data_5_subject.csv",
-            "kwargs": {
-                "short_ma": 3,
-                "long_ma": 35
-            },
-            "results": {
-                "id": {
-                    "0": "Subject 1",
-                    "1": "Subject 2",
-                    "2": "Subject 3",
-                    "3": "Subject 4",
-                    "4": "Subject 5"
-                },
-                "MAGE": {
-                    "0": 73.65247558946658,
-                    "1": 118.07350904396523,
-                    "2": 115.77725072028778,
-                    "3": 71.48608348279893,
                     "4": 142.28929272793408
                 }
             }
