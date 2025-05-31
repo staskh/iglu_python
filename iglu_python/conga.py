@@ -4,12 +4,14 @@ from typing import Union
 from .utils import check_data_columns
 from .utils import CGMS2DayByDay
 
-def conga(data: Union[pd.DataFrame, pd.Series], n: int = 24, tz: str = "") -> pd.DataFrame:
+def conga(data: Union[pd.DataFrame, pd.Series, list], n: int = 24, tz: str = "") -> pd.DataFrame:
     """
     Calculate Continuous Overall Net Glycemic Action (CONGA).
     
     The function produces CONGA values for any n hours apart. CONGA is the standard 
     deviation of the difference between glucose values that are exactly n hours apart.
+
+    Missing values will be linearly interpolated when close enough to non-missing values.
     
     Parameters
     ----------
@@ -55,24 +57,26 @@ def conga(data: Union[pd.DataFrame, pd.Series], n: int = 24, tz: str = "") -> pd
     def conga_single(data: pd.DataFrame, hours: int = 1, tz: str = "") -> float:
         """Calculate CONGA for a single subject"""
         # Convert data to day-by-day format
-        data_ip = CGMS2DayByDay(data, tz=tz)
-        gl_by_id_ip = data_ip[0]  # Matrix of glucose values
-        dt0 = data_ip[2]  # Time between measurements in minutes
+        # Missing values will be linearly interpolated when close enough to non-missing values.
+        gl_by_id_ip, _ , dt0 = CGMS2DayByDay(data, tz=tz)
         
         # Calculate number of readings per hour
         hourly_readings = round(60 / dt0)
         
         # Calculate differences between measurements n hours apart
         # Flatten the matrix and calculate differences with lag
-        gl_vector = gl_by_id_ip.T.flatten()
-        diffs = np.diff(gl_vector, n=hourly_readings * hours)
-        
-        # Return standard deviation of differences
-        return float(np.std(diffs, ddof=1))
+        gl_vector = gl_by_id_ip.flatten()
+
+        # Calculate differences between measurements n hours apart
+        # Flatten the matrix and calculate differences with lag
+        lag=hourly_readings * hours
+        diffs = gl_vector[lag:] - gl_vector[:-lag]
+
+        return float(np.nanstd(diffs, ddof=1))
     
     # Handle Series input
-    if isinstance(data, pd.Series):
-        # Convert Series to DataFrame format
+    if isinstance(data, (pd.Series, list)):
+        # Convert Series to DataFrame format (assuming that the data is collected with 5-minute intervals)
         data_df = pd.DataFrame({
             'id': ['subject1'] * len(data),
             'time': pd.date_range(start='2020-01-01', periods=len(data), freq='5min'),
