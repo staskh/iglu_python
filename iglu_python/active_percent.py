@@ -68,11 +68,7 @@ def active_percent(
     1  subject2     100.00    0.0  2020-01-01 00:00:00  2020-01-01 00:05:00
     """
     # Check data format and convert time to datetime
-    data = check_data_columns(data)
-    data['time'] = pd.to_datetime(data['time'])
-    if tz and tz != "":
-        data['time'] = data['time'].apply(localize_naive_timestamp)
-        data['time'] = data['time'].dt.tz_convert(tz)
+    data = check_data_columns(data,tz)
 
     # Initialize result list
     active_perc_data = []
