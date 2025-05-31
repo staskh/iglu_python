@@ -63,7 +63,7 @@ def test_hbgi_basic():
         'gl': [150, 200, 130, 190]  # Different hyperglycemia for each subject
     })
     
-    result = hbgi.hbgi(data)
+    result = iglu.hbgi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
