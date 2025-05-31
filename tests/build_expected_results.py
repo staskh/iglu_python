@@ -136,8 +136,6 @@ def run_scenario(scenarios: list[str], input_file_name: str):
         else:
             assert isinstance(results, dict), "Results must be a dictionary"
             results_dict = results
-        #results_dict = convert_timestamps_to_str(results_dict) # To keep JSON happy
-        #results_dict = convert_nan_to_none(results_dict) # To keep JSON happy
         
         scenario_dict["results"] = results_dict
         run_results.append(scenario_dict)
@@ -218,7 +216,6 @@ def main():
         ["auc", {"tz": 'GMT'}],
         ["below_percent"],
         ["below_percent", {"targets_below": [30, 100]}],
-        #["CGMS2DayByDay"],
         ["cogi"],
         ["cogi", {"targets" : [80, 180]}],
         ["conga"],
@@ -261,6 +258,7 @@ def main():
     ]
 
     multi_subject_input_files = [
+        "tests/data/simple_test_1.csv",
         "tests/data/example_data_5_subject.csv",
     ]
 
@@ -273,6 +271,7 @@ def main():
 
 
     single_subject_input_files = [
+        "tests/data/simple_test_1.csv",
         "tests/data/example_data_1_subject.csv",
     ]
 
