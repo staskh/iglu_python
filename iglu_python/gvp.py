@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Union
 from .utils import check_data_columns
-from .cgm2daybyday import cgm2daybyday
+from .utils import CGMS2DayByDay
 
 def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
     """
@@ -113,7 +113,7 @@ def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     def gvp_single(subj_data):
         """Calculate GVP for a single subject"""
         # Get interpolated data
-        data_ip = cgm2daybyday(subj_data)
+        data_ip = CGMS2DayByDay(subj_data)
         daybyday = data_ip['gd2d'].values.flatten()
         reading_gap = data_ip['dt0']
         

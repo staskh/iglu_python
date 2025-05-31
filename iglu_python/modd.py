@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Union
 from .utils import check_data_columns
-from .cgm2daybyday import cgm2daybyday
+from .utils import CGMS2DayByDay
 
 def modd(data: Union[pd.DataFrame, pd.Series], lag: int = 1, tz: str = "") -> pd.DataFrame:
     """
@@ -54,11 +54,13 @@ def modd(data: Union[pd.DataFrame, pd.Series], lag: int = 1, tz: str = "") -> pd
     def modd_single(data: pd.DataFrame) -> float:
         """Calculate MODD for a single subject"""
         # Convert data to day-by-day format
-        data_ip = cgm2daybyday(data, tz=tz)
+        data_ip = CGMS2DayByDay(data, tz=tz)
         gl_by_id_ip = data_ip[1]  # Get interpolated glucose values
         
         # Calculate absolute differences with specified lag
-        abs_diffs = np.abs(np.diff(gl_by_id_ip, lag=lag))
+        # Shift array by lag and calculate differences
+        gl_shifted = np.roll(gl_by_id_ip, -lag, axis=0)  # Shift down by lag
+        abs_diffs = np.abs(gl_by_id_ip - gl_shifted)
         
         # Calculate mean of absolute differences, ignoring NaN values
         modd_val = np.nanmean(abs_diffs)

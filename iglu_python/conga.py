@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Union
 from .utils import check_data_columns
-from .cgm2daybyday import cgm2daybyday
+from .utils import CGMS2DayByDay
 
 def conga(data: Union[pd.DataFrame, pd.Series], n: int = 24, tz: str = "") -> pd.DataFrame:
     """
@@ -55,7 +55,7 @@ def conga(data: Union[pd.DataFrame, pd.Series], n: int = 24, tz: str = "") -> pd
     def conga_single(data: pd.DataFrame, hours: int = 1, tz: str = "") -> float:
         """Calculate CONGA for a single subject"""
         # Convert data to day-by-day format
-        data_ip = cgm2daybyday(data, tz=tz)
+        data_ip = CGMS2DayByDay(data, tz=tz)
         gl_by_id_ip = data_ip[0]  # Matrix of glucose values
         dt0 = data_ip[2]  # Time between measurements in minutes
         

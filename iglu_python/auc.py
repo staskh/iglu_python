@@ -3,7 +3,7 @@ import numpy as np
 from typing import Optional, Union
 from datetime import datetime
 from .utils import check_data_columns
-from .cgm2daybyday import cgm2daybyday
+from .utils import CGMS2DayByDay
 
 def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
     """
@@ -49,18 +49,16 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
     1  subject2      142.5
     """
     # Check data format and convert time to datetime
-    data = check_data_columns(data, time_check=True, tz=tz)
-    data['time'] = pd.to_datetime(data['time'])
+    data = check_data_columns(data)
     
     def auc_single(subject_data: pd.DataFrame) -> float:
         """Calculate AUC for a single subject"""
         # Get interpolated data using CGMS2DayByDay
-        data_ip = cgm2daybyday(subject_data, tz=tz)
-        dt0 = data_ip['dt0']  # Time interval between measurements in minutes
+        gd2d,actual_dates,dt0 = CGMS2DayByDay(subject_data, tz=tz)
         
         # Create DataFrame with day and glucose values
-        days = np.repeat(data_ip['actual_dates'], 1440/dt0)
-        gl_values = data_ip['gd2d'].flatten()
+        days = np.repeat(actual_dates, 1440/dt0)
+        gl_values = gd2d.flatten()
         
         # Group by day and calculate AUC for each day
         daily_data = pd.DataFrame({
@@ -70,16 +68,16 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
         
         # Calculate AUC for each day using trapezoidal rule
         daily_auc = daily_data.groupby('day').apply(
-            lambda x: (dt0/60) * np.sum((x['gl'].iloc[1:].values + x['gl'].iloc[:-1].values) / 2)
+            lambda x:  np.nansum((x['gl'].iloc[1:].values + x['gl'].iloc[:-1].values) / 2)
         )
         
-        # Calculate hours of data for each day
-        daily_hours = daily_data.groupby('day').apply(
-            lambda x: (dt0/60) * len(x['gl'].dropna())
+        # number of trapezoidal areas
+        n_trapezoids = daily_data.groupby('day').apply(
+            lambda x: (len(x['gl'].dropna()) - 1)
         )
         
         # Calculate hourly average AUC for each day
-        hourly_avg = daily_auc / daily_hours
+        hourly_avg = daily_auc / n_trapezoids
         
         # Return mean of daily hourly averages
         return hourly_avg.mean()

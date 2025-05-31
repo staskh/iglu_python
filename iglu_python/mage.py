@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Union, Optional, Literal
 from .utils import check_data_columns
-from .cgm2daybyday import cgm2daybyday
+from .utils import CGMS2DayByDay
 
 def mage(data: Union[pd.DataFrame, pd.Series], 
          version: Literal['ma', 'naive'] = 'ma',
@@ -104,10 +104,10 @@ def mage(data: Union[pd.DataFrame, pd.Series],
         
         return float(mage_val) if not pd.isna(mage_val) else np.nan
     
-    def mage_ma_single(data: pd.DataFrame) -> pd.DataFrame:
+    def mage_ma_single(data: pd.DataFrame, short_ma: int, long_ma: int) -> pd.DataFrame:
         """Calculate MAGE using moving average algorithm for a single subject"""
         # Convert data to day-by-day format
-        data_ip = cgm2daybyday(data, dt0=5, inter_gap=inter_gap, tz=tz)
+        data_ip = CGMS2DayByDay(data, dt0=5, inter_gap=inter_gap, tz=tz)
         dt0 = data_ip[2]  # Time between measurements in minutes
         
         # Ensure short_ma and long_ma are appropriate
@@ -201,15 +201,11 @@ def mage(data: Union[pd.DataFrame, pd.Series],
             'time': pd.date_range(start='2020-01-01', periods=len(data), freq='5min'),
             'gl': data.values
         })
-        
-        if version == 'naive':
-            mage_val = mage_naive(data_df)
-            return pd.DataFrame({'MAGE': [mage_val]})
+        if version == 'ma':
+            result = mage_ma_single(data_df, short_ma, long_ma)
         else:
-            result = mage_ma_single(data_df)
-            if return_type == 'num':
-                return pd.DataFrame({'MAGE': [result['mage'].iloc[0]]})
-            return result
+            result = pd.DataFrame({'MAGE': [mage_naive(data_df)]})
+        return result
     
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -221,15 +217,12 @@ def mage(data: Union[pd.DataFrame, pd.Series],
         if len(subject_data.dropna(subset=['gl'])) == 0:
             continue
             
-        if version == 'naive':
-            mage_val = mage_naive(subject_data)
-            result.append({'id': subject, 'MAGE': mage_val})
+        if version == 'ma':
+            subject_result = mage_ma_single(subject_data, short_ma, long_ma)
+            mage_val = subject_result['mage'].iloc[0]
         else:
-            subject_result = mage_ma_single(subject_data)
-            if return_type == 'num':
-                result.append({'id': subject, 'MAGE': subject_result['mage'].iloc[0]})
-            else:
-                subject_result['id'] = subject
-                result.append(subject_result)
+            mage_val = mage_naive(subject_data)
+            
+        result.append({'id': subject, 'MAGE': mage_val})
     
     return pd.DataFrame(result) 

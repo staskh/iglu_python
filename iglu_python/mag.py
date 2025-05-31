@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Union, Optional
 from .utils import check_data_columns
-from .cgm2daybyday import cgm2daybyday
+from .utils import CGMS2DayByDay
 
 def mag(data: Union[pd.DataFrame, pd.Series], n: int = 60, dt0: Optional[int] = None, 
         inter_gap: int = 45, tz: str = "") -> pd.DataFrame:
@@ -62,10 +62,10 @@ def mag(data: Union[pd.DataFrame, pd.Series], n: int = 60, dt0: Optional[int] = 
        MAG
     0  66.0
     """
-    def mag_single(data: pd.DataFrame) -> float:
+    def mag_single(data: pd.DataFrame, n: int) -> float:
         """Calculate MAG for a single subject"""
         # Convert data to day-by-day format
-        data_ip = cgm2daybyday(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
+        data_ip = CGMS2DayByDay(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
         dt0_actual = data_ip[2]  # Time between measurements in minutes
         
         # Ensure n is not less than data collection frequency
@@ -100,7 +100,7 @@ def mag(data: Union[pd.DataFrame, pd.Series], n: int = 60, dt0: Optional[int] = 
             'time': pd.date_range(start='2020-01-01', periods=len(data), freq='5min'),
             'gl': data.values
         })
-        mag_val = mag_single(data_df)
+        mag_val = mag_single(data_df, n)
         return pd.DataFrame({'MAG': [mag_val]})
     
     # Handle DataFrame input
@@ -117,7 +117,7 @@ def mag(data: Union[pd.DataFrame, pd.Series], n: int = 60, dt0: Optional[int] = 
         if len(subject_data.dropna(subset=['gl'])) == 0:
             continue
             
-        mag_val = mag_single(subject_data)
+        mag_val = mag_single(subject_data, n)
         result.append({'id': subject, 'MAG': mag_val})
     
     return pd.DataFrame(result) 
