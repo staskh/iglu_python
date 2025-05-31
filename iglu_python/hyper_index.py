@@ -57,9 +57,25 @@ def hyper_index(data: Union[pd.DataFrame, pd.Series], ULTR: int = 140,
        hyper_index
     0  0.106
     """
+    # Handle Series input
+    is_vector = False
+    if isinstance(data, (list, np.ndarray)):
+        data = pd.Series(data)
+    if isinstance(data, pd.Series):
+        is_vector = True
+        data = data.dropna()
+        if len(data) == 0:
+            return pd.DataFrame({'GVP': [np.nan]})
+            
+        # Convert to DataFrame format for processing
+        data = pd.DataFrame({
+            'id': ['subject1'] * len(data),
+            'time': pd.date_range(start='2020-01-01', periods=len(data), freq='5min'),
+            'gl': data.values
+        })
+
     # Check and prepare data
     data = check_data_columns(data)
-    is_vector = getattr(data, 'is_vector', False)
     
     # Calculate hyper_index for each subject
     result = []

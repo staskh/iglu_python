@@ -1,7 +1,58 @@
 import pytest
 import pandas as pd
 import numpy as np
+import json
+import iglu_python as iglu
 from iglu_python.hyper_index import hyper_index
+
+method_name = 'hyper_index'
+
+def get_test_scenarios():
+    """Get test scenarios for hyper_index calculations"""
+    # Load expected results
+    with open('tests/expected_results.json', 'r') as f:
+        expected_results = json.load(f)
+
+    # Filter scenarios for hyper_index method
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
+
+@pytest.mark.parametrize('scenario', get_test_scenarios())
+def test_hyper_index_calculation(scenario):
+    """Test hyper_index calculation against expected results"""
+    
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
+    
+    expected_results = scenario['results']
+    expected_df = pd.DataFrame(expected_results)
+    expected_df = expected_df.reset_index(drop=True)
+
+    # Read CSV and convert time column to datetime
+    df = pd.read_csv(input_file_name, index_col=0)
+    if 'time' in df.columns:
+        df['time'] = pd.to_datetime(df['time'])
+    
+    result_df = iglu.hyper_index(df, **kwargs)
+    
+    assert result_df is not None
+    
+    # Compare DataFrames with precision to 0.001 for numeric columns
+    pd.testing.assert_frame_equal(
+        result_df.round(3),
+        expected_df.round(3),
+        check_dtype=False,  # Don't check dtypes since we might have different numeric types
+        check_index_type=True,
+        check_column_type=True,
+        check_frame_type=True,
+        check_names=True,
+        check_datetimelike_compat=True,
+        check_categorical=True,
+        check_like=True,
+        check_freq=True,
+        check_flags=True,
+        check_exact=False,
+        rtol=1e-3,
+    )
 
 def test_hyper_index_basic():
     """Test basic hyper_index calculation with known values."""
@@ -13,7 +64,7 @@ def test_hyper_index_basic():
     })
     
     # Calculate hyper_index
-    result = hyper_index(data)
+    result = iglu.hyper_index(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -36,7 +87,7 @@ def test_hyper_index_series_input():
     data = pd.Series([150, 200, 180, 130, 190, 160])
     
     # Calculate hyper_index
-    result = hyper_index(data)
+    result = iglu.hyper_index(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -56,7 +107,7 @@ def test_hyper_index_custom_parameters():
     })
     
     # Test with custom parameters
-    result = hyper_index(data, ULTR=160, a=1.5, c=25)
+    result = iglu.hyper_index(data, ULTR=160, a=1.5, c=25)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -74,7 +125,7 @@ def test_hyper_index_empty_data():
     
     # Test that function raises appropriate error
     with pytest.raises(ValueError):
-        hyper_index(data)
+        iglu.hyper_index(data)
 
 def test_hyper_index_missing_values():
     """Test hyper_index calculation with missing values."""
@@ -85,7 +136,7 @@ def test_hyper_index_missing_values():
     })
     
     # Calculate hyper_index
-    result = hyper_index(data)
+    result = iglu.hyper_index(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -105,7 +156,7 @@ def test_hyper_index_no_hyper_values():
     })
     
     # Calculate hyper_index
-    result = hyper_index(data)
+    result = iglu.hyper_index(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -125,7 +176,7 @@ def test_hyper_index_multiple_subjects():
     })
     
     # Calculate hyper_index
-    result = hyper_index(data)
+    result = iglu.hyper_index(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
