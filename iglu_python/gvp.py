@@ -51,11 +51,19 @@ def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
     
     return gvp
 
-def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
     """
     Calculate Glucose Variability Percentage (GVP).
     
     The function produces a DataFrame with GVP values for each subject.
+
+    GVP is calculated by dividing the total length of the line of the glucose trace
+    by the length of a perfectly flat trace. The formula for this is
+    \eqn{sqrt(diff^2+dt0^2)/(n*dt0)}, where diff is the change in
+    Glucose measurements from one reading to the next. NA glucose values are
+    omitted from the calculation of the GVP.
+    dt0 is the time gap between measurements and n is the number of glucose readings
+
     
     Parameters
     ----------
@@ -95,7 +103,11 @@ def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0  42.30
     """
     # Handle Series input
+    is_vector = False
+    if isinstance(data, (list, np.ndarray)):
+        data = pd.Series(data)
     if isinstance(data, pd.Series):
+        is_vector = True
         data = data.dropna()
         if len(data) == 0:
             return pd.DataFrame({'GVP': [np.nan]})
@@ -113,12 +125,13 @@ def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     def gvp_single(subj_data):
         """Calculate GVP for a single subject"""
         # Get interpolated data
-        data_ip = CGMS2DayByDay(subj_data)
-        daybyday = data_ip['gd2d'].values.flatten()
-        reading_gap = data_ip['dt0']
+        daybyday, _ , reading_gap = CGMS2DayByDay(subj_data)
+        daybyday = daybyday.flatten()
         
         # Calculate differences between consecutive readings
-        diffvec = np.diff(daybyday[~np.isnan(daybyday)])
+        diffvec = np.diff(daybyday)
+        # Exclude NA values from diffvec
+        diffvec = diffvec[~np.isnan(diffvec)]
         
         # Calculate added length (hypotenuse) and base length
         added_length = np.sqrt(reading_gap**2 + diffvec**2)
@@ -140,4 +153,7 @@ def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         gvp_value = gvp_single(subject_data)
         result.append({'id': subject, 'GVP': gvp_value})
     
-    return pd.DataFrame(result) 
+    df = pd.DataFrame(result) 
+    if is_vector:
+        df = df.drop(columns=['id'])
+    return df

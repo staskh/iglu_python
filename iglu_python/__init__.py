@@ -11,6 +11,7 @@ from .grade_eugly import grade_eugly
 from .grade_hyper import grade_hyper
 from .grade_hypo import grade_hypo
 from .gri import gri
+from .gvp import gvp
 from .in_range_percent import in_range_percent
 from .iqr_glu import iqr_glu
 from .j_index import j_index
@@ -39,6 +40,7 @@ __all__ = [
     'grade_hyper',
     'grade_hypo',
     'gri',
+    'gvp',
     'in_range_percent',
     'iqr_glu',
     'j_index',

@@ -41,5 +41,11 @@ The following issues have been identified in the R implementation:
 
 We are maintaining test compatibility while these issues are being investigated. Updates will be provided as we receive clarification from the IGLU-R development team.
 
+### Input Data Types
+Most metric functions, in addition to a standard DataFrame, support multiple input formats for glucose readings:
+- `List[float]`: Python list of glucose values
+- `np.array`: NumPy array of glucose values
+- `pd.Series`: Pandas Series of glucose values
 
+When using these sequence types (without timestamps), the functions assume a fixed 5-minute interval between measurements. For more precise analysis with variable time intervals, use the DataFrame input format with explicit timestamps.
 
