@@ -15,6 +15,7 @@ from .gvp import gvp
 from .hbgi import hbgi
 from .hyper_index import hyper_index
 from .hypo_index import hypo_index
+from .igc import igc
 from .in_range_percent import in_range_percent
 from .iqr_glu import iqr_glu
 from .j_index import j_index
@@ -47,6 +48,7 @@ __all__ = [
     'hbgi',
     'hyper_index',
     'hypo_index',
+    'igc',
     'in_range_percent',
     'iqr_glu',
     'j_index',
