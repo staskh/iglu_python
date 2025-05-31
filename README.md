@@ -20,6 +20,14 @@ During our implementation and testing process, we identified several discrepanci
 
 ## Known Implementation Differences
 
+### Timezone Handling in check_data_columns
+
+The function's timezone handling behavior requires clarification:
+- When a specific timezone is provided, the function performs a timezone **conversion** (`tz_convert`) rather than timezone **localization** (`tz_localize`)
+- This means timestamps are being transformed to the target timezone instead of being labeled with it
+- The intended behavior needs to be confirmed with the original IGLU-R authors
+- This difference in timezone handling may affect daily aggregation and analysis results
+
 ### CGMS2DayByDay Function
 The following issues have been identified in the R implementation:
 
