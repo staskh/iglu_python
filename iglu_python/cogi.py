@@ -6,7 +6,7 @@ from .in_range_percent import in_range_percent
 from .below_percent import below_percent
 from .sd_glu import sd_glu
 
-def cogi(data: Union[pd.DataFrame, pd.Series], targets: List[int] = [70, 180], 
+def cogi(data: Union[pd.DataFrame, pd.Series, list], targets: List[int] = [70, 180], 
          weights: List[float] = [0.5, 0.35, 0.15]) -> pd.DataFrame:
     """
     Calculate Coefficient of Glucose Irregularity (COGI).
@@ -19,8 +19,8 @@ def cogi(data: Union[pd.DataFrame, pd.Series], targets: List[int] = [70, 180],
     
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a list of glucose values
     targets : List[int], default=[70, 180]
         List of two glucose values for threshold. The lower value is used for determining
         time below range, and both values define the target range.
@@ -32,7 +32,7 @@ def cogi(data: Union[pd.DataFrame, pd.Series], targets: List[int] = [70, 180],
     -------
     pd.DataFrame
         DataFrame with 1 row for each subject, a column for subject id and a column 
-        for the COGI value. If a Series of glucose values is passed, then a DataFrame 
+        for the COGI value. If a list of glucose values is passed, then a DataFrame 
         without the subject id is returned.
         
     References
@@ -60,26 +60,42 @@ def cogi(data: Union[pd.DataFrame, pd.Series], targets: List[int] = [70, 180],
        COGI
     0  68.9
     """
-    def weight_features(feature: float, scale_range: List[float], weight: float = 1, 
-                       increasing: bool = False) -> float:
-        """Helper function to weight and scale features."""
-        if increasing:
-            out = min(1, max(0, (feature - min(scale_range)) / 
-                            (max(scale_range) - min(scale_range))))
+    def weight_features(feature: Union[float, pd.Series, list], scale_range: List[float], weight: float = 1, 
+                       increasing: bool = False) -> Union[float, pd.Series, list]:
+        """Helper function to weight and scale features. If feature is a Series (or a list), the output is a Series (or list) with the same number of rows (or length) as the input, with values clipped (or "inverse" clipped) so that they are between 0 and 1."""
+        if isinstance(feature, pd.Series):
+            scaled = (feature - min(scale_range)) / (max(scale_range) - min(scale_range))
+            if increasing:
+                out = scaled.clip(lower=0, upper=1)
+            else:
+                out = (1 - scaled).clip(lower=0, upper=1)
+        elif isinstance(feature, list):
+            scaled = [(x - min(scale_range)) / (max(scale_range) - min(scale_range)) for x in feature]
+            if increasing:
+                out = [min(1, max(0, x)) for x in scaled]
+            else:
+                out = [min(1, max(0, 1 - x)) for x in scaled]
         else:
-            out = min(1, max(0, (feature - max(scale_range)) / 
-                            (min(scale_range) - max(scale_range))))
+            scaled = (feature - min(scale_range)) / (max(scale_range) - min(scale_range))
+            if increasing:
+                out = min(1, max(0, scaled))
+            else:
+                out = min(1, max(0, 1 - scaled))
         return out * weight
     
     # Check and prepare data
-    data = check_data_columns(data)
-    is_vector = getattr(data, 'is_vector', False)
+    is_vector = isinstance(data, (pd.Series, list))
+    if not is_vector:
+        data = check_data_columns(data)
     targets = sorted([float(t) for t in targets])
     
     # Calculate components
-    ir = in_range_percent(data, [targets])['in_range_' + '_'.join(map(str, targets))]
-    br = below_percent(data, targets_below=[targets[0]])['below_' + str(int(targets[0]))]
-    stddev = sd_glu(data)['SD']
+    ir_df = in_range_percent(data, [targets])
+    ir = ir_df['in_range_' + '_'.join(map(str, targets))]
+    br_df = below_percent(data, targets_below=[targets[0]])
+    br = br_df['below_' + str(int(targets[0]))]
+    stddev_df = sd_glu(data)
+    stddev = stddev_df['SD']
     
     # Calculate weighted features
     weighted_features = (
@@ -90,11 +106,9 @@ def cogi(data: Union[pd.DataFrame, pd.Series], targets: List[int] = [70, 180],
     
     # Create output DataFrame
     out = pd.DataFrame({'COGI': weighted_features * 100})  # Convert to percentage
-    out['id'] = sd_glu(data)['id']
-    out = out[['id', 'COGI']]
+    if not is_vector:
+        out['id'] = stddev_df['id']
+        out = out[['id', 'COGI']]
     
-    # Remove id column if input was a Series
-    if is_vector and not out.empty:
-        out = out.drop('id', axis=1)
         
     return out 

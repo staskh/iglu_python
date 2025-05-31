@@ -4,7 +4,6 @@ import numpy as np
 import json
 import os
 import iglu_python as iglu
-from iglu_python.cogi import cogi
 
 def test_cogi_basic():
     """Test basic cogi calculation with known values."""
@@ -12,11 +11,11 @@ def test_cogi_basic():
     data = pd.DataFrame({
         'id': ['subject1', 'subject1', 'subject1', 'subject2', 'subject2', 'subject2'],
         'time': pd.date_range(start='2020-01-01', periods=6, freq='5min'),
-        'gl': [150, 200, 180, 130, 190, 160]
+        'gl': [150, 200, 180, 130, 180, 160]
     })
     
     # Calculate cogi
-    result = cogi(data)
+    result = iglu.cogi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -39,7 +38,7 @@ def test_cogi_series_input():
     data = pd.Series([150, 200, 180, 130, 190, 160])
     
     # Calculate cogi
-    result = cogi(data)
+    result = iglu.cogi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -59,7 +58,7 @@ def test_cogi_custom_parameters():
     })
     
     # Test with custom parameters
-    result = cogi(data, targets=[80, 150], weights=[0.3, 0.6, 0.1])
+    result = iglu.cogi(data, targets=[80, 150], weights=[0.3, 0.6, 0.1])
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -77,7 +76,7 @@ def test_cogi_empty_data():
     
     # Test that function raises appropriate error
     with pytest.raises(ValueError):
-        cogi(data)
+        iglu.cogi(data)
 
 def test_cogi_missing_values():
     """Test cogi calculation with missing values."""
@@ -88,7 +87,7 @@ def test_cogi_missing_values():
     })
     
     # Calculate cogi
-    result = cogi(data)
+    result = iglu.cogi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -108,7 +107,7 @@ def test_cogi_all_in_range():
     })
     
     # Calculate cogi
-    result = cogi(data)
+    result = iglu.cogi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -128,7 +127,7 @@ def test_cogi_all_below_range():
     })
     
     # Calculate cogi
-    result = cogi(data)
+    result = iglu.cogi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -148,7 +147,7 @@ def test_cogi_multiple_subjects():
     })
     
     # Calculate cogi
-    result = cogi(data)
+    result = iglu.cogi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
