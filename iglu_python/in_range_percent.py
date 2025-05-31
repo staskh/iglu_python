@@ -3,7 +3,7 @@ import numpy as np
 from typing import List, Union
 from .utils import check_data_columns
 
-def in_range_percent(data: Union[pd.DataFrame, pd.Series], 
+def in_range_percent(data: Union[pd.DataFrame, pd.Series, list], 
                     target_ranges: List[List[int]] = [[70, 180], [63, 140]]) -> pd.DataFrame:
     """
     Calculate percentage of values within target ranges.
@@ -15,8 +15,8 @@ def in_range_percent(data: Union[pd.DataFrame, pd.Series],
     
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a list of glucose values
     target_ranges : List[List[int]], default=[[70, 180], [63, 140]]
         List of target value ranges. Each range is a list of two values [min, max].
         Default ranges are:
@@ -27,7 +27,7 @@ def in_range_percent(data: Union[pd.DataFrame, pd.Series],
     -------
     pd.DataFrame
         DataFrame with 1 row for each subject, a column for subject id and a column 
-        for each target range. If a Series of glucose values is passed, then a DataFrame 
+        for each target range. If a list of glucose values is passed, then a DataFrame 
         without the subject id is returned.
         
     References
@@ -60,7 +60,7 @@ def in_range_percent(data: Union[pd.DataFrame, pd.Series],
     0             75.0
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
+    if isinstance(data, (pd.Series, list)):
         # Calculate total non-NA readings
         total_readings = len(data.dropna())
         if total_readings == 0:
@@ -75,7 +75,7 @@ def in_range_percent(data: Union[pd.DataFrame, pd.Series],
         
         return pd.DataFrame([percentages])
     
-    # Handle DataFrame input
+    
     data = check_data_columns(data)
     
     # Initialize result list

@@ -3,7 +3,7 @@ import numpy as np
 from typing import List, Union
 from .utils import check_data_columns
 
-def above_percent(data: Union[pd.DataFrame, pd.Series], targets_above: List[int] = [140, 180, 250]) -> pd.DataFrame:
+def above_percent(data: Union[pd.DataFrame, pd.Series, list], targets_above: List[int] = [140, 180, 250]) -> pd.DataFrame:
     """
     Calculate percentage of values above target thresholds.
     
@@ -14,8 +14,8 @@ def above_percent(data: Union[pd.DataFrame, pd.Series], targets_above: List[int]
     
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a list of glucose values
     targets_above : List[float], default=[140, 180, 250]
         List of glucose thresholds. Glucose values from data argument will be compared 
         to each value in the targets_above list.
@@ -53,7 +53,7 @@ def above_percent(data: Union[pd.DataFrame, pd.Series], targets_above: List[int]
     0       75.0       25.0
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
+    if isinstance(data, (pd.Series, list)):
         # Convert targets to float
         targets_above = [int(t) for t in targets_above]
         

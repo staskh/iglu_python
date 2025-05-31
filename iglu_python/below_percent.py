@@ -3,7 +3,7 @@ import numpy as np
 from typing import List, Union
 from .utils import check_data_columns
 
-def below_percent(data: Union[pd.DataFrame, pd.Series], targets_below: List[int] = [54, 70]) -> pd.DataFrame:
+def below_percent(data: Union[pd.DataFrame, pd.Series, list], targets_below: List[int] = [54, 70]) -> pd.DataFrame:
     """
     Calculate percentage of values below target thresholds.
     
@@ -14,8 +14,8 @@ def below_percent(data: Union[pd.DataFrame, pd.Series], targets_below: List[int]
     
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a list of glucose values
     targets_below : List[float], default=[54, 70]
         List of glucose thresholds. Glucose values from data argument will be compared 
         to each value in the targets_below list.
@@ -24,7 +24,7 @@ def below_percent(data: Union[pd.DataFrame, pd.Series], targets_below: List[int]
     -------
     pd.DataFrame
         DataFrame with 1 row for each subject, a column for subject id and a column 
-        for each target value. If a Series of glucose values is passed, then a DataFrame 
+        for each target value. If a Series or a list of glucose values is passed, then a DataFrame 
         without the subject id is returned.
         
     References
@@ -53,7 +53,7 @@ def below_percent(data: Union[pd.DataFrame, pd.Series], targets_below: List[int]
     0       25.0      50.0
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
+    if isinstance(data, (pd.Series, list)):
         # Convert targets to float
         targets_below = [int(t) for t in targets_below]
         

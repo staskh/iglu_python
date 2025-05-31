@@ -1,7 +1,59 @@
+import json
 import pytest
 import pandas as pd
 import numpy as np
-from iglu_python.in_range_percent import in_range_percent
+import iglu_python as iglu
+
+method_name = 'in_range_percent'
+
+def get_test_scenarios():
+    """Get test scenarios for in_range_percent calculations"""
+    # Load expected results
+    with open('tests/expected_results.json', 'r') as f:
+        expected_results = json.load(f)
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results['config']['local_tz'])
+    # Filter scenarios for in_range_percent method
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
+
+
+@pytest.mark.parametrize('scenario', get_test_scenarios())
+def test_in_range_percent_calculation(scenario):
+    """Test in_range_percent calculation against expected results"""
+    
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
+    
+    # Read CSV and convert time column to datetime
+    df = pd.read_csv(input_file_name, index_col=0)
+    if 'time' in df.columns:
+        df['time'] = pd.to_datetime(df['time'])
+    
+    expected_results = scenario['results']
+    expected_df = pd.DataFrame(expected_results)
+    expected_df = expected_df.reset_index(drop=True)
+
+    result_df = iglu.in_range_percent(df, **kwargs)
+    
+    assert result_df is not None
+    
+    # Compare DataFrames with precision to 0.001 for numeric columns
+    pd.testing.assert_frame_equal(
+        result_df,
+        expected_df,
+        check_dtype=False,  # Don't check dtypes since we might have different numeric types
+        check_index_type=True,
+        check_column_type=True,
+        check_frame_type=True,
+        check_names=True,
+        check_datetimelike_compat=True,
+        check_categorical=True,
+        check_like=True,
+        check_freq=True,
+        check_flags=True,
+        check_exact=False,
+        rtol=0.001,
+    )
 
 def test_in_range_percent_basic():
     """Test basic in_range_percent calculation with known values."""
@@ -13,7 +65,7 @@ def test_in_range_percent_basic():
     })
     
     # Calculate in_range_percent
-    result = in_range_percent(data)
+    result = iglu.in_range_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -38,7 +90,7 @@ def test_in_range_percent_series_input():
     data = pd.Series([80, 90, 100, 130, 190, 160])
     
     # Calculate in_range_percent
-    result = in_range_percent(data)
+    result = iglu.in_range_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -60,7 +112,7 @@ def test_in_range_percent_custom_targets():
     })
     
     # Test with custom targets
-    result = in_range_percent(data, target_ranges=[[75, 95], [85, 105]])
+    result = iglu.in_range_percent(data, target_ranges=[[75, 95], [85, 105]])
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -80,7 +132,7 @@ def test_in_range_percent_empty_data():
     
     # Test that function raises appropriate error
     with pytest.raises(ValueError):
-        in_range_percent(data)
+        iglu.in_range_percent(data)
 
 def test_in_range_percent_missing_values():
     """Test in_range_percent calculation with missing values."""
@@ -91,7 +143,7 @@ def test_in_range_percent_missing_values():
     })
     
     # Calculate in_range_percent
-    result = in_range_percent(data)
+    result = iglu.in_range_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -113,7 +165,7 @@ def test_in_range_percent_all_out_of_range():
     })
     
     # Calculate in_range_percent
-    result = in_range_percent(data)
+    result = iglu.in_range_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -135,7 +187,7 @@ def test_in_range_percent_all_in_range():
     })
     
     # Calculate in_range_percent
-    result = in_range_percent(data)
+    result = iglu.in_range_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -157,7 +209,7 @@ def test_in_range_percent_multiple_subjects():
     })
     
     # Calculate in_range_percent
-    result = in_range_percent(data)
+    result = iglu.in_range_percent(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
