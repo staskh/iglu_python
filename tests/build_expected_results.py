@@ -267,8 +267,11 @@ def main():
 
 
     single_subject_input_files = [
-        "tests/data/simple_test_1.csv",
-        "tests/data/example_data_1_subject.csv",
+        "tests/data/example_data_Subject_1.csv",
+        "tests/data/example_data_Subject_2.csv",
+        "tests/data/example_data_Subject_3.csv",
+        "tests/data/example_data_Subject_4.csv",
+        "tests/data/example_data_Subject_5.csv",
     ]
 
     # record config
