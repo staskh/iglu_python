@@ -27,17 +27,13 @@ def calculate_lbgi(glucose_values: pd.Series) -> float:
     # LBGI = 22.77 * mean(fbg[gl < 112.5]^2)
     # where fbg = max(0, 1.509 * (log(gl)^1.084 - 5.381))
     
-    # Filter values below threshold
-    low_glucose = glucose_values[glucose_values < 112.5]
-    
-    if len(low_glucose) == 0:
-        return 0.0
-    
-    # Calculate fbg for low glucose values
-    fbg = np.maximum(0, 1.509 * (np.log(low_glucose) ** 1.084 - 5.381))
+    # Calculate fbg values
+    fbg = 1.509 * (np.log(glucose_values)**1.084 - 5.381)
+    fbg = np.minimum(fbg, 0)  # Take min with 0
     
     # Calculate LBGI
-    lbgi = 22.77 * np.mean(fbg ** 2)
+    n = len(glucose_values)
+    lbgi = 10 * np.sum(fbg[glucose_values < 112.5]**2) / n
     
     return lbgi
 
@@ -48,6 +44,11 @@ def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     The LBGI is calculated using the formula from the R implementation:
     LBGI = 22.77 * mean(fbg[gl < 112.5]^2)
     where fbg = max(0, 1.509 * (log(gl)^1.084 - 5.381))
+
+    LBGI is calculated by \eqn{1/n * \sum (10 * fbg_i ^2)},
+    where \eqn{fbg_i = min(0, 1.509 * (log(G_i)^{1.084} - 5.381)},
+    G_i is the ith Glucose measurement for a subject, and
+    n is the total number of measurements for that subject.
     
     Parameters
     ----------

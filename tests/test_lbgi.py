@@ -1,7 +1,58 @@
 import pytest
 import pandas as pd
 import numpy as np
+import json
+import iglu_python as iglu
 from iglu_python.lbgi import lbgi
+
+method_name = 'lbgi'
+
+def get_test_scenarios():
+    """Get test scenarios for LBGI calculations"""
+    # Load expected results
+    with open('tests/expected_results.json', 'r') as f:
+        expected_results = json.load(f)
+
+    # Filter scenarios for LBGI method
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
+
+@pytest.mark.parametrize('scenario', get_test_scenarios())
+def test_lbgi_calculation(scenario):
+    """Test LBGI calculation against expected results"""
+    
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
+    
+    expected_results = scenario['results']
+    expected_df = pd.DataFrame(expected_results)
+    expected_df = expected_df.reset_index(drop=True)
+
+    # Read CSV and convert time column to datetime
+    df = pd.read_csv(input_file_name, index_col=0)
+    if 'time' in df.columns:
+        df['time'] = pd.to_datetime(df['time'])
+    
+    result_df = iglu.lbgi(df, **kwargs)
+    
+    assert result_df is not None
+    
+    # Compare DataFrames with precision to 0.001 for numeric columns
+    pd.testing.assert_frame_equal(
+        result_df.round(3),
+        expected_df.round(3),
+        check_dtype=False,  # Don't check dtypes since we might have different numeric types
+        check_index_type=True,
+        check_column_type=True,
+        check_frame_type=True,
+        check_names=True,
+        check_datetimelike_compat=True,
+        check_categorical=True,
+        check_like=True,
+        check_freq=True,
+        check_flags=True,
+        check_exact=False,
+        rtol=1e-3,
+    )
 
 def test_lbgi_basic():
     """Test basic LBGI calculation with known glucose values."""
@@ -12,7 +63,7 @@ def test_lbgi_basic():
         'gl': [70, 80, 60, 50]  # Different hypoglycemia for each subject
     })
     
-    result = lbgi(data)
+    result = iglu.lbgi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -28,7 +79,7 @@ def test_lbgi_basic():
 def test_lbgi_series_input():
     """Test LBGI calculation with Series input."""
     data = pd.Series([70, 80, 60, 50])
-    result = lbgi(data)
+    result = iglu.lbgi(data)
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
@@ -43,7 +94,7 @@ def test_lbgi_empty_data():
     """Test LBGI calculation with empty DataFrame."""
     data = pd.DataFrame(columns=['id', 'time', 'gl'])
     with pytest.raises(ValueError):
-        lbgi(data)
+        iglu.lbgi(data)
 
 def test_lbgi_missing_values():
     """Test LBGI calculation with missing values."""
@@ -53,7 +104,7 @@ def test_lbgi_missing_values():
         'gl': [70, np.nan, 60]
     })
     
-    result = lbgi(data)
+    result = iglu.lbgi(data)
     
     # Check that NaN values are handled correctly
     assert isinstance(result, pd.DataFrame)
@@ -81,7 +132,7 @@ def test_lbgi_all_below_threshold():
         'gl': [40, 50, 60]  # All values below 112.5
     })
     
-    result = lbgi(data)
+    result = iglu.lbgi(data)
     
     # Check that LBGI is positive when all values are below threshold
     assert result.loc[0, 'LBGI'] > 0
@@ -123,7 +174,7 @@ def test_lbgi_edge_cases():
         'gl': [112.4, 112.5, 112.6, 20]  # Values around and below threshold
     })
     
-    result = lbgi(data)
+    result = iglu.lbgi(data)
     
     # Check that LBGI is calculated correctly
     assert isinstance(result, pd.DataFrame)

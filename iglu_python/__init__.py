@@ -19,6 +19,7 @@ from .igc import igc
 from .in_range_percent import in_range_percent
 from .iqr_glu import iqr_glu
 from .j_index import j_index
+from .lbgi import lbgi
 from .mad_glu import mad_glu
 from .mag import mag
 from .mage import mage
@@ -27,6 +28,7 @@ from .modd import modd
 from .range_glu import range_glu
 from .roc import roc
 from .sd_glu import sd_glu
+from .sd_roc import sd_roc
 from .utils import CGMS2DayByDay, check_data_columns
 __all__ = [
     'above_percent',
@@ -52,6 +54,7 @@ __all__ = [
     'in_range_percent',
     'iqr_glu',
     'j_index',
+    'lbgi',
     'mad_glu',
     'mag',
     'mage',
@@ -60,4 +63,5 @@ __all__ = [
     'range_glu',
     'roc',
     'sd_glu',
+    'sd_roc',
 ]
