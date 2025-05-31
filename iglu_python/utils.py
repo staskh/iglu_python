@@ -84,6 +84,22 @@ def check_data_columns(data: pd.DataFrame, tz = "") -> pd.DataFrame:
     if data['gl'].isna().any():
         warnings.warn("Data contains missing glucose values")
     
+
+    # convert time to datetime
+    data['time'] = pd.to_datetime(data['time'])
+
+    # convert time to specified timezone
+    # TODO: check if this is correct (R-implementation compatibility)
+    # if tz and tz != "":
+    #     # First remove timezone information, then localize to specified timezone
+    #     data['time'] = pd.to_datetime(data['time']).dt.tz_localize(None).dt.tz_localize(tz)
+    #
+    # this is implementation compatible with R implementation
+    # but seems incorrect, as it convert time to TZ instead of localizing it to TZ
+    if tz and tz != "":
+        data['time'] = data['time'].apply(localize_naive_timestamp).dt.tz_convert(tz)
+
+
     return data
 
 def CGMS2DayByDay(
