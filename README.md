@@ -54,7 +54,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | modd | 
 | pgs |
 | quantile_glu |
-| range_glu | ❌ |
+| range_glu |  ✅ |
 | roc | ❌ |
 | sd_glu | ✅ |
 | sd_measures | ✅ |

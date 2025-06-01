@@ -58,10 +58,8 @@ def test_range_glu_calculation(scenario):
         check_flags=True,
     )
 
-def test_range_glu_output_format():
-    """Test the output format of range_glu function"""
-    
-    # Create test data with known values
+def test_range_glu_basic_format():
+    """Test basic output format and structure of range_glu function"""
     data = pd.DataFrame({
         'id': ['subject1', 'subject1', 'subject1', 'subject1', 'subject2', 'subject2'],
         'time': pd.to_datetime([
@@ -75,61 +73,66 @@ def test_range_glu_output_format():
         'gl': [150, 155, 160, 165, 140, 145]
     })
     
-    # Test with default parameters
     result = iglu.range_glu(data)
     
-    # Check DataFrame structure
     assert isinstance(result, pd.DataFrame)
     assert all(col in result.columns for col in ['id', 'range'])
-    
-    # Check values are non-negative
     assert all(result['range'] >= 0)
-    
-    # Test with Series input
+
+def test_range_glu_series_input():
+    """Test range_glu calculation with Series input"""
     series_data = pd.Series([150, 155, 160, 165, 140, 145])
-    result_series = iglu.range_glu(series_data)
-    assert isinstance(result_series, pd.DataFrame)
-    assert 'range' in result_series.columns
-    assert len(result_series) == 1
-    assert result_series['range'].iloc[0] == 25  # max(165) - min(140)
+    result = iglu.range_glu(series_data)
     
-    # Test with empty data
+    assert isinstance(result, pd.DataFrame)
+    assert 'range' in result.columns
+    assert len(result) == 1
+    assert result['range'].iloc[0] == 25  # max(165) - min(140)
+
+def test_range_glu_empty_data():
+    """Test range_glu calculation with empty DataFrame"""
     empty_data = pd.DataFrame(columns=['id', 'time', 'gl'])
-    result_empty = iglu.range_glu(empty_data)
-    assert isinstance(result_empty, pd.DataFrame)
-    assert len(result_empty) == 0
-    
-    # Test with single subject and constant glucose
+    with pytest.raises(ValueError, match="Data frame is empty"):
+        iglu.range_glu(empty_data)
+
+def test_range_glu_constant_glucose():
+    """Test range_glu calculation with constant glucose values"""
     single_subject = pd.DataFrame({
         'id': ['subject1'] * 4,
         'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00', 
                               '2020-01-01 00:10:00', '2020-01-01 00:15:00']),
         'gl': [150, 150, 150, 150]  # Constant glucose
     })
-    result_single = iglu.range_glu(single_subject)
-    assert len(result_single) == 1
-    assert result_single['range'].iloc[0] == 0  # Should be 0 for constant glucose
+
+    result = iglu.range_glu(single_subject)
     
-    # Test with missing values
+    assert len(result) == 1
+    assert result['range'].iloc[0] == 0  # Should be 0 for constant glucose
+
+def test_range_glu_missing_values():
+    """Test range_glu calculation with missing values"""
     data_with_na = pd.DataFrame({
         'id': ['subject1'] * 4,
         'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00', 
                               '2020-01-01 00:10:00', '2020-01-01 00:15:00']),
         'gl': [150, np.nan, 160, 165]
     })
-    result_na = iglu.range_glu(data_with_na)
-    assert isinstance(result_na, pd.DataFrame)
-    assert len(result_na) == 1
-    assert result_na['range'].iloc[0] == 15  # max(165) - min(150)
+    result = iglu.range_glu(data_with_na)
     
-    # Test with multiple subjects and different ranges
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 1
+    assert result['range'].iloc[0] == 15  # max(165) - min(150)
+
+def test_range_glu_multiple_subjects():
+    """Test range_glu calculation with multiple subjects"""
     multi_subject = pd.DataFrame({
         'id': ['subject1', 'subject1', 'subject2', 'subject2'],
         'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00',
                               '2020-01-01 00:00:00', '2020-01-01 00:05:00']),
         'gl': [150, 200, 130, 190]
     })
-    result_multi = iglu.range_glu(multi_subject)
-    assert len(result_multi) == 2
-    assert result_multi.loc[result_multi['id'] == 'subject1', 'range'].iloc[0] == 50  # 200 - 150
-    assert result_multi.loc[result_multi['id'] == 'subject2', 'range'].iloc[0] == 60  # 190 - 130 
+    result = iglu.range_glu(multi_subject)
+    
+    assert len(result) == 2
+    assert result.loc[result['id'] == 'subject1', 'range'].iloc[0] == 50  # 200 - 150
+    assert result.loc[result['id'] == 'subject2', 'range'].iloc[0] == 60  # 190 - 130
