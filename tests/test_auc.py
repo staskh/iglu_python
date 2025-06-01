@@ -17,10 +17,6 @@ def get_test_scenarios():
     # Filter scenarios for AUC method
     return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
-@pytest.fixture
-def test_data():
-    """Fixture that provides test data for AUC calculations"""
-    return get_test_scenarios()
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
 def test_auc_calculation(scenario):
@@ -57,7 +53,7 @@ def test_auc_calculation(scenario):
         check_freq=True,
         check_flags=True,
         check_exact=False,
-        rtol=0.01,
+        rtol=0.001,
     )
 
 def test_auc_output_format():
