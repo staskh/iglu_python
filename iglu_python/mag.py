@@ -76,17 +76,20 @@ def mag(data: Union[pd.DataFrame, pd.Series], n: int = 60, dt0: Optional[int] = 
         readings_per_interval = round(n / dt0_actual)
         
         # Get glucose values and calculate differences
-        gl_values = data_ip[0].T.flatten()  # Flatten the matrix
-        gl_values = gl_values[~np.isnan(gl_values)]  # Remove NaN values
+        gl_values = data_ip[0].flatten()  # Flatten the matrix
+        #gl_values = gl_values[~np.isnan(gl_values)]  # Remove NaN values
         
         if len(gl_values) <= 1:
             return 0.0
             
         # Calculate absolute differences between readings n minutes apart
-        diffs = np.abs(np.diff(gl_values, n=readings_per_interval))
+        lag = readings_per_interval
+        diffs = gl_values[lag:] - gl_values[:-lag]
+        diffs = np.abs(diffs)
+        diffs = diffs[~np.isnan(diffs)]
         
         # Calculate MAG: sum of absolute differences divided by total time in hours
-        total_time_hours = (len(gl_values) * dt0_actual) / 60
+        total_time_hours = ((len(diffs)) * n) / 60
         if total_time_hours == 0:
             return 0.0
             
