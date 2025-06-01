@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 import iglu_python as iglu
-from iglu_python.hyper_index import hyper_index
 
 method_name = "hyper_index"
 

@@ -1,12 +1,10 @@
 import json
-from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
 import pytest
 
 import iglu_python as iglu
-from iglu_python.grade_hypo import grade_hypo
 
 method_name = "grade_hypo"
 

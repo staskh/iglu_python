@@ -7,7 +7,7 @@ from .utils import check_data_columns
 
 
 def hbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
-    """
+    r"""
     Calculate High Blood Glucose Index (HBGI).
 
     The function produces a DataFrame with values equal to the HBGI, which is calculated
@@ -15,8 +15,8 @@ def hbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     gl is the glucose measurement, and n is the total number of measurements.
 
     TODO: Review description from R implementation documentation:
-    HBGI is calculated by \eqn{1/n * \sum (10 * fg_i ^2)},
-    where \eqn{fg_i = max(0, 1.509 * (log(G_i)^{1.084} - 5.381)},
+    HBGI is calculated by :math:`1/n * \sum (10 * fg_i ^2)`,
+    where :math:`fg_i = \max(0, 1.509 * (\log(G_i)^{1.084} - 5.381))`,
     G_i is the ith Glucose measurement for a subject, and
     n is the total number of measurements for that subject.
 

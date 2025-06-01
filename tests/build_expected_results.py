@@ -12,10 +12,8 @@ It uses the following libraries:
 """
 
 import json
-import math
 from datetime import datetime
 from importlib.metadata import version
-from typing import Tuple
 
 import iglu_py as iglu
 import numpy as np

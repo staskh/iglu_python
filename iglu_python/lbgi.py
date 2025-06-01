@@ -42,15 +42,15 @@ def calculate_lbgi(glucose_values: pd.Series) -> float:
 
 
 def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
-    """
+    r"""
     Calculate the Low Blood Glucose Index (LBGI) for each subject.
 
     The LBGI is calculated using the formula from the R implementation:
     LBGI = 22.77 * mean(fbg[gl < 112.5]^2)
     where fbg = max(0, 1.509 * (log(gl)^1.084 - 5.381))
 
-    LBGI is calculated by \eqn{1/n * \sum (10 * fbg_i ^2)},
-    where \eqn{fbg_i = min(0, 1.509 * (log(G_i)^{1.084} - 5.381)},
+    LBGI is calculated by :math:`1/n * \sum (10 * fbg_i ^2)`,
+    where :math:`fbg_i = \min(0, 1.509 * (\log(G_i)^{1.084} - 5.381))`,
     G_i is the ith Glucose measurement for a subject, and
     n is the total number of measurements for that subject.
 

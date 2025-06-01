@@ -55,14 +55,14 @@ def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
 
 
 def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
-    """
+    r"""
     Calculate Glucose Variability Percentage (GVP).
 
     The function produces a DataFrame with GVP values for each subject.
 
     GVP is calculated by dividing the total length of the line of the glucose trace
     by the length of a perfectly flat trace. The formula for this is
-    \eqn{sqrt(diff^2+dt0^2)/(n*dt0)}, where diff is the change in
+    :math:`\sqrt{\text{diff}^2+\text{dt0}^2}/(n*\text{dt0})`, where diff is the change in
     Glucose measurements from one reading to the next. NA glucose values are
     omitted from the calculation of the GVP.
     dt0 is the time gap between measurements and n is the number of glucose readings

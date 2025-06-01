@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 import iglu_python as iglu
-from iglu_python.hbgi import hbgi
 
 method_name = "hbgi"
 

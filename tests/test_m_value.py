@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 import iglu_python as iglu
-from iglu_python.m_value import m_value
 
 method_name = "m_value"
 

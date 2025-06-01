@@ -7,7 +7,7 @@ from .utils import check_data_columns
 
 
 def m_value(data: Union[pd.DataFrame, pd.Series], r: float = 90) -> pd.DataFrame:
-    """
+    r"""
     Calculate the M-value of Schlichtkrull et al. (1965) for each subject.
 
     The M-value is the mean of the logarithmic transformation of the deviation
@@ -16,8 +16,8 @@ def m_value(data: Union[pd.DataFrame, pd.Series], r: float = 90) -> pd.DataFrame
     A reference value corresponding to basal glycemia in normal
     subjects; default is 90 mg/dL.
 
-    M-value is calculated by \eqn{1000 * mean(abs(log10(gl / r)) ** 3)},
-    where gl is the glucose measurement, and r is the reference value.
+    M-value is calculated by :math:`1000 * \text{mean}(|\log_{10}(\text{gl} / r)|^3)`,
+    where gl is glucose values, r is a reference value.
 
 
     Parameters

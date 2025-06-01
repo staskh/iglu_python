@@ -1,11 +1,9 @@
-import warnings
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Union
+from datetime import datetime
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
 from .utils import CGMS2DayByDay, check_data_columns
 
@@ -292,7 +290,7 @@ def plot_ranges(data: pd.DataFrame) -> plt.Figure:
 
     # Create stacked bar
     bottom = 0
-    for (label, value), color in zip(ranges.items(), colors):
+    for (label, value), color in zip(ranges.items(), colors, strict=False):
         ax.bar(0, value, bottom=bottom, label=label, color=color)
         bottom += value
 
@@ -446,7 +444,7 @@ def plot_daily(
         axes = [axes]
 
     # Plot each day
-    for i, (ax, date) in enumerate(zip(axes, actual_dates)):
+    for i, (ax, date) in enumerate(zip(axes, actual_dates, strict=False)):
         # Plot glucose values
         ax.plot(time_points, data_ip[i], "b-", alpha=0.5)
 

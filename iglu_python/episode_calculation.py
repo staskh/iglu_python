@@ -93,7 +93,7 @@ def event_class(
     # Create event labels
     event_idx = []
     event_label = []
-    for i, (start, end) in enumerate(zip(pairs["starts_ref"], pairs["ends_ref"])):
+    for i, (start, end) in enumerate(zip(pairs["starts_ref"], pairs["ends_ref"], strict=False)):
         event_idx.extend(range(start, end + 1))
         event_label.extend([i + 1] * (end - start + 1))
 
