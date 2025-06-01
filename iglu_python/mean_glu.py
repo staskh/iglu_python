@@ -43,13 +43,13 @@ def mean_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     """
     # Handle Series input
     if isinstance(data, pd.Series):
-        return pd.DataFrame({'mean_glu': [data.mean()]})
+        return pd.DataFrame({'mean': [data.mean()]})
     
     # Handle DataFrame input
     data = check_data_columns(data)
     
     # Calculate mean glucose for each subject
     result = data.groupby('id')['gl'].mean().reset_index()
-    result.columns = ['id', 'mean_glu']
+    result.columns = ['id', 'mean']
     
     return result 

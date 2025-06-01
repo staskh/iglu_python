@@ -69,12 +69,12 @@ def test_mean_glu_basic():
     # Check output format
     assert isinstance(result, pd.DataFrame)
     assert 'id' in result.columns
-    assert 'mean_glu' in result.columns
+    assert 'mean' in result.columns
     assert len(result) == 2  # Two subjects
     
     # Check that mean values are correct
-    subject1_mean = result[result['id'] == 'subject1']['mean_glu'].iloc[0]
-    subject2_mean = result[result['id'] == 'subject2']['mean_glu'].iloc[0]
+    subject1_mean = result[result['id'] == 'subject1']['mean'].iloc[0]
+    subject2_mean = result[result['id'] == 'subject2']['mean'].iloc[0]
     assert abs(subject1_mean - 176.67) < 0.01  # 176.67 is the expected mean
     assert abs(subject2_mean - 160.0) < 0.01  # 160.0 is the expected mean
 
@@ -88,12 +88,12 @@ def test_mean_glu_series_input():
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
-    assert 'mean_glu' in result.columns
+    assert 'mean' in result.columns
     assert 'id' not in result.columns
     assert len(result) == 1
     
     # Check that mean value is correct
-    assert abs(result['mean_glu'].iloc[0] - 168.33) < 0.01  # 168.33 is the expected mean
+    assert abs(result['mean'].iloc[0] - 168.33) < 0.01  # 168.33 is the expected mean
 
 def test_mean_glu_empty_data():
     """Test mean_glu calculation with empty data."""
@@ -118,11 +118,11 @@ def test_mean_glu_missing_values():
     # Check output format
     assert isinstance(result, pd.DataFrame)
     assert 'id' in result.columns
-    assert 'mean_glu' in result.columns
+    assert 'mean' in result.columns
     assert len(result) == 1
     
     # Check that mean value is correct (should ignore NaN)
-    assert abs(result['mean_glu'].iloc[0] - 165.0) < 0.01  # 165.0 is the expected mean
+    assert abs(result['mean'].iloc[0] - 165.0) < 0.01  # 165.0 is the expected mean
 
 def test_mean_glu_constant_values():
     """Test mean_glu calculation with constant values."""
@@ -138,11 +138,11 @@ def test_mean_glu_constant_values():
     # Check output format
     assert isinstance(result, pd.DataFrame)
     assert 'id' in result.columns
-    assert 'mean_glu' in result.columns
+    assert 'mean' in result.columns
     assert len(result) == 1
     
     # Check that mean value is correct
-    assert result['mean_glu'].iloc[0] == 150.0
+    assert result['mean'].iloc[0] == 150.0
 
 def test_mean_glu_multiple_subjects():
     """Test mean_glu calculation with multiple subjects."""
@@ -158,13 +158,13 @@ def test_mean_glu_multiple_subjects():
     # Check output format
     assert isinstance(result, pd.DataFrame)
     assert 'id' in result.columns
-    assert 'mean_glu' in result.columns
+    assert 'mean' in result.columns
     assert len(result) == 3  # Three subjects
     
     # Check that mean values are correct
-    subject1_mean = result[result['id'] == 'subject1']['mean_glu'].iloc[0]
-    subject2_mean = result[result['id'] == 'subject2']['mean_glu'].iloc[0]
-    subject3_mean = result[result['id'] == 'subject3']['mean_glu'].iloc[0]
+    subject1_mean = result[result['id'] == 'subject1']['mean'].iloc[0]
+    subject2_mean = result[result['id'] == 'subject2']['mean'].iloc[0]
+    subject3_mean = result[result['id'] == 'subject3']['mean'].iloc[0]
     assert abs(subject1_mean - 175.0) < 0.01  # 175.0 is the expected mean
     assert abs(subject2_mean - 160.0) < 0.01  # 160.0 is the expected mean
     assert abs(subject3_mean - 140.0) < 0.01  # 140.0 is the expected mean 
