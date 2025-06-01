@@ -1,9 +1,11 @@
-import pandas as pd
-import numpy as np
 from typing import Union
-from .utils import check_data_columns
+
+import numpy as np
+import pandas as pd
+
 from .hyper_index import hyper_index
 from .hypo_index import hypo_index
+from .utils import check_data_columns
 
 
 def igc(

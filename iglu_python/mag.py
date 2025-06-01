@@ -1,8 +1,9 @@
-import pandas as pd
+from typing import Optional, Union
+
 import numpy as np
-from typing import Union, Optional
-from .utils import check_data_columns
-from .utils import CGMS2DayByDay
+import pandas as pd
+
+from .utils import CGMS2DayByDay, check_data_columns
 
 
 def mag(

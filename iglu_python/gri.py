@@ -1,9 +1,11 @@
-import pandas as pd
-import numpy as np
 from typing import Union
-from .utils import check_data_columns
-from .below_percent import below_percent
+
+import numpy as np
+import pandas as pd
+
 from .above_percent import above_percent
+from .below_percent import below_percent
+from .utils import check_data_columns
 
 
 def gri(data: Union[pd.DataFrame, pd.Series], tz: str = "") -> pd.DataFrame:

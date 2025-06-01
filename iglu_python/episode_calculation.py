@@ -1,7 +1,9 @@
-import pandas as pd
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
-from typing import Union, List, Tuple, Optional
-from .utils import check_data_columns, CGMS2DayByDay
+import pandas as pd
+
+from .utils import CGMS2DayByDay, check_data_columns
 
 
 def event_class(

@@ -13,15 +13,16 @@ It uses the following libraries:
 
 import json
 import math
-from typing import Tuple
-import pandas as pd
-import numpy as np
-import iglu_py as iglu
-from iglu_py import bridge
 from datetime import datetime
-from tzlocal import get_localzone
 from importlib.metadata import version
+from typing import Tuple
+
+import iglu_py as iglu
+import numpy as np
+import pandas as pd
 import rpy2.robjects as ro
+from iglu_py import bridge
+from tzlocal import get_localzone
 
 
 ####

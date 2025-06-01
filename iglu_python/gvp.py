@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
 from typing import Union
-from .utils import check_data_columns
-from .utils import CGMS2DayByDay
+
+import numpy as np
+import pandas as pd
+
+from .utils import CGMS2DayByDay, check_data_columns
 
 
 def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:

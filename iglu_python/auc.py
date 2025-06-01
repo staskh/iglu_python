@@ -1,9 +1,10 @@
-import pandas as pd
-import numpy as np
-from typing import Optional, Union
 from datetime import datetime
-from .utils import check_data_columns
-from .utils import CGMS2DayByDay
+from typing import Optional, Union
+
+import numpy as np
+import pandas as pd
+
+from .utils import CGMS2DayByDay, check_data_columns
 
 
 def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:

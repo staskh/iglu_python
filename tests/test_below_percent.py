@@ -1,10 +1,10 @@
-import pytest
-import pandas as pd
-import numpy as np
 import json
 
-import iglu_python as iglu
+import numpy as np
+import pandas as pd
+import pytest
 
+import iglu_python as iglu
 
 method_name = "below_percent"
 

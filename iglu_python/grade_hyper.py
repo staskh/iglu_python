@@ -1,8 +1,10 @@
-import pandas as pd
-import numpy as np
 from typing import Union
-from .utils import check_data_columns
+
+import numpy as np
+import pandas as pd
+
 from .grade import _grade_formula
+from .utils import check_data_columns
 
 
 def grade_hyper(data: Union[pd.DataFrame, pd.Series], upper: int = 140) -> pd.DataFrame:

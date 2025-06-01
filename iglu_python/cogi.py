@@ -1,10 +1,12 @@
-import pandas as pd
-import numpy as np
 from typing import List, Union
-from .utils import check_data_columns
-from .in_range_percent import in_range_percent
+
+import numpy as np
+import pandas as pd
+
 from .below_percent import below_percent
+from .in_range_percent import in_range_percent
 from .sd_glu import sd_glu
+from .utils import check_data_columns
 
 
 def cogi(

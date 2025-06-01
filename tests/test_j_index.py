@@ -1,8 +1,10 @@
-import pytest
-import pandas as pd
-import numpy as np
 import json
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
+import pytest
+
 import iglu_python as iglu
 
 method_name = "j_index"

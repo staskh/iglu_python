@@ -1,9 +1,11 @@
-import pytest
-import pandas as pd
-import numpy as np
 import json
+
+import numpy as np
+import pandas as pd
+import pytest
+
 import iglu_python as iglu
-from iglu_python.grade import grade, _grade_formula
+from iglu_python.grade import _grade_formula, grade
 
 method_name = "grade"
 

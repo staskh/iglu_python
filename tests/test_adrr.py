@@ -1,6 +1,8 @@
-import pytest
-import pandas as pd
 import json
+
+import pandas as pd
+import pytest
+
 import iglu_python as iglu
 
 method_name = "adrr"

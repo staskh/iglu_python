@@ -21,10 +21,10 @@ from .in_range_percent import in_range_percent
 from .iqr_glu import iqr_glu
 from .j_index import j_index
 from .lbgi import lbgi
+from .m_value import m_value
 from .mad_glu import mad_glu
 from .mag import mag
 from .mage import mage
-from .m_value import m_value
 from .mean_glu import mean_glu
 from .median_glu import median_glu
 from .modd import modd

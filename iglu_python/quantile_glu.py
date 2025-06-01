@@ -1,6 +1,8 @@
-import pandas as pd
+from typing import List, Union
+
 import numpy as np
-from typing import Union, List
+import pandas as pd
+
 from .utils import check_data_columns
 
 

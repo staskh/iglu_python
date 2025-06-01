@@ -1,7 +1,9 @@
 import json
-import pytest
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import pytest
+
 import iglu_python as iglu
 
 method_name = "sd_glu"

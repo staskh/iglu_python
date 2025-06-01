@@ -1,9 +1,11 @@
-import pytest
-import pandas as pd
-import numpy as np
 import json
 import os
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import pytest
+
 import iglu_python as iglu
 
 method_name = "ea1c"
