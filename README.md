@@ -1,8 +1,13 @@
 IGLU_PYTHON library
 
-Python version of popular IGLU (Interpreting GLUcose data) package
+# Concept
+IGLU_PYTHON is a pure Python implementation of the widely-used [IGLU](https://github.com/irinagain/iglu) (Interpreting GLUcose data) package. While the original IGLU implementation (referred to as iglu-r) is highly regarded in the research community, its R-based implementation has limited its adoption outside academic settings. The existing [IGLU-PY](https://github.com/IrinaStatsLab/iglu-py) solution provides a Python-to-R bridge but still requires a complete R installation and its dependencies.
 
-# IGLU-R Compatibility
+IGLU_PYTHON reimplements all IGLU metric functions natively in Python, eliminating the need for R while maintaining full compatibility with the original package. 
+
+This project is proudly sponsored by [Pheno.AI](https://www.pheno.ai).
+
+## IGLU-R Compatibility
 
 A significant focus of this project has been ensuring compatibility with the original R implementation of IGLU. To achieve this:
 
@@ -12,6 +17,50 @@ A significant focus of this project has been ensuring compatibility with the ori
 - Each unit test in the package compares Python implementation results against the R-generated reference values
 
 This approach ensures that the Python implementation produces results consistent with the original R package.
+
+## Unit Test Status
+Unless noted, iglu-r test is considered successful if it achives precision of 1e-3
+
+| Function | IGLU-R test compatibility | array/list/Series | TZ |
+|----------|---------------------------|-------------------|----|
+| above_percent | ✅ |
+| active_percent | ✅ |
+| adrr | ✅ |
+| auc| ❌ |
+| below_percent| ✅ |
+| cogi | ✅ |
+| conga | ✅ |
+| cv_glu | ✅ |
+| cv_measures | ✅ |
+| ea1c | ✅ |
+| gmi | ✅ |
+| grade_eugly | ✅ |
+| grade_hyper | ✅ |
+| grade_hypo | ✅ |
+| grade | ✅ |
+| gri | ✅ |
+| gvp | ✅ |
+| hbgi | ✅ |
+| hyper_index | ✅ |
+| hypo_index | ✅ |
+| igc | ✅ |
+| j_index | ✅ |
+| lbgi | ✅ |
+| mad_glu | ✅ |
+| mag |   (1e-1, need improvement)|
+| mage | ❌ |
+| mean_glu | ❌ |
+| median_glu |
+| modd | ❌ |
+| pgs |
+| quantile_glu |
+| range_glu | ❌ |
+| roc | ❌ |
+| sd_glu | ✅ |
+| sd_measures | ✅ |
+| sd_roc | ❌ |
+|||
+| CGMS2DayByDay |
 
 
 # Notes on IGLU-R Compatibility
