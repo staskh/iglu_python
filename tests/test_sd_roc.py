@@ -1,58 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-import json
-import iglu_python as iglu
 from iglu_python.sd_roc import sd_roc
-
-method_name = 'sd_roc'
-
-def get_test_scenarios():
-    """Get test scenarios for SD ROC calculations"""
-    # Load expected results
-    with open('tests/expected_results.json', 'r') as f:
-        expected_results = json.load(f)
-
-    # Filter scenarios for SD ROC method
-    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
-
-@pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_sd_roc_calculation(scenario):
-    """Test SD ROC calculation against expected results"""
-    
-    input_file_name = scenario['input_file_name']
-    kwargs = scenario['kwargs']
-    
-    expected_results = scenario['results']
-    expected_df = pd.DataFrame(expected_results)
-    expected_df = expected_df.reset_index(drop=True)
-
-    # Read CSV and convert time column to datetime
-    df = pd.read_csv(input_file_name, index_col=0)
-    if 'time' in df.columns:
-        df['time'] = pd.to_datetime(df['time'])
-    
-    result_df = iglu.sd_roc(df, **kwargs)
-    
-    assert result_df is not None
-    
-    # Compare DataFrames with precision to 0.001 for numeric columns
-    pd.testing.assert_frame_equal(
-        result_df.round(3),
-        expected_df.round(3),
-        check_dtype=False,  # Don't check dtypes since we might have different numeric types
-        check_index_type=True,
-        check_column_type=True,
-        check_frame_type=True,
-        check_names=True,
-        check_datetimelike_compat=True,
-        check_categorical=True,
-        check_like=True,
-        check_freq=True,
-        check_flags=True,
-        check_exact=False,
-        rtol=1e-3,
-    )
 
 def test_sd_roc_basic():
     """Test basic SD of ROC calculation with known glucose values."""

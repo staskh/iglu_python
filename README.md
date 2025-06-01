@@ -49,8 +49,3 @@ Most metric functions, in addition to a standard DataFrame, support multiple inp
 
 When using these sequence types (without timestamps), the functions assume a fixed 5-minute interval between measurements. For more precise analysis with variable time intervals, use the DataFrame input format with explicit timestamps.
 
-# ToDo
-- implement Series/list/array as an input for all metrics
-- test and implement tz='UTC' timezone assignment
-- clarify functionality correctness for CGMS2DayByDay
-- optimize code by NOT converting arrays/Series into DataFrames
