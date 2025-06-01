@@ -46,6 +46,9 @@ dev = [
     "pre-commit>=3.0.0",
 ]
 
+[tool.hatch.build.targets.wheel]
+include = ["iglu_python/"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
