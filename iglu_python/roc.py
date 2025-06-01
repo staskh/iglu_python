@@ -3,7 +3,7 @@ import numpy as np
 from typing import Union
 from .utils import check_data_columns, CGMS2DayByDay
 
-def roc(data: Union[pd.DataFrame, pd.Series], timelag: int = 15, dt0: int = None, 
+def roc(data: Union[pd.DataFrame, pd.Series], timelag: int = 15, dt0: int = 5, 
         inter_gap: int = 45, tz: str = "") -> pd.DataFrame:
     """
     Calculate the Rate of Change at each time point (ROC).
@@ -12,6 +12,18 @@ def roc(data: Union[pd.DataFrame, pd.Series], timelag: int = 15, dt0: int = None
     The output columns are subject id and ROC values. The output rows correspond to time points
     for each subject.
     
+    The glucose values are linearly interpolated over a time grid starting at the
+    beginning of the first day of data and ending on the last day of data. Because
+    of this, there may be many NAs at the beginning and the end of the roc values
+    for each subject. These NAs are a result of interpolated time points that do
+    not have recorded glucose values near them because recording had either not
+    yet begun for the day or had already ended.
+    
+    The ROC is calculated as \eqn{\frac{G(t_i) - G(t_{i-1})}{t_i - t_{i-1}}}
+    where \eqn{G_i} is the Glucose measurement at time \eqn{t_i} and \eqn{G_{i-1}} is the
+    Glucose measurement at time \eqn{t_{i-1}}. The time difference between the points,
+    \eqn{t_i - t_{i-1}}, is selectable and set at a default of 15 minutes.
+
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series]
@@ -66,11 +78,12 @@ def roc(data: Union[pd.DataFrame, pd.Series], timelag: int = 15, dt0: int = None
     2  12.0
     3   NaN
     """
-    def roc_single(data: pd.DataFrame, timelag: int) -> np.ndarray:
+    def roc_single(data: pd.DataFrame, timelag: int, dt0: int = None) -> np.ndarray:
         """Calculate ROC for a single subject's data"""
         data_ip = CGMS2DayByDay(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
         gl_ip_vec = data_ip[0].flatten()  # Flatten the interpolated glucose matrix
-        dt0 = data_ip[2]  # Get the time frequency
+        if dt0 is None:
+            dt0 = data_ip[2]  # Get the time frequency
         
         if timelag < dt0:
             print(f"Parameter timelag cannot be less than the data collection frequency: {dt0}, "
@@ -99,7 +112,7 @@ def roc(data: Union[pd.DataFrame, pd.Series], timelag: int = 15, dt0: int = None
         })
     
     # Handle DataFrame input
-    data = check_data_columns(data, time_check=True, tz=tz)
+    data = check_data_columns(data, tz=tz)
     
     # Calculate ROC for each subject
     result = []
@@ -122,7 +135,7 @@ def roc(data: Union[pd.DataFrame, pd.Series], timelag: int = 15, dt0: int = None
             result.append({
                 'id': subject,
                 'time': t,
-                'ROC': r
+                'roc': r
             })
     
     return pd.DataFrame(result) 
