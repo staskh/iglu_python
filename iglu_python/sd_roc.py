@@ -53,6 +53,13 @@ def sd_roc(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     The SD of ROC is calculated as the standard deviation of the rate of change
     of glucose values over time. The rate of change is calculated as the difference
     in glucose values divided by the time difference between measurements.
+
+    When calculating rate of change, missing values will be linearly interpolated
+    when close enough to non-missing values.
+
+    Calculated by taking the standard deviation of all the ROC values for each
+    individual subject. NA rate of change values are omitted from the
+    standard deviation calculation.
     
     Parameters
     ----------
@@ -63,7 +70,7 @@ def sd_roc(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     Returns
     -------
     pd.DataFrame
-        DataFrame with columns ['id', 'SD_ROC'] containing SD of ROC values for each subject
+        DataFrame with columns ['id', 'sd_roc'] containing SD of ROC values for each subject
         If input is a Series, returns DataFrame with single row and column 'SD_ROC'
         
     References
@@ -115,14 +122,14 @@ def sd_roc(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         raise ValueError("Empty DataFrame provided")
     
     # Calculate SD of ROC for each subject
-    result = pd.DataFrame(columns=['id', 'SD_ROC'])
+    result = pd.DataFrame(columns=['id', 'sd_roc'])
     
     for subject_id in data['id'].unique():
         subject_data = data[data['id'] == subject_id]
         sd_roc_value = calculate_sd_roc(subject_data['gl'], subject_data['time'])
         result = pd.concat([result, pd.DataFrame({
             'id': [subject_id],
-            'SD_ROC': [sd_roc_value]
+            'sd_roc': [sd_roc_value]
         })], ignore_index=True)
     
     return result 

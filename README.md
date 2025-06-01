@@ -21,9 +21,9 @@ This approach ensures that the Python implementation produces results consistent
 ## Unit Test Status
 Unless noted, iglu-r test is considered successful if it achives precision of 1e-3
 
-| Function | IGLU-R test compatibility | array/list/Series | TZ |
-|----------|---------------------------|-------------------|----|
-| above_percent | ✅ |
+| Function | IGLU-R test compatibility | array/list/Series | TZ | Comments |
+|----------|---------------------------|-------------------|----|----------|
+| above_percent | ✅ | |||
 | active_percent | ✅ |
 | adrr | ✅ |
 | auc| ❌ |
@@ -58,8 +58,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | roc | ❌ |
 | sd_glu | ✅ |
 | sd_measures | ✅ |
-| sd_roc | ❌ |
-|||
+| sd_roc | ❌ | || R version uses iglu.roc()|
 | CGMS2DayByDay | 🟡 |
 
 
