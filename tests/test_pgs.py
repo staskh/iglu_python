@@ -17,7 +17,7 @@ def get_test_scenarios():
     return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_pgs_calculation(scenario):
+def test_pgs_iglu_r_compatible(scenario):
     """Test PGS calculation against expected results"""
     
     input_file_name = scenario['input_file_name']

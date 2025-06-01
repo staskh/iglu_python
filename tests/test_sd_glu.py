@@ -18,7 +18,7 @@ def get_test_scenarios():
 
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_sd_glu_calculation(scenario):
+def test_sd_glu_iglu_r_compatible(scenario):
     """Test sd_glu calculation against expected results"""
     
     input_file_name = scenario['input_file_name']

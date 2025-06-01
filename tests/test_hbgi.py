@@ -17,7 +17,7 @@ def get_test_scenarios():
     return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_hbgi_calculation(scenario):
+def test_hbgi_iglu_r_compatible(scenario):
     """Test HBGI calculation against expected results"""
     
     input_file_name = scenario['input_file_name']

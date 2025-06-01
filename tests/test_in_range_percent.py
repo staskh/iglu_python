@@ -18,7 +18,7 @@ def get_test_scenarios():
 
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_in_range_percent_calculation(scenario):
+def test_in_range_percent_iglu_r_compatible(scenario):
     """Test in_range_percent calculation against expected results"""
     
     input_file_name = scenario['input_file_name']

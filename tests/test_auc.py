@@ -19,7 +19,7 @@ def get_test_scenarios():
 
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_auc_calculation(scenario):
+def test_auc_iglu_r_compatible(scenario):
     """Test AUC calculation against expected results"""
     
     input_file_name = scenario['input_file_name']

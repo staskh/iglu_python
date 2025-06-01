@@ -22,7 +22,7 @@ def test_data():
     return get_test_scenarios()
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_mag_calculation(scenario):
+def test_mag_iglu_r_compatible(scenario):
     """Test MAG calculation against expected results"""
     
     input_file_name = scenario['input_file_name']

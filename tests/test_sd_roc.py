@@ -17,7 +17,7 @@ def get_test_scenarios():
     return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_sd_roc_calculation(scenario):
+def test_sd_roc_iglu_r_compatible(scenario):
     """Test SD ROC calculation against expected results"""
     
     input_file_name = scenario['input_file_name']
@@ -71,13 +71,13 @@ def test_sd_roc_basic():
     # Check output format
     assert isinstance(result, pd.DataFrame)
     assert 'id' in result.columns
-    assert 'SD_ROC' in result.columns
+    assert 'sd_roc' in result.columns
     assert len(result) == 2
     
     # Check calculations
     # Both subjects have same absolute rate of change (4 mg/dL per minute)
-    assert abs(result.loc[result['id'] == 'subject1', 'SD_ROC'].values[0] - \
-               result.loc[result['id'] == 'subject2', 'SD_ROC'].values[0]) < 1e-10
+    assert abs(result.loc[result['id'] == 'subject1', 'sd_roc'].values[0] - \
+               result.loc[result['id'] == 'subject2', 'sd_roc'].values[0]) < 1e-10
 
 def test_sd_roc_series_input():
     """Test SD of ROC calculation with Series input."""
@@ -90,13 +90,13 @@ def test_sd_roc_series_input():
     
     # Check output format
     assert isinstance(result, pd.DataFrame)
-    assert 'SD_ROC' in result.columns
+    assert 'sd_roc' in result.columns
     assert len(result) == 1
     assert len(result.columns) == 1
     
     # Check that SD of ROC is calculated
-    assert not np.isnan(result.loc[0, 'SD_ROC'])
-    assert result.loc[0, 'SD_ROC'] > 0
+    assert not np.isnan(result.loc[0, 'sd_roc'])
+    assert result.loc[0, 'sd_roc'] > 0
 
 def test_sd_roc_series_input_no_datetime_index():
     """Test SD of ROC calculation with Series input without datetime index."""
@@ -122,7 +122,7 @@ def test_sd_roc_missing_values():
     
     # Check that NaN values are handled correctly
     assert isinstance(result, pd.DataFrame)
-    assert not np.isnan(result.loc[0, 'SD_ROC'])
+    assert not np.isnan(result.loc[0, 'sd_roc'])
     assert len(result) == 1
 
 def test_sd_roc_single_value():
@@ -137,8 +137,8 @@ def test_sd_roc_single_value():
     
     # Check that NaN is returned for single values
     assert isinstance(result, pd.DataFrame)
-    assert np.isnan(result.loc[0, 'SD_ROC'])
-    assert np.isnan(result.loc[1, 'SD_ROC'])
+    assert np.isnan(result.loc[0, 'sd_roc'])
+    assert np.isnan(result.loc[1, 'sd_roc'])
 
 def test_sd_roc_constant_values():
     """Test SD of ROC calculation with constant glucose values."""
@@ -151,7 +151,7 @@ def test_sd_roc_constant_values():
     result = sd_roc(data)
     
     # Check that SD of ROC is 0 for constant values
-    assert abs(result.loc[0, 'SD_ROC']) < 1e-10
+    assert abs(result.loc[0, 'sd_roc']) < 1e-10
 
 def test_sd_roc_multiple_subjects():
     """Test SD of ROC calculation with multiple subjects."""
@@ -195,6 +195,6 @@ def test_sd_roc_irregular_timestamps():
     
     # Check that SD of ROC is calculated correctly
     assert isinstance(result, pd.DataFrame)
-    assert not np.isnan(result.loc[0, 'SD_ROC'])
+    assert not np.isnan(result.loc[0, 'sd_roc'])
     # SD of ROC should be positive but not extremely high
-    assert 0 < result.loc[0, 'SD_ROC'] < 100 
+    assert 0 < result.loc[0, 'sd_roc'] < 100 

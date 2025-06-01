@@ -21,7 +21,7 @@ def test_data():
     return get_test_scenarios()
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_modd_calculation(scenario):
+def test_modd_iglu_r_compatible(scenario):
     """Test modd calculation against expected results"""
     
     input_file_name = scenario['input_file_name']
@@ -57,7 +57,74 @@ def test_modd_calculation(scenario):
         check_flags=True,
     )
 
-def test_modd_output_format():
+def test_modd_default_output():
+    """Test modd calculation with default parameters"""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1', 'subject1', 'subject2', 'subject2'],
+        'time': pd.to_datetime([
+            '2020-01-01 00:00:00',  # 0 min
+            '2020-01-01 00:05:00',  # 5 min
+            '2020-01-01 00:10:00',  # 10 min
+            '2020-01-01 00:15:00',  # 15 min
+            '2020-01-01 00:00:00',  # subject2
+            '2020-01-01 00:05:00'   # subject2
+        ]),
+        'gl': [150, 200, 180, 160, 140, 190]
+    })
+    
+    result = iglu.modd(data)
+    
+    assert isinstance(result, pd.DataFrame)
+    assert all(col in result.columns for col in ['id', 'MODD'])
+    assert all(result['MODD'] >= 0)
+
+def test_modd_custom_lag():
+    """Test modd calculation with custom lag value"""
+    data = pd.DataFrame({
+        'id': ['subject1', 'subject1', 'subject1', 'subject1', 'subject2', 'subject2'],
+        'time': pd.to_datetime([
+            '2020-01-01 00:00:00',  # 0 min
+            '2020-01-01 00:05:00',  # 5 min
+            '2020-01-01 00:10:00',  # 10 min
+            '2020-01-01 00:15:00',  # 15 min
+            '2020-01-01 00:00:00',  # subject2
+            '2020-01-01 00:05:00'   # subject2
+        ]),
+        'gl': [150, 200, 180, 160, 140, 190]
+    })
+    
+    result = iglu.modd(data, lag=2)
+    assert isinstance(result, pd.DataFrame)
+    assert all(col in result.columns for col in ['id', 'MODD'])
+    assert all(result['MODD'] >= 0)
+
+def test_modd_series_input():
+    """Test modd calculation with Series input"""
+    series_data = pd.Series([150, 200, 180, 160, 140, 190])
+    result = iglu.modd(series_data)
+    assert isinstance(result, pd.DataFrame)
+    assert 'MODD' in result.columns
+    assert len(result) == 1
+
+def test_modd_empty_input():
+    """Test modd calculation with empty DataFrame"""
+    empty_data = pd.DataFrame(columns=['id', 'time', 'gl'])
+    result = iglu.modd(empty_data)
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 0
+
+def test_modd_single_subject():
+    """Test modd calculation with single subject data"""
+    single_subject = pd.DataFrame({
+        'id': ['subject1'] * 4,
+        'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00', 
+                              '2020-01-01 00:10:00', '2020-01-01 00:15:00']),
+        'gl': [150, 150, 150, 150]  # Constant glucose
+    })
+    result = iglu.modd(single_subject)
+    assert isinstance(result, pd.DataFrame)
+    assert all(col in result.columns for col in ['id', 'MODD'])
+    assert len(result) == 1
     """Test the output format of modd function"""
     
     # Create test data with known values

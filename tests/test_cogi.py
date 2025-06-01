@@ -184,7 +184,7 @@ def get_cogi_test_scenarios():
     return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == 'cogi']
 
 @pytest.mark.parametrize('scenario', get_cogi_test_scenarios())
-def test_cogi_calculation(scenario):
+def test_cogi_iglu_r_compatible(scenario):
     """Test COGI calculation against expected results"""
     input_file_name = scenario['input_file_name']
     kwargs = scenario['kwargs']

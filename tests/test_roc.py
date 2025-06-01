@@ -17,7 +17,7 @@ def get_test_scenarios():
     return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
 
 @pytest.mark.parametrize('scenario', get_test_scenarios())
-def test_roc_calculation(scenario):
+def test_roc_iglu_r_compatible(scenario):
     """Test ROC calculation against expected results"""
     
     input_file_name = scenario['input_file_name']
@@ -76,18 +76,18 @@ def test_roc_default():
     
     result = iglu.roc(data)
     assert isinstance(result, pd.DataFrame)
-    assert all(col in result.columns for col in ['id', 'time', 'ROC'])
+    assert all(col in result.columns for col in ['id', 'time', 'roc'])
     assert len(result) > 0  # Should have ROC values for each time point
-    assert result['ROC'].isna().any()  # Should have some NaN values at the start
+    assert result['roc'].isna().any()  # Should have some NaN values at the start
 
 def test_roc_series():
     """Test ROC with Series input"""
     series_data = pd.Series([150, 160, 170, 180, 190, 200])
     result = iglu.roc(series_data)
     assert isinstance(result, pd.DataFrame)
-    assert all(col in result.columns for col in ['id', 'time', 'ROC'])
+    assert all(col in result.columns for col in ['id', 'time', 'roc'])
     assert len(result) > 0
-    assert result['ROC'].isna().any()
+    assert result['roc'].isna().any()
 
 def test_roc_empty():
     """Test ROC with empty data"""
@@ -110,7 +110,7 @@ def test_roc_constant_glucose():
     result = iglu.roc(data)
     assert len(result) > 0
     # After the initial NaN values, ROC should be 0 for constant glucose
-    assert np.allclose(result['ROC'].dropna(), 0, atol=1e-10)
+    assert np.allclose(result['roc'].dropna(), 0, atol=1e-10)
 
 def test_roc_missing_values():
     """Test ROC with missing values"""
@@ -123,7 +123,7 @@ def test_roc_missing_values():
     result = iglu.roc(data_with_na)
     assert isinstance(result, pd.DataFrame)
     assert len(result) > 0
-    assert result['ROC'].isna().any()
+    assert result['roc'].isna().any()
 
 def test_roc_different_timelag():
     """Test ROC with different timelag values"""
@@ -144,7 +144,7 @@ def test_roc_different_timelag():
     assert len(result_15) > 0
     assert len(result_30) > 0
     # Different timelag should give different ROC values
-    assert not np.array_equal(result_15['ROC'].dropna(), result_30['ROC'].dropna())
+    assert not np.array_equal(result_15['roc'].dropna(), result_30['roc'].dropna())
 
 def test_roc_timezone():
     """Test ROC with timezone parameter"""
