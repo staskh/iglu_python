@@ -50,7 +50,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | mag |  🟡 (1e-1 only)|
 | mage | ❌ |
 | mean_glu | ✅ |
-| median_glu |
+| median_glu | ✅ |
 | modd | ❌ |
 | pgs |
 | quantile_glu |

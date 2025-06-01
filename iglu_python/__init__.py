@@ -25,6 +25,7 @@ from .mag import mag
 from .mage import mage
 from .m_value import m_value
 from .mean_glu import mean_glu
+from .median_glu import median_glu
 from .modd import modd
 from .range_glu import range_glu
 from .roc import roc
@@ -61,6 +62,7 @@ __all__ = [
     'mage',
     'm_value',
     'mean_glu',
+    'median_glu',
     'modd',
     'range_glu',
     'roc',
