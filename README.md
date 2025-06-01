@@ -33,6 +33,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | cv_glu | ✅ |
 | cv_measures | ✅ |
 | ea1c | ✅ |
+| episode_calculation |  ❌ |
 | gmi | ✅ |
 | grade_eugly | ✅ |
 | grade_hyper | ✅ |
@@ -52,8 +53,8 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | mean_glu | ✅ |
 | median_glu | ✅ |
 | modd | ❌ |
-| pgs |
-| quantile_glu |
+| pgs |  ❌  | || depends on episode_calculation|
+| quantile_glu |  ✅ |
 | range_glu | ✅ |
 | roc | ❌ |
 | sd_glu | ✅ |

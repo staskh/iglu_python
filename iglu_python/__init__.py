@@ -6,6 +6,7 @@ from .below_percent import below_percent
 from .cogi import cogi
 from .conga import conga
 from .ea1c import ea1c
+from .episode_calculation import episode_calculation
 from .grade import grade
 from .grade_eugly import grade_eugly
 from .grade_hyper import grade_hyper
@@ -27,6 +28,8 @@ from .m_value import m_value
 from .mean_glu import mean_glu
 from .median_glu import median_glu
 from .modd import modd
+from .pgs import pgs
+from .quantile_glu import quantile_glu
 from .range_glu import range_glu
 from .roc import roc
 from .sd_glu import sd_glu
@@ -43,6 +46,7 @@ __all__ = [
     'cogi',
     'conga',
     'ea1c',
+    'episode_calculation',
     'grade',
     'grade_eugly',
     'grade_hyper',
@@ -64,6 +68,8 @@ __all__ = [
     'mean_glu',
     'median_glu',
     'modd',
+    'pgs',
+    'quantile_glu',
     'range_glu',
     'roc',
     'sd_glu',
