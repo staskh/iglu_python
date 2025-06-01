@@ -1,7 +1,58 @@
 import pytest
 import pandas as pd
 import numpy as np
+import json
+import iglu_python as iglu
 from iglu_python.mean_glu import mean_glu
+
+method_name = 'mean_glu'
+
+def get_test_scenarios():
+    """Get test scenarios for mean glucose calculations"""
+    # Load expected results
+    with open('tests/expected_results.json', 'r') as f:
+        expected_results = json.load(f)
+
+    # Filter scenarios for mean glucose method
+    return [scenario for scenario in expected_results['test_runs'] if scenario['method'] == method_name]
+
+@pytest.mark.parametrize('scenario', get_test_scenarios())
+def test_mean_glu_calculation(scenario):
+    """Test mean glucose calculation against expected results"""
+    
+    input_file_name = scenario['input_file_name']
+    kwargs = scenario['kwargs']
+    
+    expected_results = scenario['results']
+    expected_df = pd.DataFrame(expected_results)
+    expected_df = expected_df.reset_index(drop=True)
+
+    # Read CSV and convert time column to datetime
+    df = pd.read_csv(input_file_name, index_col=0)
+    if 'time' in df.columns:
+        df['time'] = pd.to_datetime(df['time'])
+    
+    result_df = iglu.mean_glu(df, **kwargs)
+    
+    assert result_df is not None
+    
+    # Compare DataFrames with precision to 0.001 for numeric columns
+    pd.testing.assert_frame_equal(
+        result_df.round(3),
+        expected_df.round(3),
+        check_dtype=False,  # Don't check dtypes since we might have different numeric types
+        check_index_type=True,
+        check_column_type=True,
+        check_frame_type=True,
+        check_names=True,
+        check_datetimelike_compat=True,
+        check_categorical=True,
+        check_like=True,
+        check_freq=True,
+        check_flags=True,
+        check_exact=False,
+        rtol=1e-3,
+    )
 
 def test_mean_glu_basic():
     """Test basic mean_glu calculation with known values."""
