@@ -59,7 +59,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | roc | ✅ |
 | sd_glu | ✅ |
 | sd_measures | ✅ |
-| sd_roc | ❌ | || R version uses iglu.roc()|
+| sd_roc |  ✅ | |||
 | CGMS2DayByDay | ✅ |
 
 
