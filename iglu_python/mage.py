@@ -26,6 +26,22 @@ def mage(
     averages to identify intervals where a peak/nadir might exist, then calculates the height from
     one peak/nadir to the next nadir/peak from the original glucose values.
 
+    If version 'ma' is selected, the function computationally emulates the manual method for calculating
+    the mean amplitude of glycemic excursions (MAGE) first suggested in 
+    "Mean Amplitude of Glycemic Excursions, a Measure of Diabetic Instability", (Service, 1970). 
+    For this version, glucose values will be interpolated over a uniform time grid prior to calculation.
+
+    'ma' is a more accurate algorithm that uses the crosses of a short and long moving average 
+    to identify intervals where a peak/nadir might exist. Then, the height from one peak/nadir 
+    to the next nadir/peak is calculated from the _original_ (not moving average) glucose values. 
+    (Note: this function internally uses CGMS2DayByDay with dt0 = 5. 
+    Thus, all CGM data is linearly interpolated to 5 minute intervals. See the MAGE vignette for more details.)
+
+    'naive' algorithm calculates MAGE by taking the mean of absolute glucose differences 
+    (between each value and the mean)  that are greater than the standard deviation. A multiplier can be added 
+    to the standard deviation using the `sd_multiplier` argument.
+
+
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series]
@@ -139,7 +155,7 @@ def mage(
                 {
                     "start": [data["time"].iloc[0]],
                     "end": [data["time"].iloc[-1]],
-                    "mage": [np.nan],
+                    "MAGE": [np.nan],
                     "plus_or_minus": [None],
                     "first_excursion": [None],
                 }
@@ -201,7 +217,7 @@ def mage(
             {
                 "start": [data["time"].iloc[0]],
                 "end": [data["time"].iloc[-1]],
-                "mage": [mage_val],
+                "MAGE": [mage_val],
                 "plus_or_minus": [plus_or_minus],
                 "first_excursion": [None],  # Not implemented in this version
             }
@@ -237,10 +253,11 @@ def mage(
 
         if version == "ma":
             subject_result = mage_ma_single(subject_data, short_ma, long_ma)
-            mage_val = subject_result["mage"].iloc[0]
+            subject_result_dict = subject_result.iloc[0].to_dict()
         else:
             mage_val = mage_naive(subject_data)
+            subject_result_dict = {"MAGE": mage_val}
 
-        result.append({"id": subject, "MAGE": mage_val})
+        result.append({"id": subject, **subject_result_dict})
 
     return pd.DataFrame(result)

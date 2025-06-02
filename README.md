@@ -49,7 +49,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | lbgi | ✅ |
 | mad_glu | ✅ |
 | mag |  🟡 (0.1 precision)|
-| mage | ❌ |
+| mage | 🟡 (0.2 precision) | || See algorithm at [MAGE](https://github.com/irinagain/iglu/blob/master/vignettes/MAGE.Rmd) |
 | mean_glu | ✅ |
 | median_glu | ✅ |
 | modd | ❌ |
@@ -60,7 +60,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | sd_glu | ✅ |
 | sd_measures | ✅ |
 | sd_roc | ❌ | || R version uses iglu.roc()|
-| CGMS2DayByDay | 🟡 |
+| CGMS2DayByDay | ✅ |
 
 
 # Notes on IGLU-R Compatibility
