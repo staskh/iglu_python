@@ -24,7 +24,7 @@ def get_test_scenarios():
 
 
 @pytest.mark.parametrize("scenario", get_test_scenarios())
-def test_episode_iglu_r_compatible(scenario):
+def test_episode_calculation_iglu_r_compatible(scenario):
     """Test episode calculation against expected results"""
 
     input_file_name = scenario["input_file_name"]
@@ -39,7 +39,7 @@ def test_episode_iglu_r_compatible(scenario):
     if "time" in df.columns:
         df["time"] = pd.to_datetime(df["time"])
 
-    result_df = iglu.episode_iglu_r_compatible(df, **kwargs)
+    result_df = iglu.episode_calculation(df, **kwargs)
 
     assert result_df is not None
 
@@ -88,7 +88,7 @@ def test_episode_calculation_default():
         }
     )
 
-    result = iglu.episode_iglu_r_compatible(data)
+    result = iglu.episode_calculation(data)
     assert isinstance(result, pd.DataFrame)
     assert all(
         col in result.columns
@@ -108,7 +108,7 @@ def test_episode_calculation_default():
 def test_episode_calculation_series():
     """Test episode calculation with Series input"""
     series_data = pd.Series([150, 155, 160, 165, 140, 145])
-    result = iglu.episode_iglu_r_compatible(series_data)
+    result = iglu.episode_calculation(series_data)
     assert isinstance(result, pd.DataFrame)
     assert all(
         col in result.columns
@@ -129,7 +129,7 @@ def test_episode_calculation_empty():
     """Test episode calculation with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.episode_iglu_r_compatible(empty_data)
+        result = iglu.episode_calculation(empty_data)
 
 
 def test_episode_calculation_constant_glucose():
@@ -148,7 +148,7 @@ def test_episode_calculation_constant_glucose():
             "gl": [150, 150, 150, 150],
         }
     )
-    result = iglu.episode_iglu_r_compatible(data)
+    result = iglu.episode_calculation(data)
     assert len(result) > 0
     # No episodes should be detected for constant glucose
     assert all(result["total_episodes"] == 0)
@@ -170,7 +170,7 @@ def test_episode_calculation_missing_values():
             "gl": [150, np.nan, 160, 165],
         }
     )
-    result = iglu.episode_iglu_r_compatible(data_with_na)
+    result = iglu.episode_calculation(data_with_na)
     assert isinstance(result, pd.DataFrame)
     assert len(result) > 0
 
@@ -196,8 +196,8 @@ def test_episode_calculation_different_thresholds():
         }
     )
 
-    result_default = iglu.episode_iglu_r_compatible(data)
-    result_custom = iglu.episode_iglu_r_compatible(
+    result_default = iglu.episode_calculation(data)
+    result_custom = iglu.episode_calculation(
         data, lv1_hypo=100, lv2_hypo=80, lv1_hyper=200, lv2_hyper=250
     )
     assert len(result_default) > 0
@@ -222,7 +222,7 @@ def test_episode_calculation_return_data():
             "gl": [150, 160, 170, 180],
         }
     )
-    result = iglu.episode_iglu_r_compatible(data, return_data=True)
+    result = iglu.episode_calculation(data, return_data=True)
     assert isinstance(result, dict)
     assert "episodes" in result
     assert "data" in result
@@ -254,7 +254,7 @@ def test_episode_calculation_extended_hypo():
             "gl": [65] * 24,  # 2 hours below lv1_hypo
         }
     )
-    result = iglu.episode_iglu_r_compatible(data)
+    result = iglu.episode_calculation(data)
     assert len(result) > 0
     # Should detect extended hypoglycemia
     extended_hypo = result[(result["type"] == "hypo") & (result["level"] == "extended")]
@@ -282,7 +282,7 @@ def test_episode_calculation_exclusive_levels():
             "gl": [60, 65, 70, 75, 50, 55, 60, 65],  # Mix of lv1 and lv2 hypo
         }
     )
-    result = iglu.episode_iglu_r_compatible(data)
+    result = iglu.episode_calculation(data)
     assert len(result) > 0
     # Should detect exclusive level 1 events
     lv1_excl = result[(result["type"] == "hypo") & (result["level"] == "lv1_excl")]

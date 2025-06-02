@@ -16,6 +16,18 @@ def event_class(
     """
     Classify and label all events in a segment.
 
+    ### algorithm description
+    # (1) apply the following to each subject (episode_single)
+    #       (a) interpolate to create equidistant grid
+    #       (b) split into contiguous segments based on gaps
+    #       (c) classify events in each segment (event_class)
+    #       (d) summarize episodes (episode_summary)
+    # (a) event_class: label events of each type for each segment
+    #       (a) must be >= duration (function input is # idx to get # minutes)
+    #       (b) ends at >= dur_length (function input is top level dur_length/dt0)
+    # (b) episode_summary: calculate summary statistics
+    #       (a) return for each type of episode: # episodes, mean duration, mean glu value
+
     Parameters
     ----------
     data : pd.DataFrame
