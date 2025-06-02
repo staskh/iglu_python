@@ -90,7 +90,7 @@ def test_quantile_glu_default():
 
     result = iglu.quantile_glu(data)
     assert isinstance(result, pd.DataFrame)
-    assert all(col in result.columns for col in ["id", 0.0, 25.0, 50.0, 75.0, 100.0])
+    assert all(col in result.columns for col in ["id", '0', '25', '50', '75', '100'])
     assert len(result) == 2  # One row per subject
 
 
@@ -128,7 +128,7 @@ def test_quantile_glu_custom_quantiles():
     )
     custom_quantiles = [0, 33, 66, 100]
     result = iglu.quantile_glu(data, quantiles=custom_quantiles)
-    assert all(col in result.columns for col in ["id"] + custom_quantiles)
+    assert all(col in result.columns for col in ["id"] + [str(q) for q in custom_quantiles])
     assert len(result) == 1
 
 
