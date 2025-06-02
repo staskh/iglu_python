@@ -56,7 +56,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | pgs |  ❌  | || depends on episode_calculation|
 | quantile_glu |  ✅ |
 | range_glu | ✅ |
-| roc | ❌ |
+| roc | ✅  (rtol=0.001,atol=0.002) |
 | sd_glu | ✅ |
 | sd_measures | ✅ |
 | sd_roc | ❌ | || R version uses iglu.roc()|
