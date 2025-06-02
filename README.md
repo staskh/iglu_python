@@ -26,7 +26,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | above_percent | ✅ | |||
 | active_percent | ✅ |
 | adrr | ✅ |
-| auc| ❌ |
+| auc| 🟡 (0.1 precision) | || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
 | below_percent| ✅ |
 | cogi | ✅ |
 | conga | ✅ |
@@ -48,7 +48,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | j_index | ✅ |
 | lbgi | ✅ |
 | mad_glu | ✅ |
-| mag |  🟡 (1e-1 only)|
+| mag |  🟡 (0.1 precision)|
 | mage | ❌ |
 | mean_glu | ✅ |
 | median_glu | ✅ |

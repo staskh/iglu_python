@@ -73,7 +73,7 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
         # Calculate AUC for each hour using trapezoidal rule (mg*min/dL)
         hourly_auc = hourly_data.groupby("hour").apply(
             lambda x: np.nansum(
-                (dt0)*(x["gl"].values + x["gl_next"].values) / 2
+                (dt0/60)*(x["gl"].values + x["gl_next"].values) / 2
             ),
             include_groups=False
         )
