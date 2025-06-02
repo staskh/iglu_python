@@ -34,7 +34,7 @@ from .range_glu import range_glu
 from .roc import roc
 from .sd_glu import sd_glu
 from .sd_roc import sd_roc
-from .utils import CGMS2DayByDay, check_data_columns
+from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df
 
 __all__ = [
     "above_percent",
@@ -48,6 +48,7 @@ __all__ = [
     "conga",
     "ea1c",
     "episode_calculation",
+    "gd2d_to_df",
     "grade",
     "grade_eugly",
     "grade_hyper",

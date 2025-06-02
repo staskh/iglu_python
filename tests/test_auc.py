@@ -115,18 +115,28 @@ def test_auc_empty_data():
 def test_auc_constant_glucose():
     """Test auc function with constant glucose values"""
     single_subject = pd.DataFrame({
-        'id': ['subject1'] * 4,
+        'id': ['subject1'] * 14,        # need 13 points to workaround R bug in CGMS2DayByDay
         'time': pd.to_datetime([
             '2020-01-01 00:00:00',
             '2020-01-01 00:05:00',
             '2020-01-01 00:10:00',
-            '2020-01-01 00:15:00'
+            '2020-01-01 00:15:00',
+            '2020-01-01 00:20:00',
+            '2020-01-01 00:25:00',
+            '2020-01-01 00:30:00',
+            '2020-01-01 00:35:00',
+            '2020-01-01 00:40:00',
+            '2020-01-01 00:45:00',
+            '2020-01-01 00:50:00',
+            '2020-01-01 00:55:00',
+            '2020-01-01 01:00:00',
+            '2020-01-01 01:05:00',
         ]),
-        'gl': [150, 150, 150, 150]  # Constant glucose
+        'gl': [100] * 14  # Constant glucose
     })
     result_single = iglu.auc(single_subject)
     assert len(result_single) == 1
-    assert result_single['hourly_auc'].iloc[0] == 150.0  # Should be equal to constant glucose
+    assert result_single['hourly_auc'].iloc[0] == 60*100.0  # Should be equal to constant glucose * 60 min
 
 
 def test_auc_missing_values():

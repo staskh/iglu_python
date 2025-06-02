@@ -87,7 +87,7 @@ def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
         warnings.warn("Data contains missing glucose values")
 
     # convert time to datetime
-    data["time"] = pd.to_datetime(data["time"])
+    data.loc[:, "time"] = pd.to_datetime(data["time"])
 
     # convert time to specified timezone
     # TODO: check if this is correct (R-implementation compatibility)
@@ -173,7 +173,7 @@ def CGMS2DayByDay(
     start_time = data["time"].min().floor("D")
     end_time = data["time"].max().ceil("D")
     time_grid = pd.date_range(
-        start=start_time + pd.Timedelta(minutes=dt0), end=end_time, freq=f"{dt0}T"
+        start=start_time + pd.Timedelta(minutes=dt0), end=end_time, freq=f"{dt0}min"
     )
     # remove last time point
     # time_grid = time_grid[:-1]
@@ -228,3 +228,21 @@ def CGMS2DayByDay(
     actual_dates = [start_time + pd.Timedelta(days=i) for i in range(n_days)]
 
     return interp_data, actual_dates, dt0
+
+def gd2d_to_df(gd2d, actual_dates, dt0):
+    """Convert gd2d (CGMS2DayByDay output) to a pandas DataFrame"""
+    df = pd.DataFrame({"time": [], "gl": []})
+
+    gl = gd2d.flatten().tolist()
+    time = []
+    for day in range(gd2d.shape[0]):
+        n = len(gd2d[day, :])
+        day_time = [pd.Timedelta(i * dt0, unit="m") + actual_dates[day] for i in range(n)]
+        time.extend(day_time)
+
+    df = pd.DataFrame({
+            "time": pd.Series(time, dtype='datetime64[ns]'),
+            "gl": pd.Series(gl, dtype='float64')
+        })
+
+    return df
