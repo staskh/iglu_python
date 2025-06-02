@@ -1,5 +1,5 @@
 import json
-
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -62,89 +62,104 @@ def test_auc_iglu_r_compatible(scenario):
     )
 
 
-def test_auc_output_format():
-    """Test the output format of auc function"""
-
-    # Create test data with known values
+def test_auc_basic_output_format():
+    """Test basic output format and structure of auc function"""
     data = pd.DataFrame(
         {
-            "id": [
-                "subject1",
-                "subject1",
-                "subject1",
-                "subject1",
-                "subject2",
-                "subject2",
-            ],
-            "time": pd.to_datetime(
-                [
-                    "2020-01-01 00:00:00",  # 0 min
-                    "2020-01-01 00:05:00",  # 5 min
-                    "2020-01-01 00:10:00",  # 10 min
-                    "2020-01-01 00:15:00",  # 15 min
-                    "2020-01-01 00:00:00",  # subject2
-                    "2020-01-01 00:05:00",  # subject2
-                ]
-            ),
-            "gl": [150, 155, 160, 165, 140, 145],
+            "id": ["subject1", "subject1", "subject1", "subject1", "subject2", "subject2", "subject2"],
+            "time": pd.to_datetime([
+                "2020-01-01 00:00:00",  # 0 min
+                "2020-01-01 00:05:00",  # 5 min
+                "2020-01-01 00:10:00",  # 10 min
+                "2020-01-01 00:15:00",  # 15 min
+                "2020-01-01 00:00:00",  # subject2
+                "2020-01-01 00:05:00",  # subject2
+                "2020-01-01 00:10:00",  # subject2
+            ]),
+            "gl": [150, 155, 160, 165, 140, 145, 150],
         }
     )
 
-    # Test with default parameters
     result = iglu.auc(data)
-
-    # Check DataFrame structure
     assert isinstance(result, pd.DataFrame)
     assert all(col in result.columns for col in ["id", "hourly_auc"])
-
-    # Check values are non-negative
     assert all(result["hourly_auc"] >= 0)
 
-    # # Test with timezone
-    # result_tz = iglu.auc(data, tz='GMT')
-    # assert isinstance(result_tz, pd.DataFrame)
 
-    # # Test with empty data
-    # empty_data = pd.DataFrame(columns=['id', 'time', 'gl'])
-    # result_empty = iglu.auc(empty_data)
-    # assert isinstance(result_empty, pd.DataFrame)
-    # assert len(result_empty) == 0
+def test_auc_timezone():
+    """Test auc function with timezone parameter"""
+    data = pd.DataFrame(
+        {
+            "id": ["subject1", "subject1", "subject1", "subject1"],
+            "time": pd.to_datetime([
+                "2020-01-01 00:00:00",
+                "2020-01-01 00:05:00",
+                "2020-01-01 00:10:00",
+                "2020-01-01 00:15:00",
+            ]),
+            "gl": [150, 155, 160, 165],
+        }
+    )
 
-    # # Test with single subject and constant glucose
-    # single_subject = pd.DataFrame({
-    #     'id': ['subject1'] * 4,
-    #     'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00',
-    #                           '2020-01-01 00:10:00', '2020-01-01 00:15:00']),
-    #     'gl': [150, 150, 150, 150]  # Constant glucose
-    # })
-    # result_single = iglu.auc(single_subject)
-    # assert len(result_single) == 1
-    # assert result_single['hourly_auc'].iloc[0] == 150.0  # Should be equal to constant glucose
+    result_tz = iglu.auc(data, tz='GMT')
+    assert isinstance(result_tz, pd.DataFrame)
 
-    # # Test with missing values
-    # data_with_na = pd.DataFrame({
-    #     'id': ['subject1'] * 4,
-    #     'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00',
-    #                           '2020-01-01 00:10:00', '2020-01-01 00:15:00']),
-    #     'gl': [150, np.nan, 160, 165]
-    # })
-    # result_na = iglu.auc(data_with_na)
-    # assert isinstance(result_na, pd.DataFrame)
-    # assert len(result_na) == 1
-    # assert not np.isnan(result_na['hourly_auc'].iloc[0])  # Should handle NA values
 
-    # # Test with multiple days
-    # multi_day = pd.DataFrame({
-    #     'id': ['subject1'] * 8,
-    #     'time': pd.to_datetime([
-    #         '2020-01-01 00:00:00', '2020-01-01 00:05:00',  # Day 1
-    #         '2020-01-01 00:10:00', '2020-01-01 00:15:00',
-    #         '2020-01-02 00:00:00', '2020-01-02 00:05:00',  # Day 2
-    #         '2020-01-02 00:10:00', '2020-01-02 00:15:00'
-    #     ]),
-    #     'gl': [150, 155, 160, 165, 140, 145, 150, 155]
-    # })
-    # result_multi = iglu.auc(multi_day)
-    # assert isinstance(result_multi, pd.DataFrame)
-    # assert len(result_multi) == 1
-    # assert not np.isnan(result_multi['hourly_auc'].iloc[0])  # Should handle multiple days
+def test_auc_empty_data():
+    """Test auc function with empty DataFrame"""
+    empty_data = pd.DataFrame(columns=['id', 'time', 'gl'])
+    with pytest.raises(ValueError):
+        iglu.auc(empty_data)
+
+
+def test_auc_constant_glucose():
+    """Test auc function with constant glucose values"""
+    single_subject = pd.DataFrame({
+        'id': ['subject1'] * 4,
+        'time': pd.to_datetime([
+            '2020-01-01 00:00:00',
+            '2020-01-01 00:05:00',
+            '2020-01-01 00:10:00',
+            '2020-01-01 00:15:00'
+        ]),
+        'gl': [150, 150, 150, 150]  # Constant glucose
+    })
+    result_single = iglu.auc(single_subject)
+    assert len(result_single) == 1
+    assert result_single['hourly_auc'].iloc[0] == 150.0  # Should be equal to constant glucose
+
+
+def test_auc_missing_values():
+    """Test auc function with missing glucose values"""
+    data_with_na = pd.DataFrame({
+        'id': ['subject1'] * 4,
+        'time': pd.to_datetime([
+            '2020-01-01 00:00:00',
+            '2020-01-01 00:05:00',
+            '2020-01-01 00:10:00',
+            '2020-01-01 00:15:00'
+        ]),
+        'gl': [150, np.nan, 160, 165]
+    })
+    result_na = iglu.auc(data_with_na)
+    assert isinstance(result_na, pd.DataFrame)
+    assert len(result_na) == 1
+    assert not np.isnan(result_na['hourly_auc'].iloc[0])  # Should handle NA values
+
+
+def test_auc_multiple_days():
+    """Test auc function with data spanning multiple days"""
+    multi_day = pd.DataFrame({
+        'id': ['subject1'] * 8,
+        'time': pd.to_datetime([
+            '2020-01-01 00:00:00', '2020-01-01 00:05:00',  # Day 1
+            '2020-01-01 00:10:00', '2020-01-01 00:15:00',
+            '2020-01-02 00:00:00', '2020-01-02 00:05:00',  # Day 2
+            '2020-01-02 00:10:00', '2020-01-02 00:15:00'
+        ]),
+        'gl': [150, 155, 160, 165, 140, 145, 150, 155]
+    })
+    result_multi = iglu.auc(multi_day)
+    assert isinstance(result_multi, pd.DataFrame)
+    assert len(result_multi) == 1
+    assert not np.isnan(result_multi['hourly_auc'].iloc[0])  # Should handle multiple days
