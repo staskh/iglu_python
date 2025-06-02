@@ -178,7 +178,7 @@ def CGMS2DayByDay(
     # remove last time point
     # time_grid = time_grid[:-1]
 
-    # find gaps in the data
+    # find gaps in the data (using original data indexes, not time grid)
     gaps = []
     for i in range(len(data) - 1):
         if (
@@ -207,7 +207,7 @@ def CGMS2DayByDay(
         gap_end_time = data["time"].iloc[gap_end_idx]
         # find the index of the gap end in the time grid
         gap_end_idx_in_time_grid = int(
-            np.floor((gap_end_time - start_time).total_seconds() / (60 * dt0))
+            np.floor(((gap_end_time - start_time).total_seconds() -1 ) / (60 * dt0)) # -1sec to indicate time before measurement
         )
         # put nan in the gap
         interp_data[gap_start_idx_in_time_grid:gap_end_idx_in_time_grid] = np.nan
