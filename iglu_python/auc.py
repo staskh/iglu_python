@@ -33,7 +33,7 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
     pd.DataFrame
         DataFrame with columns:
         - id: subject identifier
-        - hourly_auc: hourly average AUC value
+        - hourly_auc: hourly average AUC value (mg*h/dL)
 
     References
     ----------
