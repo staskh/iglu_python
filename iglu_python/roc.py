@@ -103,10 +103,11 @@ def roc(
 
         # Calculate ROC: (G(t_i) - G(t_{i-1}))/(t_i - t_{i-1})
         # First pad with NaN for the first timelag/dt0 points
+        index_lag = timelag // dt0
         out = np.concatenate(
             [
-                np.full(timelag // dt0, np.nan),
-                np.diff(gl_ip_vec, n=timelag // dt0) / timelag,
+                np.full(index_lag, np.nan),
+                (gl_ip_vec[index_lag:] - gl_ip_vec[:-index_lag]) / timelag,
             ]
         )
         return out

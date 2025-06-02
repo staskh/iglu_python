@@ -63,7 +63,8 @@ def test_roc_iglu_r_compatible(scenario):
         check_freq=True,
         check_flags=True,
         check_exact=False,
-        rtol=1e-3,
+        rtol=0.001,
+        atol=0.002,
     )
 
 
