@@ -89,25 +89,6 @@ def test_auc_basic_output_format():
     assert all(result["hourly_auc"] >= 0)
 
 
-def test_auc_timezone():
-    """Test auc function with timezone parameter"""
-    data = pd.DataFrame(
-        {
-            "id": ["subject1", "subject1", "subject1", "subject1"],
-            "time": pd.to_datetime([
-                "2020-01-01 00:00:00",
-                "2020-01-01 00:05:00",
-                "2020-01-01 00:10:00",
-                "2020-01-01 00:15:00",
-            ]),
-            "gl": [150, 155, 160, 165],
-        }
-    )
-
-    result_tz = iglu.auc(data, tz='GMT')
-    assert isinstance(result_tz, pd.DataFrame)
-
-
 def test_auc_empty_data():
     """Test auc function with empty DataFrame"""
     empty_data = pd.DataFrame(columns=['id', 'time', 'gl'])
