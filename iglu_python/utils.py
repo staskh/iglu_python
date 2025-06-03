@@ -86,8 +86,8 @@ def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
     if data["gl"].isna().any():
         warnings.warn("Data contains missing glucose values")
 
-    # convert time to datetime
-    data.loc[:, "time"] = pd.to_datetime(data["time"])
+    # # convert time to datetime
+    # data.loc[:, "time"] = pd.to_datetime(data["time"])
 
     # convert time to specified timezone
     # TODO: check if this is correct (R-implementation compatibility)
@@ -97,8 +97,10 @@ def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
     #
     # this is implementation compatible with R implementation
     # but seems incorrect, as it convert time to TZ instead of localizing it to TZ
-    if tz and tz != "":
+    if tz != "":
         data["time"] = data["time"].apply(localize_naive_timestamp).dt.tz_convert(tz)
+    else:
+        data["time"] = data["time"].apply(localize_naive_timestamp)
 
     return data
 
@@ -108,7 +110,7 @@ def CGMS2DayByDay(
     dt0: Optional[pd.Timestamp] = None,
     inter_gap: int = 45,
     tz: str = "",
-) -> Tuple[np.ndarray, list, int, list]:
+) -> Tuple[np.ndarray, list, int]:
     """
     Interpolate glucose values onto an equally spaced grid from day to day.
 
