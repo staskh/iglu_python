@@ -105,7 +105,8 @@ def my_episode_calculation(data: pd.DataFrame, **kwargs):
 def convert_timestamps_to_str(obj):
     """Convert pandas Timestamp objects to strings in a dictionary or list."""
     if isinstance(obj, pd.Timestamp):
-        return obj.strftime("%Y-%m-%d %H:%M:%S")
+        #return obj.strftime("%Y-%m-%d %H:%M:%S")
+        return obj.isoformat()
     elif isinstance(obj, dict):
         return {key: convert_timestamps_to_str(value) for key, value in obj.items()}
     elif isinstance(obj, list):
