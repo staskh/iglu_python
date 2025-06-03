@@ -24,13 +24,6 @@ def get_test_scenarios():
         if scenario["method"] == method_name
     ]
 
-
-@pytest.fixture
-def test_data():
-    """Fixture that provides test data for active_percent calculations"""
-    return get_test_scenarios()
-
-
 @pytest.mark.parametrize("scenario", get_test_scenarios())
 def test_active_percent_iglu_r_compatible(scenario):
     """Test active_percent calculation against expected results"""
@@ -38,28 +31,25 @@ def test_active_percent_iglu_r_compatible(scenario):
     input_file_name = scenario["input_file_name"]
     kwargs = scenario["kwargs"]
 
+    expected_results = scenario["results"]
+    expected_df = pd.DataFrame(expected_results)
+    expected_df = expected_df.reset_index(drop=True)
+
     # Read CSV and convert time column to datetime
     df = pd.read_csv(input_file_name, index_col=0)
     if "time" in df.columns:
         df["time"] = pd.to_datetime(df["time"])
 
+
     result_df = iglu.active_percent(df, **kwargs)
 
     assert result_df is not None
-
-    expected_results = scenario["results"]
-    expected_df = pd.DataFrame(expected_results)
-    expected_df = expected_df.reset_index(drop=True)
-    # Convert start_date and end_date to Timestamp
-    for col in ["start_date", "end_date"]:
-        if col in expected_df.columns:
-            expected_df[col] = pd.to_datetime(expected_df[col])
 
     # Convert timestamp columns to strings for comparison
     for col in ["start_date", "end_date"]:
         if col in result_df.columns:
             # drop tz information
-            result_df[col] = result_df[col].dt.tz_localize(None)
+            result_df[col] = result_df[col].apply(lambda x: x.isoformat())
 
     # Compare DataFrames with precision to 0.001 for numeric columns
     pd.testing.assert_frame_equal(
