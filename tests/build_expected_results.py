@@ -19,6 +19,7 @@ import iglu_py as iglu
 import numpy as np
 import pandas as pd
 import rpy2.robjects as ro
+import rpy2.rlike.container
 from iglu_py import bridge
 from tzlocal import get_localzone
 
@@ -79,6 +80,27 @@ def my_CGMS2DayByDay(data: pd.DataFrame, return_df=False, **kwargs):
         return df
     return result
 
+@bridge.df_conversion
+def my_episode_calculation(data: pd.DataFrame, **kwargs):
+    results = bridge.iglu_r.episode_calculation(data, **kwargs)
+
+    if isinstance(results, pd.DataFrame):
+        return results
+    
+    # here we have to handle NamedList
+    assert isinstance(results,rpy2.rlike.container.NamedList)
+
+    results_dict = {}
+
+    for i, name in enumerate(results.names()):
+        new_df = ro.conversion.rpy2py(results[i])
+        new_df = new_df.replace({np.nan: None})  # To keep JSON happy
+        new_df_dict = new_df.to_dict()
+        if name in results_dict:
+            results_dict[name].update(new_df_dict)
+        else:
+            results_dict[name] = new_df_dict
+    return results_dict
 
 def convert_timestamps_to_str(obj):
     """Convert pandas Timestamp objects to strings in a dictionary or list."""
@@ -121,14 +143,6 @@ def execute_iglu_method(iglu_method_name: str, df: pd.DataFrame, **kwargs):
     return results
 
 
-def execute_CGMS2DayByDay(iglu_method_name: str, df: pd.DataFrame, **kwargs):
-    method = getattr(iglu, iglu_method_name)
-
-    results = my_CGMS2DayByDay(df, **kwargs)
-
-    return results
-
-
 def run_scenario(scenarios: list[str], input_file_name: str):
     df = pd.read_csv(input_file_name, index_col=0)
     if "time" in df.columns:
@@ -143,9 +157,9 @@ def run_scenario(scenarios: list[str], input_file_name: str):
             "kwargs": scenario[1] if len(scenario) > 1 else {},
         }
         if scenario[0] == "CGMS2DayByDay":
-            results = execute_CGMS2DayByDay(
-                scenario[0], df, **scenario[1] if len(scenario) > 1 else {}
-            )
+            results = my_CGMS2DayByDay(df, **scenario[1] if len(scenario) > 1 else {})
+        elif scenario[0] == "episode_calculation":
+            results =my_episode_calculation(df, **scenario[1] if len(scenario) > 1 else {})
         else:
             results = execute_iglu_method(
                 scenario[0], df, **scenario[1] if len(scenario) > 1 else {}
@@ -180,18 +194,19 @@ class CustomJSONEncoder(json.JSONEncoder):
         self._seen.add(obj_id)
 
         try:
-            # Handle all NaN variations
+           
             if isinstance(
                 obj,
                 (float, np.number, np.float32, np.float64, np.float16, np.longdouble),
             ):
-                if np.isnan(obj):
+                # Handle all NaN variations
+                if pd.isna(obj) or np.isnan(obj):
                     return None
                 else:
                     return float(obj)
 
-            if isinstance(obj, (np.int32, np.int64)):
-                if np.isnan(obj):
+            if isinstance(obj, (int, np.int32, np.int64)):
+                if pd.isna(obj) or np.isnan(obj):
                     return None
                 else:
                     return int(obj)  # To keep JSON happy
@@ -250,6 +265,7 @@ def main():
         ["cv_measures"],
         ["ea1c"],
         ["episode_calculation"],
+        ["episode_calculation", {"return_data": True}],
         ["gmi"],
         ["grade"],
         ["grade_eugly"],
