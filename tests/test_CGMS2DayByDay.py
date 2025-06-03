@@ -64,8 +64,8 @@ def test_CGMS2DayByDay_iglu_r_compatible(scenario):
     assert actual_dates == expected_actual_dates
     assert dt0 == expected_dt0
 
-    result_df = _gd2d_to_df(interp_data, actual_dates, dt0)
-    expected_df = _gd2d_to_df(expected_interp_data, expected_actual_dates, expected_dt0)
+    result_df = iglu.gd2d_to_df(interp_data, actual_dates, dt0)
+    expected_df = iglu.gd2d_to_df(expected_interp_data, expected_actual_dates, expected_dt0)
 
     # Compare DataFrames with precision to 0.001 for numeric columns
     pd.testing.assert_frame_equal(
@@ -84,20 +84,6 @@ def test_CGMS2DayByDay_iglu_r_compatible(scenario):
         check_exact=False,
         rtol=0.01,
     )
-
-
-def _gd2d_to_df(gd2d, actual_dates, dt0):
-    """Convert gd2d to a pandas DataFrame"""
-    df = pd.DataFrame({"time": [], "gl": []})
-    for day in range(gd2d.shape[0]):
-        gl = gd2d[day, :].tolist()
-        n = len(gl)
-        time = [pd.Timedelta(i * dt0, unit="m") + actual_dates[day] for i in range(n)]
-
-        df = pd.concat([df, pd.DataFrame({"time": time, "gl": gl})], ignore_index=True)
-
-    return df
-
 
 @pytest.mark.skip(
     reason="It seems R implementation of CGMS2DayByDay has a bug with gaps, SKIP this test"
