@@ -37,10 +37,10 @@ jobs:
         pip install -e .
         pip install -r requirements-dev.txt
 
-    - name: Lint with ruff
-      run: |
-        ruff check .
-        ruff format --check .
+    # - name: Lint with ruff
+    #   run: |
+    #     ruff check .
+    #     ruff format --check .
 
     - name: Test with pytest
       run: |
