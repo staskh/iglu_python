@@ -9,6 +9,7 @@ from tzlocal import get_localzone
 
 local_tz = get_localzone()  # get the local timezone
 
+IGLU_R_COMPATIBLE = True
 
 def localize_naive_timestamp(timestamp: datetime) -> datetime:
     """
@@ -27,6 +28,10 @@ def set_local_tz(tz: str) -> None:
     """
     global local_tz
     local_tz = ZoneInfo(tz)
+
+def get_local_tz() :
+    global local_tz
+    return local_tz
 
 
 def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
@@ -153,10 +158,6 @@ def CGMS2DayByDay(
     # Check data format
     data = check_data_columns(data, tz)
 
-    # # Convert timezone if specified
-    # if tz and tz!= "":
-    #     data['time'] = data['time'].dt.tz_localize(tz)
-
     # Get unique subjects
     subjects = data["id"].unique()
     if len(subjects) > 1:
@@ -175,10 +176,14 @@ def CGMS2DayByDay(
     start_time = data["time"].min().floor("D")
     end_time = data["time"].max().ceil("D")
     time_grid = pd.date_range(
-        start=start_time + pd.Timedelta(minutes=dt0), end=end_time, freq=f"{dt0}min"
+        start=start_time, end=end_time, freq=f"{dt0}min"
     )
-    # remove last time point
-    # time_grid = time_grid[:-1]
+    if IGLU_R_COMPATIBLE:
+        # remove the first time point
+        time_grid = time_grid[1:]
+    else:
+        # remove the last time point
+        time_grid = time_grid[:-1]
 
     # find gaps in the data (using original data indexes, not time grid)
     gaps = []

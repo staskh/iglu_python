@@ -34,7 +34,7 @@ from .range_glu import range_glu
 from .roc import roc
 from .sd_glu import sd_glu
 from .sd_roc import sd_roc
-from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df
+from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, IGLU_R_COMPATIBLE
 
 __all__ = [
     "above_percent",
@@ -59,6 +59,7 @@ __all__ = [
     "hyper_index",
     "hypo_index",
     "igc",
+    "IGLU_R_COMPATIBLE",
     "in_range_percent",
     "iqr_glu",
     "j_index",
