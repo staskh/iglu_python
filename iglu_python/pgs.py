@@ -80,13 +80,13 @@ def pgs(
     """
     # Handle Series input
     if isinstance(data, pd.Series):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
         data = pd.DataFrame(
             {
-                "id": ["subject1"],
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
-                "gl": data,
+                "id": ["subject1"] * len(data.values),
+                "time": data.index,
+                "gl": data.values,
             }
         )
 
@@ -98,9 +98,7 @@ def pgs(
         # Calculate components
         gvp_val = gvp(subj_data)["GVP"].iloc[0]
         mean_val = mean_glu(subj_data)["mean"].iloc[0]
-        ptir_val = in_range_percent(subj_data, ranges=[(70, 180)])[
-            "in_range_70_180"
-        ].iloc[0]
+        ptir_val = in_range_percent(subj_data, target_ranges=[[70, 180]])["in_range_70_180"].iloc[0]
 
         # Calculate episode components
         eps = episode_calculation(

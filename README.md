@@ -53,7 +53,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | mean_glu | ✅ |
 | median_glu | ✅ |
 | modd | ❌ |
-| pgs |  ❌  | || depends on episode_calculation|
+| pgs |  ✅  | || |
 | quantile_glu |  ✅ |
 | range_glu | ✅ |
 | roc | ✅ |

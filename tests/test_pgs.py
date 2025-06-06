@@ -73,6 +73,7 @@ def test_pgs_default():
                 "subject1",
                 "subject2",
                 "subject2",
+                "subject2",
             ],
             "time": pd.to_datetime(
                 [
@@ -82,9 +83,10 @@ def test_pgs_default():
                     "2020-01-01 00:15:00",  # 15 min
                     "2020-01-01 00:00:00",  # subject2
                     "2020-01-01 00:05:00",  # subject2
+                    "2020-01-01 00:10:00",  # subject2
                 ]
             ),
-            "gl": [150, 155, 160, 165, 140, 145],
+            "gl": [150, 155, 160, 165, 140, 145, 150],
         }
     )
 
@@ -97,7 +99,14 @@ def test_pgs_default():
 
 def test_pgs_series():
     """Test PGS with Series input"""
-    series_data = pd.Series([150, 155, 160, 165, 140, 145])
+    series_data = pd.Series(
+        [150, 155, 160, 165, 140, 145],
+        index=pd.date_range(
+            start="2020-01-01 00:00:00",
+            periods=6,
+            freq="5min"
+        )
+    )
     result = iglu.pgs(series_data)
     assert isinstance(result, pd.DataFrame)
     assert "PGS" in result.columns
@@ -159,7 +168,7 @@ def test_pgs_different_durations():
     """Test PGS with different duration parameters"""
     data = pd.DataFrame(
         {
-            "id": ["subject1"] * 8,
+            "id": ["subject1"] * 11,
             "time": pd.to_datetime(
                 [
                     "2020-01-01 00:00:00",
@@ -170,14 +179,17 @@ def test_pgs_different_durations():
                     "2020-01-01 00:25:00",
                     "2020-01-01 00:30:00",
                     "2020-01-01 00:35:00",
+                    "2020-01-01 00:40:00",
+                    "2020-01-01 00:45:00",
+                    "2020-01-01 00:50:00",
                 ]
             ),
-            "gl": [150, 160, 170, 180, 190, 200, 210, 220],
+            "gl": [150, 160, 60, 60, 60, 180, 190, 200, 210, 220, 230],
         }
     )
 
-    result_default = iglu.pgs(data)
-    result_custom = iglu.pgs(data, dur_length=15, end_length=15)
+    result_default = iglu.pgs(data, dur_length=10, end_length=10)
+    result_custom = iglu.pgs(data, dur_length=40, end_length=40)
     assert len(result_default) == 1
     assert len(result_custom) == 1
     assert (
