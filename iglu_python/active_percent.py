@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from .utils import check_data_columns
+from .utils import check_data_columns, localize_naive_timestamp
 
 
 def active_percent(
@@ -121,7 +121,7 @@ def active_percent(
 
             # Handle consistent end date if provided
             if consistent_end_date is not None:
-                end_date = pd.to_datetime(consistent_end_date)
+                end_date = localize_naive_timestamp(pd.to_datetime(consistent_end_date))
                 start_date = end_date - pd.Timedelta(days=int(ndays))
 
                 # Filter data to the specified date range

@@ -70,10 +70,8 @@ def test_active_percent_iglu_r_compatible(scenario):
     )
 
 
-def test_active_percent_output_format():
-    """Test the output format of active_percent function"""
-
-    # Create test data with known gaps
+def test_active_percent_basic_output():
+    """Test basic output format and structure of active_percent function"""
     data = pd.DataFrame(
         {
             "id": [
@@ -98,7 +96,6 @@ def test_active_percent_output_format():
         }
     )
 
-    # Test with default parameters
     result = iglu.active_percent(data)
 
     # Check DataFrame structure
@@ -107,32 +104,78 @@ def test_active_percent_output_format():
         col in result.columns
         for col in ["id", "active_percent", "ndays", "start_date", "end_date"]
     )
-
-    # Check values are between 0 and 100
     assert all((result["active_percent"] >= 0) & (result["active_percent"] <= 100))
-
-    # Check ndays is non-negative
     assert all(result["ndays"] >= 0)
 
-    # Test with custom dt0
-    result_custom = iglu.active_percent(data, dt0=5)
-    assert isinstance(result_custom, pd.DataFrame)
+def test_active_percent_custom_dt0():
+    """Test active_percent with custom dt0 parameter"""
+    data = pd.DataFrame(
+        {
+            "id": ["subject1"] * 4,
+            "time": pd.to_datetime(
+                [
+                    "2020-01-01 00:00:00",
+                    "2020-01-01 00:05:00",
+                    "2020-01-01 00:15:00",
+                    "2020-01-01 00:20:00",
+                ]
+            ),
+            "gl": [150, np.nan, 160, 165],
+        }
+    )
 
-    # Test with consistent end date
+    result = iglu.active_percent(data, dt0=5)
+    assert isinstance(result, pd.DataFrame)
+
+def test_active_percent_consistent_end_date():
+    """Test active_percent with consistent end date"""
+    data = pd.DataFrame(
+        {
+            "id": ["subject1"] * 4,
+            "time": pd.to_datetime(
+                [
+                    "2020-01-01 00:00:00",
+                    "2020-01-01 00:05:00",
+                    "2020-01-01 00:15:00",
+                    "2020-01-01 00:20:00",
+                ]
+            ),
+            "gl": [150, np.nan, 160, 165],
+        }
+    )
+
     end_date = datetime(2020, 1, 1, 1, 0)  # 1 hour after start
-    result_consistent = iglu.active_percent(data, consistent_end_date=end_date)
-    assert all(result_consistent["end_date"] == end_date)
+    result = iglu.active_percent(data, consistent_end_date=end_date)
+    assert all(result["end_date"].dt.tz_localize(None) == pd.to_datetime(end_date).tz_localize(None))
 
-    # Test with timezone
-    result_tz = iglu.active_percent(data, tz="GMT")
-    assert isinstance(result_tz, pd.DataFrame)
+def test_active_percent_timezone():
+    """Test active_percent with timezone parameter"""
+    data = pd.DataFrame(
+        {
+            "id": ["subject1"] * 4,
+            "time": pd.to_datetime(
+                [
+                    "2020-01-01 00:00:00",
+                    "2020-01-01 00:05:00",
+                    "2020-01-01 00:15:00",
+                    "2020-01-01 00:20:00",
+                ]
+            ),
+            "gl": [150, np.nan, 160, 165],
+        }
+    )
 
-    # Test with empty data
+    result = iglu.active_percent(data, tz="GMT")
+    assert isinstance(result, pd.DataFrame)
+
+def test_active_percent_empty_data():
+    """Test active_percent with empty DataFrame"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
         iglu.active_percent(empty_data)
 
-    # Test with single subject and no gaps
+def test_active_percent_single_subject_no_gaps():
+    """Test active_percent with single subject and no gaps"""
     single_subject = pd.DataFrame(
         {
             "id": ["subject1"] * 3,
@@ -142,8 +185,7 @@ def test_active_percent_output_format():
             "gl": [150, 155, 160],
         }
     )
-    result_single = iglu.active_percent(single_subject, dt0=5)
-    assert len(result_single) == 1
-    assert (
-        result_single["active_percent"].iloc[0] == 100.0
-    )  # Should be 100% active with no gaps
+    
+    result = iglu.active_percent(single_subject, dt0=5)
+    assert len(result) == 1
+    assert result["active_percent"].iloc[0] == 100.0  # Should be 100% active with no gaps
