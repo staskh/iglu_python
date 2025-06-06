@@ -113,7 +113,7 @@ def test_grade_hypo_empty():
     """Test GRADE hypoglycemia with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.grade_hypo(empty_data)
+        iglu.grade_hypo(empty_data)
 
 
 def test_grade_hypo_constant_glucose():

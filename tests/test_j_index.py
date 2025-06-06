@@ -120,7 +120,7 @@ def test_j_index_empty_data():
     # Empty DataFrame
     data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.j_index(data)
+        iglu.j_index(data)
 
 
 def test_j_index_missing_values():

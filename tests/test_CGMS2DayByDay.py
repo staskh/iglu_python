@@ -47,7 +47,7 @@ def test_CGMS2DayByDay_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_interp_data = np.array(expected_results["gd2d"], dtype=np.float64)
     expected_interp_data = np.where(
-        expected_interp_data == None, np.nan, expected_interp_data
+        expected_interp_data is None, np.nan, expected_interp_data
     )
     expected_interp_data = expected_interp_data.astype(np.float64)
     expected_actual_dates = [pd.Timestamp(d) for d in expected_results["actual_dates"]]

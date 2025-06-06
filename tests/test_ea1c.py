@@ -118,7 +118,7 @@ def test_ea1c_empty():
     """Test eA1C with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.ea1c(empty_data)
+        iglu.ea1c(empty_data)
 
 
 def test_ea1c_constant_glucose():

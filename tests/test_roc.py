@@ -114,7 +114,7 @@ def test_roc_empty():
     """Test ROC with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.roc(empty_data)
+        iglu.roc(empty_data)
 
 
 def test_roc_constant_glucose():

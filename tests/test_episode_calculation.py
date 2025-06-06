@@ -33,7 +33,7 @@ def test_episode_calculation_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     if "data" in expected_results:
         # this is extended expected result, with two separate dataframes
-        assert kwargs["return_data"] == True
+        assert kwargs["return_data"]
         expected_episodes_df = pd.DataFrame(expected_results['episodes']).reset_index(drop=True)
         expected_data_df = pd.DataFrame(expected_results['data']).reset_index(drop=True)
     else :
@@ -46,7 +46,7 @@ def test_episode_calculation_iglu_r_compatible(scenario):
     if "time" in df.columns:
         df["time"] = pd.to_datetime(df["time"])
 
-    if "return_data" in kwargs and kwargs["return_data"] == True :
+    if "return_data" in kwargs and kwargs["return_data"]:
         result_episodes_df, result_data_df = iglu.episode_calculation(df, **kwargs)
     else:
         result_episodes_df = iglu.episode_calculation(df, **kwargs)
@@ -54,7 +54,7 @@ def test_episode_calculation_iglu_r_compatible(scenario):
     assert result_episodes_df is not None
 
     # Compare DataFrames with precision to 0.001 for numeric columns
-    if "return_data" in kwargs and kwargs["return_data"] == True :
+    if "return_data" in kwargs and kwargs["return_data"] :
         flag_columns = ['lv1_hypo', 'lv2_hypo', 'lv1_hyper', 'lv2_hyper', 'ext_hypo', 'lv1_hypo_excl', 'lv1_hyper_excl']
         for col in flag_columns:
             result_data_df[col] = result_data_df[col].astype(bool)
@@ -207,7 +207,7 @@ def test_episode_calculation_empty():
     """Test episode calculation with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.episode_calculation(empty_data)
+        iglu.episode_calculation(empty_data)
 
 
 def test_episode_calculation_constant_glucose():

@@ -113,7 +113,7 @@ def test_gri_empty():
     """Test GRI with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.gri(empty_data)
+        iglu.gri(empty_data)
 
 
 def test_gri_constant_glucose():

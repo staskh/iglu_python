@@ -107,7 +107,7 @@ def test_quantile_glu_empty():
     """Test quantile calculation with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.quantile_glu(empty_data)
+        iglu.quantile_glu(empty_data)
 
 
 def test_quantile_glu_custom_quantiles():

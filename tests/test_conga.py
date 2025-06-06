@@ -109,7 +109,7 @@ def test_conga_empty():
     """Test CONGA with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.conga(empty_data)
+        iglu.conga(empty_data)
 
 
 def test_conga_constant_glucose():

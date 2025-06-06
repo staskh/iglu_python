@@ -118,7 +118,7 @@ def test_pgs_empty():
     """Test PGS with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.pgs(empty_data)
+        iglu.pgs(empty_data)
 
 
 def test_pgs_constant_glucose():

@@ -110,7 +110,7 @@ def test_median_glu_empty():
     """Test median_glu with empty data"""
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):
-        result = iglu.median_glu(empty_data)
+        iglu.median_glu(empty_data)
 
 
 def test_median_glu_constant_glucose():

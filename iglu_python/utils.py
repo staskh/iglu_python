@@ -232,6 +232,10 @@ def CGMS2DayByDay(
     interp_data = interp_data.reshape(n_days, n_points_per_day)
 
     # Get actual dates
+    if IGLU_R_COMPATIBLE:
+        # convert start_time into naive datetime
+        start_time = start_time.tz_localize(None)
+        
     actual_dates = [start_time + pd.Timedelta(days=i) for i in range(n_days)]
 
     return interp_data, actual_dates, dt0
