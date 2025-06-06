@@ -38,7 +38,7 @@ def test_episode_calculation_iglu_r_compatible(scenario):
         expected_data_df = pd.DataFrame(expected_results['data']).reset_index(drop=True)
     else :
         expected_episodes_df = pd.DataFrame(expected_results).reset_index(drop=True)
-        expected_data_df = None      
+        expected_data_df = None
 
 
     # Read CSV and convert time column to datetime
@@ -60,7 +60,7 @@ def test_episode_calculation_iglu_r_compatible(scenario):
             result_data_df[col] = result_data_df[col].astype(bool)
             expected_data_df[col] = expected_data_df[col].astype(bool)
         result_data_df['time'] = result_data_df['time'].apply(lambda x: x.isoformat())
-        
+
         # ToDo : find why no match in lv1_hypo_excl and lv1_hyper_excl
         pd.testing.assert_frame_equal(
             result_data_df[['id', 'time', 'gl', 'segment', 'lv1_hypo', 'lv2_hypo', 'lv1_hyper', 'lv2_hyper', 'ext_hypo']],
@@ -78,7 +78,7 @@ def test_episode_calculation_iglu_r_compatible(scenario):
             check_exact=False,
             rtol=1e-3,
         )
-    
+
     result_episodes_df['total_episodes'] = result_episodes_df['total_episodes'].astype(int)
 
     # ToDo: find why lv1_excl is not equal to expected_episodes_df

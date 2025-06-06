@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns , gd2d_to_df
+from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df
 
 
 def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:

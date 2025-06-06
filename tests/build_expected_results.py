@@ -18,8 +18,8 @@ from importlib.metadata import version
 import iglu_py as iglu
 import numpy as np
 import pandas as pd
-import rpy2.robjects as ro
 import rpy2.rlike.container
+import rpy2.robjects as ro
 from iglu_py import bridge
 from tzlocal import get_localzone
 
@@ -86,7 +86,7 @@ def my_episode_calculation(data: pd.DataFrame, **kwargs):
 
     if isinstance(results, pd.DataFrame):
         return results
-    
+
     # here we have to handle NamedList
     assert isinstance(results,rpy2.rlike.container.NamedList)
 
@@ -195,7 +195,7 @@ class CustomJSONEncoder(json.JSONEncoder):
         self._seen.add(obj_id)
 
         try:
-           
+
             if isinstance(
                 obj,
                 (float, np.number, np.float32, np.float64, np.float16, np.longdouble),

@@ -3,7 +3,8 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, get_local_tz ,check_data_columns, gd2d_to_df, IGLU_R_COMPATIBLE
+from .utils import IGLU_R_COMPATIBLE, CGMS2DayByDay, check_data_columns, gd2d_to_df, get_local_tz
+
 
 def episode_calculation(
     data: Union[pd.DataFrame, pd.Series],
@@ -148,7 +149,7 @@ def episode_calculation(
     for subject_id in data['id'].unique():
         # Get data for this subject
         subject_data = data[data['id'] == subject_id].copy()
-        
+
         # Calculate episodes for this subject
         subject_summary, subject_episode_data = episode_single(
             subject_data,
@@ -165,7 +166,7 @@ def episode_calculation(
 
         subject_summary['id'] = subject_id
         subject_episode_data['id'] = subject_id
-        
+
         # Append to main dataframes
         episode_data_df = pd.concat([episode_data_df, subject_episode_data], ignore_index=True)
         episode_summary_df = pd.concat([episode_summary_df, subject_summary], ignore_index=True)
@@ -240,7 +241,7 @@ def episode_single(
         time_ip =  pd.date_range(start=day_one + pd.Timedelta(minutes=dt0), periods=ndays * 24 * 60 /dt0, freq=f"{dt0}min")
         data_ip = gd2d_tuple[0].flatten().tolist()
         new_data = pd.DataFrame({
-            "time": time_ip, 
+            "time": time_ip,
             "gl": data_ip
             })
     else:
@@ -260,15 +261,15 @@ def episode_single(
     # Step 1: Create boolean mask for NA values
     # R: na_idx = is.na(new_data$gl)
     na_idx = new_data['gl'].isna()
-    
+
     # Step 2: Run-length encoding to find consecutive runs
-    # R: segment_rle = rle(na_idx)$lengths    
+    # R: segment_rle = rle(na_idx)$lengths
     segment_rle = _rle_lengths(na_idx)
-    
+
     # Step 3: Copy data and create segment column
     # R: segment_data = new_data
     segment_data = new_data.copy()
-    
+
     # Step 4: Create segment IDs by repeating segment numbers
     # R: segment_data$segment = rep(1:length(segment_rle), segment_rle)
     segment_ids = np.repeat(
@@ -276,11 +277,11 @@ def episode_single(
         segment_rle                      # repeat counts
     )
     segment_data['segment'] = segment_ids
-    
+
     # Step 5: Remove rows with NA glucose values
     # R: segment_data = segment_data[!is.na(segment_data$gl), ]
     segment_data = segment_data[~segment_data['gl'].isna()].reset_index(drop=True)
-    
+
 
     # Classify events for each segment
     ep_per_seg = (
@@ -311,7 +312,7 @@ def episode_single(
         else:
             return group_df['lv1_hypo']
     ep_per_seg['lv1_hypo_excl'] = ep_per_seg.groupby(['segment', 'lv1_hypo']).apply(hypo_exclusion_logic).reset_index(level=[0,1], drop=True).values.flatten()
-    
+
     def hyper_exclusion_logic(group_df):
         # group_df is a DataFrame with all columns for the current group
         if (group_df['lv2_hyper'] > 0).any():
@@ -556,4 +557,3 @@ def _rle_lengths(boolean_series):
     # Group by change points and get group sizes
     groups = changes.cumsum()
     return boolean_series.groupby(groups).size().values
-    

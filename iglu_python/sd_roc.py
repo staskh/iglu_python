@@ -91,7 +91,7 @@ def sd_roc(
         # Convert Series to DataFrame format
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series input must have a datetime index")
-        
+
         data = pd.DataFrame(
             {
                 "id": ["subject1"] * len(data),
@@ -122,4 +122,4 @@ def sd_roc(
         if len(time_diffs.unique()) <= 1:  # Regular time intervals suggest Series input
             result = result.drop(columns=["id"])
 
-    return result 
+    return result

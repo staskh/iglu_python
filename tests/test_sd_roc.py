@@ -137,7 +137,7 @@ def test_sd_roc_missing_values():
         {
             "id": ["subject1"]*n_measurements ,
             "time": pd.date_range(start="2020-01-01 00:00:00", periods=n_measurements , freq="5min"),
-            "gl": [100, np.nan] * (n_measurements//2) 
+            "gl": [100, np.nan] * (n_measurements//2)
         }
     )
 
@@ -175,7 +175,7 @@ def test_sd_roc_constant_values():
         {
             "id": ["subject1"]*n_measurements ,
             "time": pd.date_range(start="2020-01-01 00:00:00", periods=n_measurements , freq="5min"),
-            "gl": [100] * (n_measurements) 
+            "gl": [100] * (n_measurements)
         }
     )
 
