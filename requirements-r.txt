@@ -1,0 +1,8 @@
+#
+# R dependencies
+# if you want to use the IGLU-R functions, you need to install the R dependencies
+# you can install them with the following command:
+# pip install -r requirements-r.txt
+#
+rpy2 >= 3.5.13
+iglu-py
