@@ -60,12 +60,16 @@ def modd(
         """Calculate MODD for a single subject"""
         # Convert data to day-by-day format
         data_ip = CGMS2DayByDay(data, tz=tz)
-        gl_by_id_ip = data_ip[1]  # Get interpolated glucose values
+        gl_by_id_ip = data_ip[0].flatten()  # Get interpolated glucose values
+        dt0 = data_ip[2]  # Get time frequency
 
         # Calculate absolute differences with specified lag
+        # lag is in days, so we need to convert to minutes and divide of dt0 frequency
+        shift = int(lag * 24 * 60 / dt0)  # Convert lag to minutes and divide by dt0
         # Shift array by lag and calculate differences
-        gl_shifted = np.roll(gl_by_id_ip, -lag, axis=0)  # Shift down by lag
-        abs_diffs = np.abs(gl_by_id_ip - gl_shifted)
+        abs_diffs = np.abs(gl_by_id_ip[shift:] - gl_by_id_ip[:-shift])
+        # Remove NaNs
+        abs_diffs = abs_diffs[~np.isnan(abs_diffs)]  # Remove NaNs
 
         # Calculate mean of absolute differences, ignoring NaN values
         modd_val = np.nanmean(abs_diffs)
@@ -74,13 +78,12 @@ def modd(
 
     # Handle Series input
     if isinstance(data, pd.Series):
-        # Convert Series to DataFrame format
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
         data_df = pd.DataFrame(
             {
-                "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
+                "id": ["subject1"] * len(data.values),
+                "time": data.index,
                 "gl": data.values,
             }
         )
