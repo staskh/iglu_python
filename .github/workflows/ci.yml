@@ -86,7 +86,7 @@ jobs:
         twine check dist/*
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist/
@@ -109,7 +109,7 @@ jobs:
 
     - name: Run safety check
       run: |
-        safety check
+        safety scan --full-report
 
     - name: Run bandit security check
       run: |
