@@ -63,6 +63,9 @@ def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
 
+    # Create a copy to avoid dtype warning
+    data = data.copy()
+
     # Check data types
     if not pd.api.types.is_numeric_dtype(data["gl"]):
         try:
@@ -91,9 +94,6 @@ def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
     if data["gl"].isna().any():
         warnings.warn("Data contains missing glucose values")
 
-    # # convert time to datetime
-    # data.loc[:, "time"] = pd.to_datetime(data["time"])
-
     # convert time to specified timezone
     # TODO: check if this is correct (R-implementation compatibility)
     # if tz and tz != "":
@@ -103,9 +103,11 @@ def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
     # this is implementation compatible with R implementation
     # but seems incorrect, as it convert time to TZ instead of localizing it to TZ
     if tz != "":
-        data["time"] = data["time"].apply(localize_naive_timestamp).dt.tz_convert(tz)
+        # Create a copy to avoid dtype warning and properly handle timezone conversion
+        data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp).dt.tz_convert(tz)
     else:
-        data["time"] = data["time"].apply(localize_naive_timestamp)
+        # Create a copy to avoid dtype warning
+        data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
 
     return data
 
