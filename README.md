@@ -52,7 +52,7 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | mage | 🟡 (0.2 precision) | || See algorithm at [MAGE](https://github.com/irinagain/iglu/blob/master/vignettes/MAGE.Rmd) |
 | mean_glu | ✅ |
 | median_glu | ✅ |
-| modd | ❌ |
+| modd | ✅ |
 | pgs |  ✅  | || |
 | quantile_glu |  ✅ |
 | range_glu | ✅ |
