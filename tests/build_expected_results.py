@@ -254,7 +254,7 @@ def main():
         ["above_percent"],
         ["above_percent", {"targets_above": [50, 100, 250]}],
         ["active_percent"],
-        ["active_percent", {"dt0": 10}],
+        ["active_percent", {"range_type": "manual"}],
         ["adrr"],
         ["auc"],
         ["below_percent"],
