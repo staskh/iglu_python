@@ -58,8 +58,10 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | range_glu | ✅ |
 | roc | ✅ |
 | sd_glu | ✅ |
-| sd_measures | ✅ |
+| sd_measures | ❌ |
 | sd_roc |  ✅ | |||
+| process_data | ❌ |
+| summary_glu | ❌ |
 | CGMS2DayByDay | ✅ |
 
 # Installation

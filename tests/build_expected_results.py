@@ -146,6 +146,7 @@ def execute_iglu_method(iglu_method_name: str, df: pd.DataFrame, **kwargs):
 
 def run_scenario(scenarios: list[str], input_file_name: str):
     df = pd.read_csv(input_file_name, index_col=0)
+    df['gl'] = df['gl'].astype(float)
     if "time" in df.columns:
         df["time"] = pd.to_datetime(df["time"])
 
@@ -296,10 +297,12 @@ def main():
         ["sd_glu"],
         ["sd_measures"],
         ["sd_roc"],
+        ["process_data", {"id": "id", "timestamp": "time", "glu": "gl"}],
+        ["summary_glu"]
     ]
 
     multi_subject_input_files = [
-        "tests/data/simple_test_1.csv",
+        "tests/data/example_data_1_subject_with_days.csv",
         "tests/data/example_data_5_subject.csv",
     ]
 
