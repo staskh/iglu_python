@@ -69,7 +69,7 @@ def test_mage_iglu_r_compatible(scenario):
         check_freq=True,
         check_flags=True,
         check_exact=False,
-        rtol=0.2,
+        rtol=0.001,
     )
 
 
