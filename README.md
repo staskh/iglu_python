@@ -48,7 +48,7 @@ Unless noted, iglu-r test is considered successful if it achieves precision of 0
 | j_index | ✅ |
 | lbgi | ✅ |
 | mad_glu | ✅ |
-| mag |  🟡 (0.1 precision)|
+| mag |  ✅ | || IMHO, Original R implementation has an error |
 | mage | 🟡 (0.2 precision) | || See algorithm at [MAGE](https://github.com/irinagain/iglu/blob/master/vignettes/MAGE.Rmd) |
 | mean_glu | ✅ |
 | median_glu | ✅ |
