@@ -287,6 +287,7 @@ def main():
         ["mad_glu"],
         ["mag"],
         ["mage"],
+        ["mage",{"version":"naive"}],
         ["mean_glu"],
         ["median_glu"],
         ["modd"],
