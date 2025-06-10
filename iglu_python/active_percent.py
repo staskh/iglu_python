@@ -37,6 +37,7 @@ def active_percent(
         Number of days to consider in the calculation.
     consistent_end_date : Optional[Union[str, datetime]], default=None
         End date to be used for every subject. If None, each subject will have their own end date.
+        Used only in range_type=='manual' mode
 
     Returns
     -------
