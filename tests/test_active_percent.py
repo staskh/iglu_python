@@ -145,7 +145,7 @@ def test_active_percent_consistent_end_date():
     )
 
     end_date = datetime(2020, 1, 1, 1, 0)  # 1 hour after start
-    result = iglu.active_percent(data, consistent_end_date=end_date)
+    result = iglu.active_percent(data, range_type='manual', consistent_end_date=end_date)
     assert all(result["end_date"].dt.tz_localize(None) == pd.to_datetime(end_date).tz_localize(None))
 
 def test_active_percent_timezone():

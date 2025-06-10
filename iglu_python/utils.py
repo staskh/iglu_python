@@ -34,7 +34,7 @@ def get_local_tz() :
     return local_tz
 
 
-def check_data_columns(data: pd.DataFrame, tz="") -> pd.DataFrame:
+def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFrame:
     """
     Check if the input DataFrame has the required columns and correct data types.
 

@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df
+from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, IGLU_R_COMPATIBLE
 
 
 def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
@@ -64,25 +64,41 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
         gd2d, actual_dates, dt0 = CGMS2DayByDay(subject_data, tz=tz)
 
         # Convert gd2d to DataFrame
-        hourly_data = gd2d_to_df(gd2d, actual_dates, dt0)
-        # Add hour column by rounding time to nearest hour
-        hourly_data['hour'] = hourly_data['time'].dt.floor('h')
+        input_data = gd2d_to_df(gd2d, actual_dates, dt0)
+        if IGLU_R_COMPATIBLE:
+            input_data['day'] = input_data['time'].dt.floor('d')
+            input_data['gl_next'] = input_data['gl'].shift(-1)
+            each_day_area = input_data.groupby("day").apply(
+                lambda x: np.nansum(
+                    (dt0/60)*(x["gl"].values + x["gl_next"].values) / 2
+                ),
+                include_groups=False
+            )
+            # calculate number of not nan trapezoids in total (number of not nan gl and gl_next)
+            n_trapezoids = (~np.isnan(input_data["gl"]) & ~np.isnan(input_data["gl_next"])).sum()
+            hours = dt0/60 * n_trapezoids
+            daily_area = each_day_area.sum()
+            hourly_avg = daily_area/hours
+            return hourly_avg
+        else:
+            # Add hour column by rounding time to nearest hour
+            input_data['hour'] = input_data['time'].dt.floor('h')
 
-        hourly_data['gl_next'] = hourly_data['gl'].shift(-1)
+            input_data['gl_next'] = input_data['gl'].shift(-1)
 
-        # Calculate AUC for each hour using trapezoidal rule (mg*min/dL)
-        hourly_auc = hourly_data.groupby("hour").apply(
-            lambda x: np.nansum(
-                (dt0/60)*(x["gl"].values + x["gl_next"].values) / 2
-            ),
-            include_groups=False
-        )
-        # 0 mean no data in this hour, replace with nan
-        hourly_auc = hourly_auc.replace(0, np.nan)
+            # Calculate AUC for each hour using trapezoidal rule (mg*min/dL)
+            hourly_auc = input_data.groupby("hour").apply(
+                lambda x: np.nansum(
+                    (dt0/60)*(x["gl"].values + x["gl_next"].values) / 2
+                ),
+                include_groups=False
+            )
+            # 0 mean no data in this hour, replace with nan
+            hourly_auc = hourly_auc.replace(0, np.nan)
 
-        hourly_avg = hourly_auc.mean(skipna=True)
-        # Return mean of daily hourly averages
-        return hourly_avg
+            hourly_avg = hourly_auc.mean(skipna=True)
+            # Return mean of daily hourly averages
+            return hourly_avg
 
     # Process each subject
     result = []

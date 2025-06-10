@@ -3,7 +3,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns
+from .utils import CGMS2DayByDay, check_data_columns, IGLU_R_COMPATIBLE
 
 
 def mag(
@@ -92,16 +92,31 @@ def mag(
 
         # Calculate absolute differences between readings n minutes apart
         lag = readings_per_interval
-        diffs = gl_values[lag:] - gl_values[:-lag]
-        diffs = np.abs(diffs)
-        diffs = diffs[~np.isnan(diffs)]
 
-        # Calculate MAG: sum of absolute differences divided by total time in hours
-        total_time_hours = ((len(diffs)) * n) / 60
-        if total_time_hours == 0:
-            return 0.0
+        if IGLU_R_COMPATIBLE:
+            idx = np.arange(0,len(gl_values),lag)
+            gl_values_idx = gl_values[idx]
+            diffs = gl_values_idx[1:] - gl_values_idx[:-1]
+            diffs = np.abs(diffs)
+            diffs = diffs[~np.isnan(diffs)]
+            # to be IGLU-R test compatible, imho they made error.
+            # has to be total_time_hours = ((len(diffs)) * n) / 60   
+            total_time_hours = ((len(gl_values_idx[~np.isnan(gl_values_idx)])) * n) / 60
+            if total_time_hours == 0:
+                return 0.0
+            mag = float(np.sum(diffs) / total_time_hours)
+        else:
+            diffs = gl_values[lag:] - gl_values[:-lag]
+            diffs = np.abs(diffs)
+            diffs = diffs[~np.isnan(diffs)]
 
-        return float(np.sum(diffs) / total_time_hours)
+            # Calculate MAG: sum of absolute differences divided by total time in hours
+            total_time_hours = ((len(diffs)) * n) / 60   
+            if total_time_hours == 0:
+                return 0.0
+            mag = float(np.sum(diffs) / total_time_hours)
+
+        return mag
 
     # Handle Series input
     if isinstance(data, pd.Series):

@@ -19,14 +19,14 @@ A significant focus of this project has been ensuring compatibility with the ori
 This approach ensures that the Python implementation produces results consistent with the original R package.
 
 ## Unit Test Status
-Unless noted, iglu-r test is considered successful if it achives precision of 1e-3
+Unless noted, iglu-r test is considered successful if it achieves precision of 0.001
 
 | Function | IGLU-R test compatibility | array/list/Series | TZ | Comments |
 |----------|---------------------------|-------------------|----|----------|
 | above_percent | ✅ | |||
 | active_percent | ✅ |
 | adrr | ✅ |
-| auc| 🟡 (0.1 precision) | || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
+| auc| 🟡 (0.01 precision) | || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
 | below_percent| ✅ |
 | cogi | ✅ |
 | conga | ✅ |
@@ -48,8 +48,8 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | j_index | ✅ |
 | lbgi | ✅ |
 | mad_glu | ✅ |
-| mag |  🟡 (0.1 precision)|
-| mage | 🟡 (0.2 precision) | || See algorithm at [MAGE](https://github.com/irinagain/iglu/blob/master/vignettes/MAGE.Rmd) |
+| mag |  ✅ | || IMHO, Original R implementation has an error |
+| mage | ✅ | || See algorithm at [MAGE](https://github.com/irinagain/iglu/blob/master/vignettes/MAGE.Rmd) |
 | mean_glu | ✅ |
 | median_glu | ✅ |
 | modd | ✅ |
@@ -60,6 +60,8 @@ Unless noted, iglu-r test is considered successful if it achives precision of 1e
 | sd_glu | ✅ |
 | sd_measures | ✅ |
 | sd_roc |  ✅ | |||
+| process_data | ✅ |
+| summary_glu | ✅ |
 | CGMS2DayByDay | ✅ |
 
 # Installation

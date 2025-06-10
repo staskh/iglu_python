@@ -29,11 +29,14 @@ from .mean_glu import mean_glu
 from .median_glu import median_glu
 from .modd import modd
 from .pgs import pgs
+from .process_data import process_data
 from .quantile_glu import quantile_glu
 from .range_glu import range_glu
 from .roc import roc
 from .sd_glu import sd_glu
+from .sd_measures import sd_measures
 from .sd_roc import sd_roc
+from .summary_glu import summary_glu
 from .utils import IGLU_R_COMPATIBLE, CGMS2DayByDay, check_data_columns, gd2d_to_df
 
 __all__ = [
@@ -72,9 +75,12 @@ __all__ = [
     "median_glu",
     "modd",
     "pgs",
+    "process_data",
     "quantile_glu",
     "range_glu",
     "roc",
     "sd_glu",
+    "sd_measures",
     "sd_roc",
+    "summary_glu",
 ]

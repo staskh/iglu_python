@@ -37,6 +37,7 @@ def active_percent(
         Number of days to consider in the calculation.
     consistent_end_date : Optional[Union[str, datetime]], default=None
         End date to be used for every subject. If None, each subject will have their own end date.
+        Used only in range_type=='manual' mode
 
     Returns
     -------
@@ -118,31 +119,35 @@ def active_percent(
             active_percent = (
                 (theoretical_gl_vals - missing_gl_vals) / theoretical_gl_vals
             ) * 100
-
+        elif range_type == "manual":
             # Handle consistent end date if provided
             if consistent_end_date is not None:
                 end_date = localize_naive_timestamp(pd.to_datetime(consistent_end_date))
-                start_date = end_date - pd.Timedelta(days=int(ndays))
+            else:
+                end_date = sub_data["time"].max()
+            start_date = end_date - pd.Timedelta(days=int(ndays))
 
-                # Filter data to the specified date range
-                mask = (sub_data["time"] >= start_date) & (sub_data["time"] <= end_date)
-                sub_data = sub_data[mask]
+            # Filter data to the specified date range
+            mask = (sub_data["time"] >= start_date) & (sub_data["time"] <= end_date)
+            sub_data = sub_data[mask]
 
-                # Recalculate active percentage for the specified range
-                active_percent = (len(sub_data) / (ndays * (24 * (60 / dt0)))) * 100
-                min_time = start_date
-                max_time = end_date
-                ndays = (end_date - start_date).total_seconds() / (24 * 3600)
+            # Recalculate active percentage for the specified range
+            active_percent = (len(sub_data) / (ndays * (24 * (60 / dt0)))) * 100
+            min_time = start_date
+            max_time = end_date
+            ndays = (end_date - start_date).total_seconds() / (24 * 3600)
+        else:
+            raise ValueError(f"Invalid range_type: {range_type}")
 
-            active_perc_data.append(
-                {
-                    "id": subject,
-                    "active_percent": active_percent,
-                    "ndays": round(ndays, 1),
-                    "start_date": min_time,
-                    "end_date": max_time,
-                }
-            )
+        active_perc_data.append(
+            {
+                "id": subject,
+                "active_percent": active_percent,
+                "ndays": round(ndays, 1),
+                "start_date": min_time,
+                "end_date": max_time,
+            }
+        )
 
     # Convert to DataFrame
     result = pd.DataFrame(active_perc_data)
