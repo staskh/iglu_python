@@ -218,6 +218,29 @@ def test_process_data_glucose_warnings():
         assert any("above 500" in msg for msg in warning_messages)
 
 
+def test_process_data_column_rename():
+    """Test for column name renaming."""
+    data = pd.DataFrame({
+        'subject': ['A', 'A'],
+        'datetime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
+        'glucose': [120, 130]
+    })
+
+    result = iglu.process_data(data, id='subject', timestamp='datetime', glu='glucose')
+
+    # Check column names and order
+    assert list(result.columns) == ['id', 'time', 'gl']
+    
+    # Check data types
+    assert pd.api.types.is_string_dtype(result['id'])
+    assert pd.api.types.is_datetime64_any_dtype(result['time'])
+    assert pd.api.types.is_numeric_dtype(result['gl'])
+    
+    # Check values were preserved
+    assert all(result['id'] == 'A')
+    assert result['gl'].tolist() == [120, 130]
+
+
 def test_process_data_column_not_found_errors():
     """Test error handling for missing columns."""
     data = pd.DataFrame({
