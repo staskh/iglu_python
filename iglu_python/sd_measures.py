@@ -1,171 +1,247 @@
-from typing import Optional, Tuple
+import pandas as pd
+import numpy as np
+from typing import Optional, List, Dict, Any
 import warnings
 
-import numpy as np
-import pandas as pd
-from scipy import ndimage
+from .utils import check_data_columns,CGMS2DayByDay 
 
-from .utils import check_data_columns, CGMS2DayByDay
-
-
-def sd_measures(
-    data: pd.DataFrame, 
-    dt0: Optional[int] = None, 
-    inter_gap: int = 45, 
-    tz: str = ""
-) -> pd.DataFrame:
+def sd_measures(data: pd.DataFrame, 
+                dt0: Optional[int] = None, 
+                inter_gap: int = 45, 
+                tz: str = "") -> pd.DataFrame:
     """
-    Calculate SD subtypes for glucose variability analysis.
-
-    The function produces SD subtype values in a DataFrame with a row for each 
-    subject and columns corresponding to id followed by each SD subtype.
-
+    Calculate SD subtypes for glucose variability analysis
+    
+    This function produces SD subtype values in a DataFrame object
+    with a row for each subject and columns corresponding to id followed by
+    each SD subtype.
+    
     Parameters
     ----------
     data : pd.DataFrame
-        DataFrame with columns 'id', 'time', and 'gl'. Should only be data for 
-        1 subject. In case multiple subject ids are detected, an error is raised.
+        DataFrame with columns 'id', 'time', and 'gl' (glucose)
     dt0 : int, optional
-        The time frequency for interpolation in minutes. If None, will match 
-        the CGM meter's frequency (e.g., 5 min for Dexcom).
-    inter_gap : int, default=45
-        The maximum allowable gap (in minutes) for interpolation. Values will 
-        not be interpolated between glucose measurements that are more than 
-        inter_gap minutes apart.
-    tz : str, default=""
-        Time zone to use for calculations. If tz is not "", the time column 
-        is converted to the specified timezone.
-
+        The time frequency for interpolation in minutes
+    inter_gap : int, default 45
+        The maximum allowable gap (in minutes) for interpolation
+    tz : str, default ""
+        Timezone specification
+        
     Returns
     -------
     pd.DataFrame
-        DataFrame with 1 row for each subject, a column for subject id and 
-        a column for each of the six SD subtypes:
+        A DataFrame with columns for id and each of the six SD subtypes:
         - SDw: vertical within days
         - SDhhmm: between time points  
         - SDwsh: within series (1-hour windows)
-        - SDdm: horizontal sd (daily means)
+        - SDdm: horizontal sd (between daily means)
         - SDb: between days, within timepoints
         - SDbdm: between days, within timepoints, corrected for daily means
-
-    Raises
-    ------
-    ValueError
-        If multiple subjects are detected in the data.
-
-    Notes
-    -----
+        
+    Details
+    -------
     Missing values will be linearly interpolated when close enough to non-missing values.
-
-    The six SD subtypes are:
-
-    1. **SDw - vertical within days:**
-       Calculated by first taking the standard deviation of each day's glucose 
-       measurements, then taking the mean of all the standard deviations.
-
-    2. **SDhhmm - between time points:**
-       Also known as SDhh:mm. Calculated by taking the mean glucose values at 
-       each time point in the grid across days, and taking the standard deviation 
-       of those means.
-
-    3. **SDwsh - within series:**
-       Also known as SDws h. Calculated by taking the hour-long intervals starting 
-       at every point in the interpolated grid, computing the standard deviation 
-       of the points in each hour-long interval, and then finding the mean of 
-       those standard deviations.
-
-    4. **SDdm - horizontal sd:**
-       Calculated by taking the daily mean glucose values, and then taking the 
-       standard deviation of those daily means.
-
-    5. **SDb - between days, within timepoints:**
-       Calculated by taking the standard deviation of the glucose values across 
-       days for each time point, and then taking the mean of those standard deviations.
-
-    6. **SDbdm - between days, within timepoints, corrected for changes in daily means:**
-       Also known as SDb // dm. Calculated by subtracting the daily mean from 
-       each glucose value, then taking the standard deviation of the corrected 
-       glucose values across days for each time point, and then taking the mean 
-       of those standard deviations.
-
+    
+    SD Subtypes:
+    
+    1. SDw - vertical within days:
+       Standard deviation of each day's glucose measurements, then mean of all SDs
+       
+    2. SDhhmm - between time points:
+       Standard deviation of mean glucose values at each time point across days
+       
+    3. SDwsh - within series:
+       Mean of standard deviations computed over hour-long sliding windows
+       
+    4. SDdm - horizontal sd:
+       Standard deviation of daily mean glucose values
+       
+    5. SDb - between days, within timepoints:
+       Mean of standard deviations of glucose values across days for each time point
+       
+    6. SDbdm - between days, within timepoints, corrected for changes in daily means:
+       Like SDb but after subtracting daily mean from each glucose value
+       
     References
     ----------
     Rodbard (2009) New and Improved Methods to Characterize Glycemic Variability
-    Using Continuous Glucose Monitoring. Diabetes Technology and Therapeutics 11,
-    551-565, doi:10.1089/dia.2009.0015.
-
+    Using Continuous Glucose Monitoring. Diabetes Technology and Therapeutics 11, 551-565.
+    
     Examples
     --------
-    >>> data = pd.DataFrame({
-    ...     'id': ['subject1'] * 4,
-    ...     'time': pd.to_datetime(['2020-01-01 00:00:00', '2020-01-01 00:05:00',
-    ...                            '2020-01-01 00:10:00', '2020-01-01 00:15:00']),
-    ...     'gl': [150, 200, 180, 160]
-    ... })
-    >>> result = sd_measures(data)
-    >>> print(result.columns)
-    Index(['id', 'SDw', 'SDhhmm', 'SDwsh', 'SDdm', 'SDb', 'SDbdm'], dtype='object')
+    >>> import pandas as pd
+    >>> # Assuming you have glucose data
+    >>> result = sd_measures(glucose_data)
+    >>> print(result)
     """
-    # Check data format
-    data = check_data_columns(data, tz)
     
-    # Get unique subjects
-    subjects = data["id"].unique()
-    if len(subjects) > 1:
-        raise ValueError("Multiple subjects detected. Please provide a single subject.")
+    # Data validation (placeholder - implement check_data_columns equivalent)
+    data = check_data_columns(data, time_check=True, tz=tz)
     
-    subject = subjects[0]
+    subjects = data['id'].unique()
+    n_subjects = len(subjects)
     
-    # Sort by time
-    data = data.sort_values("time")
+    # Calculate uniform grid for all subjects
+    gdall = []
+    current_dt0 = dt0
     
-    # Calculate uniform grid using CGMS2DayByDay
-    gd2d, actual_dates, dt0 = CGMS2DayByDay(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
+    for i, subject_id in enumerate(subjects):
+        subject_data = data[data['id'] == subject_id].copy()
+        
+        # Convert to day-by-day format (placeholder - implement CGMS2DayByDay equivalent)
+        gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(subject_data, tz=tz, dt0=current_dt0, inter_gap=inter_gap)
+        gdall.append(gd2d)
+        
+        # Use the dt0 from first subject for consistency
+        if i == 0:
+            current_dt0 = gd2d_dt0
     
-    # Calculate SD measures
-    results = {}
-    results['id'] = subject
+    dt0 = current_dt0
     
-    # SDw - vertical within days
-    # Standard deviation of each day's glucose measurements, then mean of all SDs
-    daily_sds = np.nanstd(gd2d, axis=1, ddof=1)  # axis=1 for row-wise (daily) SD
-    results['SDw'] = np.nanmean(daily_sds)
+    # Calculate SD measures for each subject
+    results = []
     
-    # SDhhmm - between time points
-    # Mean glucose at each time point across days, then SD of those means
-    timepoint_means = np.nanmean(gd2d, axis=0)  # axis=0 for column-wise (timepoint) means
-    results['SDhhmm'] = np.nanstd(timepoint_means, ddof=1)
+    for i, gd2d in enumerate(gdall):
+        subject_id = subjects[i]
+        result = _calculate_sd_subtypes(gd2d, dt0, subject_id)
+        results.append(result)
     
-    # SDwsh - within series - for 1 hour window
-    # Calculate rolling standard deviation with 1-hour windows
-    win = round(60 / dt0)  # how many measurements are within 1 hour
-    gs = gd2d.T.flatten()  # flatten row by row (transpose then flatten)
+    # Combine results
+    final_results = pd.DataFrame(results)
     
-    # Calculate rolling standard deviation using pandas rolling with min_periods
-    gs_series = pd.Series(gs)
-    rolling_sds = gs_series.rolling(window=win, min_periods=1, center=False).std()
-    # Remove NaN values and calculate mean
-    valid_rolling_sds = rolling_sds.dropna()
-    results['SDwsh'] = np.nanmean(valid_rolling_sds)
+    return final_results
+
+
+def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[str, Any]:
+    """
+    Calculate all SD subtypes for a single subject's glucose data matrix
     
-    # SDdm - "Horizontal" sd
-    # Standard deviation of daily means
-    daily_means = np.nanmean(gd2d, axis=1)  # axis=1 for row-wise (daily) means
-    results['SDdm'] = np.nanstd(daily_means, ddof=1)
+    Parameters
+    ----------
+    gd2d : np.ndarray
+        2D array where rows are days and columns are time points
+    dt0 : int
+        Time interval in minutes
+    subject_id : Any
+        Subject identifier
+        
+    Returns
+    -------
+    dict
+        Dictionary containing all SD measures
+    """
     
-    # SDb - between days, within timepoints
-    # Standard deviation across days for each time point, then mean of those SDs
-    timepoint_sds = np.nanstd(gd2d, axis=0, ddof=1)  # axis=0 for column-wise (timepoint) SDs
-    results['SDb'] = np.nanmean(timepoint_sds)
+    result = {'id': subject_id}
     
-    # SDbdm - between days, within timepoints, corrected for changes in daily means
-    # Subtract daily mean from each value, then calculate SDs across days for each timepoint
-    daily_means_matrix = daily_means[:, np.newaxis]  # Convert to column vector for broadcasting
+    # 1. SDw - vertical within days
+    # Standard deviation within each day, then mean across days
+    daily_sds = np.nanstd(gd2d, axis=1, ddof=1)  # ddof=1 for sample std
+    result['SDw'] = np.nanmean(daily_sds)
+    
+    # 2. SDhhmm - between time points
+    # Mean at each time point across days, then SD of those means
+    timepoint_means = np.nanmean(gd2d, axis=0)
+    result['SDhhmm'] = np.nanstd(timepoint_means, ddof=1)
+    
+    # 3. SDwsh - within series (1-hour windows)
+    # Rolling standard deviation over 1-hour windows
+    win = round(60 / dt0)  # Number of measurements in 1 hour
+    gs = gd2d.flatten()  # Vectorize by columns (time-first order)
+    
+    # Calculate rolling standard deviation
+    rolling_sds = _rolling_std(gs, window=win)
+    result['SDwsh'] = np.nanmean(rolling_sds)
+    
+    # 4. SDdm - horizontal sd (between daily means)
+    # Standard deviation of daily mean glucose values
+    daily_means = np.nanmean(gd2d, axis=1)
+    result['SDdm'] = np.nanstd(daily_means, ddof=1)
+    
+    # 5. SDb - between days, within timepoints
+    # SD across days for each time point, then mean of those SDs
+    timepoint_sds = np.nanstd(gd2d, axis=0, ddof=1)
+    result['SDb'] = np.nanmean(timepoint_sds)
+    
+    # 6. SDbdm - between days, within timepoints, corrected for daily means
+    # Subtract daily mean from each value, then calculate SDb on corrected values
+    daily_means_matrix = daily_means[:, np.newaxis]  # Convert to column vector
     corrected_gd2d = gd2d - daily_means_matrix
     corrected_timepoint_sds = np.nanstd(corrected_gd2d, axis=0, ddof=1)
-    results['SDbdm'] = np.nanmean(corrected_timepoint_sds)
+    result['SDbdm'] = np.nanmean(corrected_timepoint_sds)
     
-    # Create result DataFrame
-    result_df = pd.DataFrame([results])
+    return result
+
+
+def _rolling_std(data: np.ndarray, window: int) -> np.ndarray:
+    """
+    Calculate rolling standard deviation with non-trimmed ends
     
-    return result_df 
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data array
+    window : int
+        Window size for rolling calculation
+        
+    Returns
+    -------
+    np.ndarray
+        Rolling standard deviations (trimmed to valid windows only)
+    """
+    #valid_data = data[~np.isnan(data)]
+    valid_data = np.concatenate([data, np.full(window, np.nan)])  # add nan tail to match R
+    n = len(valid_data)
+    
+    if n < window:
+        return np.array([np.nan])
+    
+    rolling_stds = []
+    
+    for i in range(n - window + 1):
+        window_data = valid_data[i:i + window]
+        if len(window_data) == window:  # Full window
+            rolling_stds.append(np.nanstd(window_data, ddof=1))
+    
+    return np.array(rolling_stds) if rolling_stds else np.array([np.nan])
+
+
+# Alternative vectorized implementation for better performance
+def sd_measures_vectorized(data: pd.DataFrame, 
+                          dt0: Optional[int] = None, 
+                          inter_gap: int = 45, 
+                          tz: str = "") -> pd.DataFrame:
+    """
+    Vectorized version of sd_measures for better performance with large datasets
+    """
+    data = check_data_columns(data, time_check=True, tz=tz)
+    
+    results = []
+    
+    for subject_id in data['id'].unique():
+        subject_data = data[data['id'] == subject_id].copy()
+        gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(subject_data, tz=tz, dt0=current_dt0, inter_gap=inter_gap)
+        
+        result = _calculate_sd_subtypes_vectorized(gd2d, gd2d_dt0, subject_id)
+        results.append(result)
+    
+    return pd.DataFrame(results)
+
+
+def _calculate_sd_subtypes_vectorized(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[str, Any]:
+    """
+    Vectorized calculation of SD subtypes using numpy operations
+    """
+    # Use numpy's built-in functions for better performance
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        
+        return {
+            'id': subject_id,
+            'SDw': np.nanmean(np.nanstd(gd2d, axis=1, ddof=1)),
+            'SDhhmm': np.nanstd(np.nanmean(gd2d, axis=0), ddof=1),
+            'SDwsh': np.nanmean(_rolling_std(gd2d.T.flatten(), round(60/dt0))),
+            'SDdm': np.nanstd(np.nanmean(gd2d, axis=1), ddof=1),
+            'SDb': np.nanmean(np.nanstd(gd2d, axis=0, ddof=1)),
+            'SDbdm': np.nanmean(np.nanstd(gd2d - np.nanmean(gd2d, axis=1, keepdims=True), 
+                                        axis=0, ddof=1))
+        }
