@@ -169,14 +169,12 @@ def mage(
         # Drop NA rows after last glucose reading
         last_valid_idx = interpolated_data['gl'].last_valid_index()
         if last_valid_idx is not None:
-            interpolated_data = interpolated_data.iloc[:last_valid_idx]
+            interpolated_data = interpolated_data.iloc[:last_valid_idx+1]
         # Add gap column to mark NA values as 1
         interpolated_data['gap'] = interpolated_data['gl'].isna().astype(int)
         
         # 4. Time Series Segmentation: split gaps > max_gap into separate segments
-        # ToDo - for now we assume all data is in a single segment ( no gaps over 12h)
-        dfs = []
-        dfs.append(interpolated_data)
+        dfs = segment_time_series(interpolated_data,max_gap)  # note: max_gap is in minutes
 
         # 5. Calculate MAGE on each identified segment
         return_val = pd.DataFrame(columns=["start", "end", "mage", "plus_or_minus", "first_excursion"])
@@ -221,12 +219,33 @@ def mage(
         data["MA_Short"] = data["gl"].rolling(window=short_ma, min_periods=1).mean()
         data["MA_Long"] = data["gl"].rolling(window=long_ma, min_periods=1).mean()
         # Fill leading NAs (forward fill first valid value)
-        data['MA_Short'].iloc[:short_ma] = data['MA_Short'].iloc[short_ma-1]
-        data['MA_Long'].iloc[:long_ma] = data['MA_Long'].iloc[long_ma-1]
+        if short_ma > len(data): 
+            data['MA_Short'].iloc[:short_ma] = data['MA_Short'].iloc[-1]
+        else:
+            data['MA_Short'].iloc[:short_ma] = data['MA_Short'].iloc[short_ma-1]
+        if long_ma > len(data):
+            data['MA_Long'].iloc[:long_ma] = data['MA_Long'].iloc[-1]
+        else:
+            data['MA_Long'].iloc[:long_ma] = data['MA_Long'].iloc[long_ma-1]
         # Calculate difference
         data['DELTA_SHORT_LONG'] = data['MA_Short'] - data['MA_Long']
         data = data.reset_index(drop=True)
+        nmeasurements = len(data)
 
+        # Sanity check 
+        if (
+            data['gl'].isnull().all() or
+            nmeasurements < 7 or
+            nmeasurements < short_ma or
+            np.std(data['gl'], ddof=1) < 1
+        ):
+            return pd.DataFrame({
+                'start': [data['time'].iloc[0]],
+                'end': [data['time'].iloc[-1]], 
+                'MAGE': [np.nan],
+                'plus_or_minus': [np.nan],
+                'first_excursion': [np.nan]
+            })
 
         # 2d. Create a preallocated list of crossing point ids & type
         # Find crossing points
@@ -234,9 +253,7 @@ def mage(
         # Initialize variables
         idx = list(data.index)  # R: idx = as.numeric(rownames(.data))
         types = {'REL_MIN': 0, 'REL_MAX': 1}  # R: types = list2env(list(REL_MIN=0, REL_MAX=1))
-        
-        nmeasurements = len(data)
-        
+                
         # Create storage lists - R: list_cross <- list("id" = rep.int(NA, nmeasurements), "type" = rep.int(NA, nmeasurements))
         list_cross = {
             'id': [np.nan] * nmeasurements,
@@ -248,6 +265,9 @@ def mage(
         list_cross['type'][0] = types['REL_MAX'] if data['DELTA_SHORT_LONG'].iloc[0] > 0 else types['REL_MIN']
         count = 1  # Python uses 0-based indexing, so count starts at 1
         
+        # treat DELTA_SHORT_LONG==0 as NaN ( so we can skip its multiplication)
+        data.loc[data['DELTA_SHORT_LONG'] == 0, 'DELTA_SHORT_LONG'] = np.nan
+
         # Main loop - R: for(i in 2:length(.data$DELTA_SHORT_LONG))
         for i in range(1, len(data['DELTA_SHORT_LONG'])):
             # Check data validity
@@ -265,25 +285,25 @@ def mage(
                         list_cross['type'][count] = types['REL_MAX']
                     count += 1
                 
-                # Gap handling: needed for gaps, where DELTA_SHORT_LONG(i-1 | i-2) = NaN
-                elif (not pd.isna(data['DELTA_SHORT_LONG'].iloc[i]) and 
-                    count > 1):  # Make sure we have a previous crossover
+            # Gap handling: needed for gaps, where DELTA_SHORT_LONG(i-1 | i-2) = NaN
+            elif (not pd.isna(data['DELTA_SHORT_LONG'].iloc[i]) and 
+                count >= 1):  # Make sure we have a previous crossover
+                
+                # R: match(list_cross$id[count-1], idx) - find index of previous crossover
+                try:
+                    prev_cross_idx = idx.index(list_cross['id'][count-1])
+                    prev_delta = data['DELTA_SHORT_LONG'].iloc[prev_cross_idx]
                     
-                    # R: match(list_cross$id[count-1], idx) - find index of previous crossover
-                    try:
-                        prev_cross_idx = idx.index(list_cross['id'][count-1])
-                        prev_delta = data['DELTA_SHORT_LONG'].iloc[prev_cross_idx]
-                        
-                        if (data['DELTA_SHORT_LONG'].iloc[i] * prev_delta < 0):
-                            list_cross['id'][count] = idx[i]
-                            if data['DELTA_SHORT_LONG'].iloc[i] < prev_delta:
-                                list_cross['type'][count] = types['REL_MIN']
-                            else:
-                                list_cross['type'][count] = types['REL_MAX']
-                            count += 1
-                    except ValueError:
-                        # Handle case where previous crossover id not found in idx
-                        pass
+                    if (data['DELTA_SHORT_LONG'].iloc[i] * prev_delta < 0):
+                        list_cross['id'][count] = idx[i]
+                        if data['DELTA_SHORT_LONG'].iloc[i] < prev_delta:
+                            list_cross['type'][count] = types['REL_MIN']
+                        else:
+                            list_cross['type'][count] = types['REL_MAX']
+                        count += 1
+                except ValueError:
+                    # Handle case where previous crossover id not found in idx
+                    pass
         
         # Add last point to capture excursion at end
         # R: utils::tail(idx, 1)
@@ -318,21 +338,20 @@ def mage(
             # Define search boundaries
             # R: s1 <- ifelse(i == 1, crosses[i, 1], indexes[i-1])
             if i == 0:  # First extrema
-                s1 = int(crosses.iloc[i, 0])  # crosses[i, 1] in R (1-indexed)
+                s1 = int(crosses.iloc[i]['id'])  # crosses[i, 1] in R (1-indexed)
             else:
-                s1 = int(indexes[i-1])
+                s1 = int(indexes[i-1])  # last minmax index
             
             # R: s2 <- crosses[i+1,1]
-            s2 = int(crosses.iloc[i+1, 0])  # crosses[i+1, 1] in R
+            s2 = int(crosses.iloc[i+1]['id'])  # crosses[i+1, 1] in R
             
             # Extract glucose segment - R: .data[as.character(s1:s2), ]$gl
-            # Convert to 0-based indexing for Python
-            segment_start = s1 - 1 if s1 > 0 else 0
+            segment_start = s1 
             segment_end = s2
-            glucose_segment = data['gl'].iloc[segment_start:segment_end]
+            glucose_segment = data['gl'].iloc[segment_start:segment_end+1] # including next cross point
             
             # Find min or max based on crossover type
-            if crosses.iloc[i, 1] == types['REL_MIN']:  # crosses[i, "type"] in R
+            if crosses.iloc[i]['type'] == types['REL_MIN']:  # crosses[i, "type"] in R
                 # R: min(.data[as.character(s1:s2), ]$gl, na.rm = TRUE)
                 minmax[i] = glucose_segment.min()
                 # R: which.min(.data[as.character(s1:s2), ]$gl)+s1-1
@@ -358,13 +377,13 @@ def mage(
         mage_minus_heights, mage_minus_tp_pairs = calculate_mage_minus(differences, minmax, standardD)
 
         if len(mage_minus_heights) == 0 and len(mage_plus_heights) == 0:
-            return {
-                'start': data['time'][0],
-                'end': data['time'][-1],
-                'MAGE': np.nan,
-                'plus_or_minus': np.nan,
-                'first_excursion': np.nan
-            }
+            return pd.DataFrame({
+                'start': [data['time'].iloc[0]],
+                'end': [data['time'].iloc[-1]],
+                'MAGE': [np.nan],
+                'plus_or_minus': [np.nan],
+                'first_excursion': [np.nan]
+            }, index=[0])
         
         # Determine which excursion type occurs first
         if (len(mage_plus_heights) > 0 and 
@@ -417,7 +436,8 @@ def mage(
             }
         )
         if version == "ma":
-            result = mage_ma_single(data_df, short_ma, long_ma)
+            mage_val = mage_ma_single(data_df, short_ma, long_ma, direction, return_type='num')
+            result = pd.DataFrame({"MAGE": [mage_val]})
         else:
             result = pd.DataFrame({"MAGE": [mage_naive(data_df)]})
         return result
@@ -433,8 +453,11 @@ def mage(
             continue
 
         if version == "ma":
-            mage_val = mage_ma_single(subject_data, short_ma, long_ma, direction, return_type = "num")
-            subject_result_dict = {"MAGE": mage_val}
+            mage_val = mage_ma_single(subject_data, short_ma, long_ma, direction, return_type)
+            if return_type == "df" :
+                subject_result_dict = mage_val.to_dict()
+            else:
+                subject_result_dict = {"MAGE": mage_val}
         else:
             mage_val = mage_naive(subject_data)
             subject_result_dict = {"MAGE": mage_val}
@@ -469,13 +492,13 @@ def calculate_mage_plus(differences, minmax, standardD):
             continue
             
         max_v = np.max(delta)  # Find maximum upward movement
-        i = np.argmax(delta) + prev_j  # Index of extrema creating maximum
+        i = int(np.argmax(delta) + prev_j)  # Index of extrema creating maximum
         
-        if max_v >= standardD:
+        if max_v > standardD:
             # Found significant upward excursion (nadir to peak > SD)
             k = j
             while k < N:
-                if minmax[k] > minmax[j]:
+                if minmax[k] >= minmax[j]:
                     j = k  # Continue riding the peak upward
                 
                 # Check if excursion ends (significant drop or end of data)
@@ -522,10 +545,10 @@ def calculate_mage_minus(differences, minmax, standardD):
         min_v = np.min(delta)  # Find maximum downward movement (most negative)
         i = np.argmin(delta) + prev_j  # Index of extrema creating minimum
         
-        if min_v <= -standardD:  # Found significant downward excursion
+        if min_v < -standardD:  # Found significant downward excursion
             k = j
             while k < N:
-                if minmax[k] < minmax[j]:
+                if minmax[k] <= minmax[j]:
                     j = k  # Continue riding the nadir downward
                 
                 # Check if excursion ends (significant rise or end of data)
@@ -543,3 +566,41 @@ def calculate_mage_minus(differences, minmax, standardD):
             j += 1
     
     return mage_minus_heights, mage_minus_tp_pairs
+
+def segment_time_series(data, max_gap_minutes):
+    """
+    Split glucose time series into segments based on large gaps
+    Simpler approach using time differences
+    """
+    # Calculate time differences
+    
+    # Calculate time differences between consecutive non-NA glucose readings
+    data['time_diff'] = np.nan
+    valid_indices = data['gl'].notna()
+    if valid_indices.any():
+        # Get timestamps of valid readings
+        valid_times = data.loc[valid_indices, 'time']
+        # Calculate differences between consecutive valid readings
+        time_diffs = valid_times.diff().dt.total_seconds() / 60  # Convert to minutes
+        # Assign differences back to original dataframe at valid indices
+        data.loc[valid_indices, 'time_diff'] = time_diffs
+    
+    # Identify where gaps exceed threshold
+    large_gaps = data['time_diff'] > max_gap_minutes
+    
+    # Create segment labels by cumulatively summing large gaps
+    # This creates a new segment ID each time we encounter a large gap
+    data['segment_id'] = large_gaps.cumsum()
+    
+    # Group by segment and return list of DataFrames
+    segments = []
+    for segment_id, group in data.groupby('segment_id'):
+        # Drop the temporary columns we added
+        group = group.drop(['time_diff', 'segment_id'], axis=1)
+        # Drop rows with NA glucose values at the end of the segment
+        while len(group) > 0 and pd.isna(group['gl'].iloc[-1]):
+            group = group.iloc[:-1]
+        segments.append(group.reset_index(drop=True))
+    
+    return segments
+    # Identify where gaps exceed threshold
