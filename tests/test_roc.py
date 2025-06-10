@@ -45,8 +45,11 @@ def test_roc_iglu_r_compatible(scenario):
 
     # accommodating R implementation format
     result_df.drop(columns=["time"], inplace=True)
-    if result_df.shape[0] < expected_df.shape[0]:
-        expected_df = expected_df.iloc[: result_df.shape[0]]
+    # drop all nan values from both dataframes to remove dependencies on CGMS2DayByDay "last day" error
+    result_df = result_df.dropna().reset_index(drop=True)
+    expected_df = expected_df.dropna().reset_index(drop=True)
+    # if result_df.shape[0] < expected_df.shape[0]:
+    #     expected_df = expected_df.iloc[: result_df.shape[0]]
 
     # Compare DataFrames with precision to 0.001 for numeric columns
     pd.testing.assert_frame_equal(
