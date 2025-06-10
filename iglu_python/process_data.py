@@ -5,6 +5,7 @@ import re
 import pandas as pd
 import numpy as np
 
+from .utils import localize_naive_timestamp
 
 def process_data(
     data: Union[pd.DataFrame, pd.Series, list, np.ndarray],
@@ -183,7 +184,10 @@ def process_data(
         
         # Insert at position 1 (after id)
         data.insert(1, 'time', time_data)
-    
+
+    # localize time if in naive format
+    data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
+
     # Process glucose column
     if glu is None:
         if 'gl' not in data.columns:

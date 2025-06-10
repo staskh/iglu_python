@@ -60,7 +60,7 @@ Unless noted, iglu-r test is considered successful if it achieves precision of 0
 | sd_glu | ✅ |
 | sd_measures | ❌ |
 | sd_roc |  ✅ | |||
-| process_data | ❌ |
+| process_data | ✅ |
 | summary_glu | ✅ |
 | CGMS2DayByDay | ✅ |
 

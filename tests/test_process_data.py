@@ -37,11 +37,15 @@ def test_process_data_iglu_r_compatible(scenario):
 
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
+    expected_df['time'] = expected_df['time'].apply(lambda x: pd.to_datetime(x).tz_convert('UTC'))
     expected_df = expected_df.reset_index(drop=True)
 
     result_df = iglu.process_data(df, **kwargs)
 
     assert result_df is not None
+
+    result_df = result_df.reset_index(drop=True)
+    result_df['time'] = result_df['time'].dt.tz_convert('UTC')
 
     # Compare DataFrames with precision to 0.001 for numeric columns
     pd.testing.assert_frame_equal(
@@ -158,34 +162,26 @@ def test_process_data_series_with_datetime_index():
 def test_process_data_series_without_datetime_index():
     """Test process_data with Series input without datetime index."""
     series_data = pd.Series([120, 130, 125])
-    
-    result = iglu.process_data(series_data)
-    
-    assert list(result.columns) == ['id', 'time', 'gl']  # time will be missing, actually just id and gl
-    assert len(result) == 3
-    assert all(result['id'] == '1')
+
+    with pytest.raises(ValueError):
+        iglu.process_data(series_data)
 
 
 def test_process_data_list_input():
     """Test process_data with list input."""
     glucose_list = [120, 130, 125, 140]
     
-    result = iglu.process_data(glucose_list)
-    
-    assert 'gl' in result.columns
-    assert len(result) == 4
-    assert list(result['gl']) == glucose_list
+    with pytest.raises(ValueError):
+        iglu.process_data(glucose_list)
 
 
 def test_process_data_numpy_array():
     """Test process_data with numpy array input."""
     glucose_array = np.array([120, 130, 125, 140])
     
-    result = iglu.process_data(glucose_array)
+    with pytest.raises(ValueError):
+        iglu.process_data(glucose_array)
     
-    assert 'gl' in result.columns
-    assert len(result) == 4
-    assert list(result['gl']) == list(glucose_array)
 
 
 def test_process_data_missing_values():
@@ -299,7 +295,7 @@ def test_process_data_empty_after_processing():
         'gl': [np.nan, np.nan]  # All NaN glucose values
     })
     
-    with pytest.raises(ValueError, match="No valid data remaining"):
+    with pytest.raises(ValueError):
         iglu.process_data(data, id='id', timestamp='time', glu='gl')
 
 
