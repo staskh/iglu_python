@@ -35,9 +35,12 @@ def test_episode_calculation_iglu_r_compatible(scenario):
         # this is extended expected result, with two separate dataframes
         assert kwargs["return_data"]
         expected_episodes_df = pd.DataFrame(expected_results['episodes']).reset_index(drop=True)
+        expected_episodes_df = expected_episodes_df.infer_objects(copy=False)
         expected_data_df = pd.DataFrame(expected_results['data']).reset_index(drop=True)
+        expected_data_df = expected_data_df.infer_objects(copy=False)
     else :
         expected_episodes_df = pd.DataFrame(expected_results).reset_index(drop=True)
+        expected_episodes_df = expected_episodes_df.infer_objects(copy=False)
         expected_data_df = None
 
 

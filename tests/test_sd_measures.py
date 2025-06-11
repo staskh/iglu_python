@@ -39,6 +39,8 @@ def test_sd_measures_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
+    pd.set_option('future.no_silent_downcasting', True)
+    expected_df = expected_df.replace({None: np.nan})
 
     result_df = iglu.sd_measures(df, **kwargs)
 

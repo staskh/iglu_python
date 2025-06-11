@@ -39,6 +39,9 @@ def test_process_data_iglu_r_compatible(scenario):
     expected_df = pd.DataFrame(expected_results)
     expected_df['time'] = expected_df['time'].apply(lambda x: pd.to_datetime(x).tz_convert('UTC'))
     expected_df = expected_df.reset_index(drop=True)
+    pd.set_option('future.no_silent_downcasting', True)
+    expected_df = expected_df.replace({None: np.nan})
+
 
     result_df = iglu.process_data(df, **kwargs)
 
