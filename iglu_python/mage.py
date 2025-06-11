@@ -196,7 +196,7 @@ def mage(
         elif direction == 'max':
             # Group by start,end and keep max mage in each group
             res = (return_val.groupby(['start', 'end'])
-                .apply(lambda x: x[x['MAGE'] == x['MAGE'].max()], include_groups=False)
+                .apply(lambda x: x[x['MAGE'] == x['MAGE'].max()], include_groups=True)
                 .reset_index(drop=True))
         else:  # default: first excursions only
             res = return_val[return_val['first_excursion'] == True].copy()
