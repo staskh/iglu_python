@@ -127,8 +127,9 @@ def pgs(
 
         return pgs_score
 
+
     # Calculate PGS for each subject
-    result = data.groupby("id").apply(lambda x: pgs_single(x)).reset_index()
+    result = data.groupby("id").apply(lambda x: pgs_single(x), include_groups=True).reset_index()
     result.columns = ["id", "PGS"]
 
     return result

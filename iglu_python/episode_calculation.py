@@ -297,7 +297,8 @@ def episode_single(
                         x, "hypo", lv1_hypo, int(120 / dt0) + 1, end_idx
                     ),
                 }
-            )
+            ),
+            include_groups=False
         )
         .reset_index()
         .drop(columns=['level_1'])
@@ -311,7 +312,7 @@ def episode_single(
             return pd.Series([0] * len(group_df), index=group_df.index)
         else:
             return group_df['lv1_hypo']
-    ep_per_seg['lv1_hypo_excl'] = ep_per_seg.groupby(['segment', 'lv1_hypo']).apply(hypo_exclusion_logic).reset_index(level=[0,1], drop=True).values.flatten()
+    ep_per_seg['lv1_hypo_excl'] = ep_per_seg.groupby(['segment', 'lv1_hypo']).apply(hypo_exclusion_logic, include_groups=True).reset_index(level=[0,1], drop=True).values.flatten()
 
     def hyper_exclusion_logic(group_df):
         # group_df is a DataFrame with all columns for the current group
@@ -319,7 +320,7 @@ def episode_single(
             return pd.Series([0] * len(group_df), index=group_df.index)
         else:
             return group_df['lv1_hyper']
-    ep_per_seg['lv1_hyper_excl'] = ep_per_seg.groupby(['segment', 'lv1_hyper']).apply(hyper_exclusion_logic).reset_index(level=[0,1], drop=True).values.flatten()
+    ep_per_seg['lv1_hyper_excl'] = ep_per_seg.groupby(['segment', 'lv1_hyper']).apply(hyper_exclusion_logic, include_groups=True).reset_index(level=[0,1], drop=True).values.flatten()
 
     full_segment_df = pd.concat([segment_data, ep_per_seg.drop(["segment"], axis=1)], axis=1)
 
@@ -402,7 +403,8 @@ def event_class(
                         else None] + [None]*(len(x)-1)
                     ),
                 }
-            )
+            ),
+            include_groups=False
         )
         .reset_index()
         .drop(columns=['level_1'])
@@ -471,7 +473,8 @@ def lv1_excl(data: pd.DataFrame) -> np.ndarray:
         lambda x: pd.DataFrame(
                 {
                     "excl":[0 if (x[lv2_first].values > 0).any() else x[lv1_first].iloc[0]]*len(x)
-                })
+                }),
+        include_groups=False
     )
 
     excl = excl.reset_index()
