@@ -72,7 +72,10 @@ def modd(
         abs_diffs = abs_diffs[~np.isnan(abs_diffs)]  # Remove NaNs
 
         # Calculate mean of absolute differences, ignoring NaN values
-        modd_val = np.nanmean(abs_diffs)
+        if len(abs_diffs) == 0:
+            modd_val = np.nan
+        else:
+            modd_val = np.nanmean(abs_diffs)
 
         return float(modd_val) if not pd.isna(modd_val) else np.nan
 
