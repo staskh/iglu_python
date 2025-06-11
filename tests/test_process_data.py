@@ -39,6 +39,9 @@ def test_process_data_iglu_r_compatible(scenario):
     expected_df = pd.DataFrame(expected_results)
     expected_df['time'] = expected_df['time'].apply(lambda x: pd.to_datetime(x).tz_convert('UTC'))
     expected_df = expected_df.reset_index(drop=True)
+    pd.set_option('future.no_silent_downcasting', True)
+    expected_df = expected_df.replace({None: np.nan})
+
 
     result_df = iglu.process_data(df, **kwargs)
 
@@ -340,7 +343,7 @@ def test_process_data_list_with_column_specs_error():
 
 def test_process_data_output_dtypes():
     """Test that output has correct data types."""
-    dates = pd.date_range('2020-01-01', periods=48, freq='1H')
+    dates = pd.date_range('2020-01-01', periods=48, freq='1h')
     data = pd.DataFrame({
         'id': ['subject1'] * 48,
         'time': dates,

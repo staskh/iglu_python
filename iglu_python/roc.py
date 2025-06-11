@@ -123,7 +123,7 @@ def roc(
             {
                 "id": ["subject1"] * len(data),
                 "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq=f"{dt0}T"
+                    start="2020-01-01", periods=len(data), freq=f"{dt0}min"
                 ),
                 "gl": data.values,
             }

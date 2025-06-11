@@ -33,7 +33,7 @@ Unless noted, iglu-r test is considered successful if it achieves precision of 0
 | cv_glu | ✅ |
 | cv_measures | ✅ |
 | ea1c | ✅ |
-| episode_calculation |  🟡  need fix in excl| || no match in lv1_hypo_excl and lv1_hyper_excl|
+| episode_calculation |  ✅| || no match in lv1_hypo_excl and lv1_hyper_excl|
 | gmi | ✅ |
 | grade_eugly | ✅ |
 | grade_hyper | ✅ |

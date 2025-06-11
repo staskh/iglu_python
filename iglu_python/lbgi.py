@@ -109,14 +109,11 @@ def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         raise ValueError("Empty DataFrame provided")
 
     # Calculate LBGI for each subject
-    result = pd.DataFrame(columns=["id", "LBGI"])
+    results = []
 
     for subject_id in data["id"].unique():
         subject_data = data[data["id"] == subject_id]["gl"]
         lbgi_value = calculate_lbgi(subject_data)
-        result = pd.concat(
-            [result, pd.DataFrame({"id": [subject_id], "LBGI": [lbgi_value]})],
-            ignore_index=True,
-        )
+        results.append({"id": subject_id, "LBGI": lbgi_value})
 
-    return result
+    return pd.DataFrame(results)

@@ -46,6 +46,9 @@ def test_ea1c_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
+    pd.set_option('future.no_silent_downcasting', True)
+    expected_df = expected_df.replace({None: np.nan})
+
 
     # Read CSV and convert time column to datetime
     df = pd.read_csv(input_file_name, index_col=0)
@@ -128,7 +131,7 @@ def test_ea1c_constant_glucose():
     data = pd.DataFrame(
         {
             "id": ["subject1"] * 24,  # 24 hours of data
-            "time": pd.date_range(start="2020-01-01", periods=24, freq="H"),
+            "time": pd.date_range(start="2020-01-01", periods=24, freq="h"),
             "gl": [constant_glucose] * 24,
         }
     )
@@ -144,7 +147,7 @@ def test_ea1c_missing_values():
     data = pd.DataFrame(
         {
             "id": ["subject1"] * 24,
-            "time": pd.date_range(start="2020-01-01", periods=24, freq="H"),
+            "time": pd.date_range(start="2020-01-01", periods=24, freq="h"),
             "gl": [150, np.nan, 160, 165, 140, 145] * 4,  # Some missing values
         }
     )
@@ -166,7 +169,7 @@ def test_ea1c_multiple_subjects():
                 "subject3",
                 "subject3",
             ],
-            "time": pd.date_range(start="2020-01-01", periods=6, freq="H"),
+            "time": pd.date_range(start="2020-01-01", periods=6, freq="h"),
             "gl": [150, 200, 130, 190, 140, 140],
         }
     )
@@ -183,7 +186,7 @@ def test_ea1c_extreme_values():
     data = pd.DataFrame(
         {
             "id": ["subject1"] * 24,
-            "time": pd.date_range(start="2020-01-01", periods=24, freq="H"),
+            "time": pd.date_range(start="2020-01-01", periods=24, freq="h"),
             "gl": [40, 600] * 12,  # Alternating very low and very high values
         }
     )
