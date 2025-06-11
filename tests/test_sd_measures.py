@@ -123,7 +123,7 @@ def test_sd_measures_multiple_days():
 
 def test_sd_measures_constant_values():
     """Test with constant glucose values."""
-    dates = pd.date_range('2020-01-01', periods=48, freq='1H')
+    dates = pd.date_range('2020-01-01', periods=48, freq='1h')
     data = pd.DataFrame({
         'id': ['subject1'] * 48,
         'time': dates,
@@ -142,7 +142,7 @@ def test_sd_measures_constant_values():
 
 def test_sd_measures_single_day():
     """Test with single day of data."""
-    dates = pd.date_range('2020-01-01 00:00', periods=24, freq='1H')
+    dates = pd.date_range('2020-01-01 00:00', periods=24, freq='1h')
     data = pd.DataFrame({
         'id': ['subject1'] * 24,
         'time': dates,
@@ -269,7 +269,7 @@ def test_sd_measures_empty_dataframe():
 
 def test_sd_measures_output_dtypes():
     """Test that output has correct data types."""
-    dates = pd.date_range('2020-01-01', periods=48, freq='1H')
+    dates = pd.date_range('2020-01-01', periods=48, freq='1h')
     data = pd.DataFrame({
         'id': ['subject1'] * 48,
         'time': dates,
@@ -287,7 +287,7 @@ def test_sd_measures_output_dtypes():
 def test_sd_measures_reproducibility():
     """Test that results are reproducible with same input."""
     np.random.seed(42)
-    dates = pd.date_range('2020-01-01', periods=48, freq='1H')
+    dates = pd.date_range('2020-01-01', periods=48, freq='1h')
     data = pd.DataFrame({
         'id': ['subject1'] * 48,
         'time': dates,

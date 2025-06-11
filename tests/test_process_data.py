@@ -340,7 +340,7 @@ def test_process_data_list_with_column_specs_error():
 
 def test_process_data_output_dtypes():
     """Test that output has correct data types."""
-    dates = pd.date_range('2020-01-01', periods=48, freq='1H')
+    dates = pd.date_range('2020-01-01', periods=48, freq='1h')
     data = pd.DataFrame({
         'id': ['subject1'] * 48,
         'time': dates,

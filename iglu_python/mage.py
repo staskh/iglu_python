@@ -196,7 +196,7 @@ def mage(
         elif direction == 'max':
             # Group by start,end and keep max mage in each group
             res = (return_val.groupby(['start', 'end'])
-                .apply(lambda x: x[x['MAGE'] == x['MAGE'].max()])
+                .apply(lambda x: x[x['MAGE'] == x['MAGE'].max()], include_groups=False)
                 .reset_index(drop=True))
         else:  # default: first excursions only
             res = return_val[return_val['first_excursion'] == True].copy()
@@ -220,13 +220,13 @@ def mage(
         data["MA_Long"] = data["gl"].rolling(window=long_ma, min_periods=1).mean()
         # Fill leading NAs (forward fill first valid value)
         if short_ma > len(data): 
-            data['MA_Short'].iloc[:short_ma] = data['MA_Short'].iloc[-1]
+            data.loc[data.index[:short_ma], 'MA_Short'] = data['MA_Short'].iloc[-1]
         else:
-            data['MA_Short'].iloc[:short_ma] = data['MA_Short'].iloc[short_ma-1]
+            data.loc[data.index[:short_ma], 'MA_Short'] = data['MA_Short'].iloc[short_ma-1]
         if long_ma > len(data):
-            data['MA_Long'].iloc[:long_ma] = data['MA_Long'].iloc[-1]
+            data.loc[data.index[:long_ma], 'MA_Long'] = data['MA_Long'].iloc[-1]
         else:
-            data['MA_Long'].iloc[:long_ma] = data['MA_Long'].iloc[long_ma-1]
+            data.loc[data.index[:long_ma], 'MA_Long'] = data['MA_Long'].iloc[long_ma-1]
         # Calculate difference
         data['DELTA_SHORT_LONG'] = data['MA_Short'] - data['MA_Long']
         data = data.reset_index(drop=True)
