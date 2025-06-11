@@ -129,7 +129,10 @@ def pgs(
 
 
     # Calculate PGS for each subject
-    result = data.groupby("id").apply(lambda x: pgs_single(x), include_groups=True).reset_index()
-    result.columns = ["id", "PGS"]
-
-    return result
+    results = []
+    for subject_id in data["id"].unique():
+        subject_data = data[data["id"] == subject_id].copy()
+        pgs_value = pgs_single(subject_data)
+        results.append({"id": subject_id, "PGS": pgs_value})
+    
+    return pd.DataFrame(results)
