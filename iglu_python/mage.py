@@ -180,7 +180,10 @@ def mage(
         return_val = pd.DataFrame(columns=["start", "end", "mage", "plus_or_minus", "first_excursion"])
         for segment in dfs:
             ret = mage_atomic(segment,short_ma,long_ma)
-            return_val = pd.concat([return_val, ret], ignore_index=True)
+            if return_val.empty:
+                return_val = ret
+            else:
+                return_val = pd.concat([return_val, ret], ignore_index=True)
 
         if return_type == 'df':
             return return_val
@@ -195,9 +198,8 @@ def mage(
             res = return_val[return_val['MAGE'].notna()].copy()
         elif direction == 'max':
             # Group by start,end and keep max mage in each group
-            res = (return_val.groupby(['start', 'end'])
-                .apply(lambda x: x[x['MAGE'] == x['MAGE'].max()], include_groups=True)
-                .reset_index(drop=True))
+            idx = return_val.groupby(['start', 'end'])['MAGE'].idxmax()
+            res = return_val.loc[idx].reset_index(drop=True)
         else:  # default: first excursions only
             res = return_val[return_val['first_excursion'] == True].copy()
         
