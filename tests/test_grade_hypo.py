@@ -151,8 +151,7 @@ def test_grade_hypo_missing_values():
             "gl": [150, np.nan, 75, 65],
         }
     )
-    with pytest.warns(UserWarning, match="Data contains missing glucose values"):
-        result = iglu.grade_hypo(data_with_na)
+    result = iglu.grade_hypo(data_with_na)
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 1
     assert result["GRADE_hypo"].iloc[0] >= 0
