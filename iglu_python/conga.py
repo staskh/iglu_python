@@ -77,6 +77,12 @@ def conga(
         lag = hourly_readings * hours
         diffs = gl_vector[lag:] - gl_vector[:-lag]
 
+        # Check if we have sufficient data for std calculation
+        # Need at least 2 non-NaN values for ddof=1
+        valid_diffs = diffs[~np.isnan(diffs)]
+        if len(valid_diffs) < 2:
+            return np.nan
+        
         return float(np.nanstd(diffs, ddof=1))
 
     # Handle Series input
