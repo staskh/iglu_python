@@ -9,7 +9,15 @@ from tzlocal import get_localzone
 
 local_tz = get_localzone()  # get the local timezone
 
-IGLU_R_COMPATIBLE = True
+_IGLU_R_COMPATIBLE = True
+
+def set_iglu_r_compatible(value: bool) -> None:
+    global _IGLU_R_COMPATIBLE
+    _IGLU_R_COMPATIBLE = value
+
+def is_iglu_r_compatible() -> bool:
+    global _IGLU_R_COMPATIBLE
+    return _IGLU_R_COMPATIBLE
 
 def localize_naive_timestamp(timestamp: datetime) -> datetime:
     """
@@ -180,7 +188,7 @@ def CGMS2DayByDay(
     time_grid = pd.date_range(
         start=start_time, end=end_time, freq=f"{dt0}min"
     )
-    if IGLU_R_COMPATIBLE:
+    if is_iglu_r_compatible():
         # remove the first time point
         time_grid = time_grid[1:]
     else:
@@ -234,7 +242,7 @@ def CGMS2DayByDay(
     interp_data = interp_data.reshape(n_days, n_points_per_day)
 
     # Get actual dates
-    if IGLU_R_COMPATIBLE:
+    if is_iglu_r_compatible():
         # convert start_time into naive datetime
         start_time = start_time.tz_localize(None)
         
@@ -254,7 +262,7 @@ def gd2d_to_df(gd2d, actual_dates, dt0):
         time.extend(day_time)
 
     df = pd.DataFrame({
-            "time": pd.Series(time, dtype='datetime64[ns]'),
+            "time": pd.Series(time),
             "gl": pd.Series(gl, dtype='float64')
         })
 

@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from .utils import IGLU_R_COMPATIBLE, CGMS2DayByDay, check_data_columns, gd2d_to_df, get_local_tz
+from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, get_local_tz, is_iglu_r_compatible
 
 
 def episode_calculation(
@@ -235,7 +235,7 @@ def episode_single(
     if dt0 is None:
         dt0 = gd2d_tuple[2]
 
-    if IGLU_R_COMPATIBLE:
+    if is_iglu_r_compatible():
         day_one = pd.to_datetime(gd2d_tuple[1][0]).tz_localize(None) # make in naive-timezone
         day_one = day_one.tz_localize('UTC') # this is how IGLU_R works
         if tz and tz!="":

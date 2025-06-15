@@ -2,7 +2,8 @@
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, IGLU_R_COMPATIBLE
+from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, is_iglu_r_compatible
+
 
 
 def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
@@ -65,7 +66,7 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
 
         # Convert gd2d to DataFrame
         input_data = gd2d_to_df(gd2d, actual_dates, dt0)
-        if IGLU_R_COMPATIBLE:
+        if is_iglu_r_compatible():
             input_data['day'] = input_data['time'].dt.floor('d')
             input_data['gl_next'] = input_data['gl'].shift(-1)
             each_day_area = input_data.groupby("day").apply(

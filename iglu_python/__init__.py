@@ -37,7 +37,7 @@ from .sd_glu import sd_glu
 from .sd_measures import sd_measures
 from .sd_roc import sd_roc
 from .summary_glu import summary_glu
-from .utils import IGLU_R_COMPATIBLE, CGMS2DayByDay, check_data_columns, gd2d_to_df
+from .utils import set_iglu_r_compatible, is_iglu_r_compatible, CGMS2DayByDay, check_data_columns, gd2d_to_df
 
 __all__ = [
     "above_percent",
@@ -62,7 +62,8 @@ __all__ = [
     "hyper_index",
     "hypo_index",
     "igc",
-    "IGLU_R_COMPATIBLE",
+    "set_iglu_r_compatible",
+    "is_iglu_r_compatible",
     "in_range_percent",
     "iqr_glu",
     "j_index",
