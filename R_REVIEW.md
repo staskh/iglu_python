@@ -7,6 +7,13 @@
       (length(na.omit(diffs))*n/60)
 ```
 
+## AUC
+
+```
+        day = rep(data_ip[[2]], 1440/dt0),
+```
+Generate sequence of days repeated 1440/dt0, while it has to have each day repeated by 1440/dt0 and followed by the next
+
 ## CGMS2DayByDay
 
 [ndays = ceiling(as.double(difftime(max(tr), min(tr), units = "days")) + 1)](https://github.com/irinagain/iglu/blob/82e4d1a39901847881d5402d1ac61b3e678d2a5e/R/utils.R#L208) has to be ndays = ceiling(as.double(difftime(max(tr), min(tr), units = "days")))`

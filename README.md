@@ -33,7 +33,7 @@ Unless noted, iglu-r test is considered successful if it achieves precision of 0
 | cv_glu | ✅ |
 | cv_measures | ✅ |
 | ea1c | ✅ |
-| episode_calculation |  ✅| || no match in lv1_hypo_excl and lv1_hyper_excl|
+| episode_calculation |  ✅| || |
 | gmi | ✅ |
 | grade_eugly | ✅ |
 | grade_hyper | ✅ |
@@ -49,7 +49,7 @@ Unless noted, iglu-r test is considered successful if it achieves precision of 0
 | lbgi | ✅ |
 | mad_glu | ✅ |
 | mag |  ✅ | || IMHO, Original R implementation has an error |
-| mage | ✅ | || See algorithm at [MAGE](https://github.com/irinagain/iglu/blob/master/vignettes/MAGE.Rmd) |
+| mage | ✅ | || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
 | mean_glu | ✅ |
 | median_glu | ✅ |
 | modd | ✅ |

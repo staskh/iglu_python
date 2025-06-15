@@ -44,8 +44,6 @@ def test_auc_iglu_r_compatible(scenario):
     pd.set_option('future.no_silent_downcasting', True)
     expected_df = expected_df.replace({None: np.nan})
 
-
-
     result_df = iglu.auc(df, **kwargs)
 
     assert result_df is not None

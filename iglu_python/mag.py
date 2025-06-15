@@ -3,7 +3,8 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns, IGLU_R_COMPATIBLE
+from .utils import CGMS2DayByDay, check_data_columns, is_iglu_r_compatible
+
 
 
 def mag(
@@ -93,7 +94,7 @@ def mag(
         # Calculate absolute differences between readings n minutes apart
         lag = readings_per_interval
 
-        if IGLU_R_COMPATIBLE:
+        if is_iglu_r_compatible():
             idx = np.arange(0,len(gl_values),lag)
             gl_values_idx = gl_values[idx]
             diffs = gl_values_idx[1:] - gl_values_idx[:-1]
