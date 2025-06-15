@@ -168,8 +168,15 @@ def episode_calculation(
         subject_episode_data['id'] = subject_id
 
         # Append to main dataframes
-        episode_data_df = pd.concat([episode_data_df, subject_episode_data], ignore_index=True)
-        episode_summary_df = pd.concat([episode_summary_df, subject_summary], ignore_index=True)
+        if episode_data_df.empty:
+            episode_data_df = subject_episode_data
+        else:
+            episode_data_df = pd.concat([episode_data_df, subject_episode_data], ignore_index=True)
+        
+        if episode_summary_df.empty:
+            episode_summary_df = subject_summary
+        else:
+            episode_summary_df = pd.concat([episode_summary_df, subject_summary], ignore_index=True)
 
 
 
@@ -238,7 +245,7 @@ def episode_single(
             day_one = day_one.tz_convert(local_tz)
         ndays = len(gd2d_tuple[1])
         # generate grid times by starting from day one and cumulatively summing
-        time_ip =  pd.date_range(start=day_one + pd.Timedelta(minutes=dt0), periods=ndays * 24 * 60 /dt0, freq=f"{dt0}min")
+        time_ip =  pd.date_range(start=day_one + pd.Timedelta(minutes=dt0), periods=int(ndays * 24 * 60 /dt0), freq=f"{dt0}min")
         data_ip = gd2d_tuple[0].flatten().tolist()
         new_data = pd.DataFrame({
             "time": time_ip,
@@ -297,29 +304,25 @@ def episode_single(
                         x, "hypo", lv1_hypo, int(120 / dt0) + 1, end_idx
                     ),
                 }
-            )
+            ),
+            include_groups=False
         )
         .reset_index()
         .drop(columns=['level_1'])
     )
 
 
-    # Add exclusive labels
-    def hypo_exclusion_logic(group_df):
-        # group_df is a DataFrame with all columns for the current group
-        if (group_df['lv2_hypo'] > 0).any():
-            return pd.Series([0] * len(group_df), index=group_df.index)
-        else:
-            return group_df['lv1_hypo']
-    ep_per_seg['lv1_hypo_excl'] = ep_per_seg.groupby(['segment', 'lv1_hypo']).apply(hypo_exclusion_logic).reset_index(level=[0,1], drop=True).values.flatten()
-
-    def hyper_exclusion_logic(group_df):
-        # group_df is a DataFrame with all columns for the current group
-        if (group_df['lv2_hyper'] > 0).any():
-            return pd.Series([0] * len(group_df), index=group_df.index)
-        else:
-            return group_df['lv1_hyper']
-    ep_per_seg['lv1_hyper_excl'] = ep_per_seg.groupby(['segment', 'lv1_hyper']).apply(hyper_exclusion_logic).reset_index(level=[0,1], drop=True).values.flatten()
+    # Add exclusive labels using the correct original logic without DeprecationWarning
+    # For hypo exclusion: group by both segment and lv1_hypo, set to 0 if any lv2_hypo > 0 in that group
+    def calculate_exclusion(df, lv1_col, lv2_col):
+        """Calculate exclusion labels for lv1 episodes based on lv2 episodes in same group"""
+        df = df.copy()
+        df['group_id'] = df.groupby(['segment', lv1_col]).ngroup()
+        group_has_lv2 = df.groupby('group_id')[lv2_col].transform(lambda x: (x > 0).any())
+        return df[lv1_col].where(~group_has_lv2, 0)
+    
+    ep_per_seg['lv1_hypo_excl'] = calculate_exclusion(ep_per_seg, 'lv1_hypo', 'lv2_hypo')
+    ep_per_seg['lv1_hyper_excl'] = calculate_exclusion(ep_per_seg, 'lv1_hyper', 'lv2_hyper')
 
     full_segment_df = pd.concat([segment_data, ep_per_seg.drop(["segment"], axis=1)], axis=1)
 
@@ -402,7 +405,8 @@ def event_class(
                         else None] + [None]*(len(x)-1)
                     ),
                 }
-            )
+            ),
+            include_groups=False
         )
         .reset_index()
         .drop(columns=['level_1'])
@@ -471,7 +475,8 @@ def lv1_excl(data: pd.DataFrame) -> np.ndarray:
         lambda x: pd.DataFrame(
                 {
                     "excl":[0 if (x[lv2_first].values > 0).any() else x[lv1_first].iloc[0]]*len(x)
-                })
+                }),
+        include_groups=False
     )
 
     excl = excl.reset_index()

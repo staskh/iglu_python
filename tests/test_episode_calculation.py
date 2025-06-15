@@ -35,9 +35,12 @@ def test_episode_calculation_iglu_r_compatible(scenario):
         # this is extended expected result, with two separate dataframes
         assert kwargs["return_data"]
         expected_episodes_df = pd.DataFrame(expected_results['episodes']).reset_index(drop=True)
+        expected_episodes_df = expected_episodes_df.infer_objects(copy=False)
         expected_data_df = pd.DataFrame(expected_results['data']).reset_index(drop=True)
+        expected_data_df = expected_data_df.infer_objects(copy=False)
     else :
         expected_episodes_df = pd.DataFrame(expected_results).reset_index(drop=True)
+        expected_episodes_df = expected_episodes_df.infer_objects(copy=False)
         expected_data_df = None
 
 
@@ -63,8 +66,8 @@ def test_episode_calculation_iglu_r_compatible(scenario):
 
         # ToDo : find why no match in lv1_hypo_excl and lv1_hyper_excl
         pd.testing.assert_frame_equal(
-            result_data_df[['id', 'time', 'gl', 'segment', 'lv1_hypo', 'lv2_hypo', 'lv1_hyper', 'lv2_hyper', 'ext_hypo']],
-            expected_data_df[['id', 'time', 'gl', 'segment', 'lv1_hypo', 'lv2_hypo', 'lv1_hyper', 'lv2_hyper', 'ext_hypo']],
+            result_data_df,
+            expected_data_df,
             check_dtype=False,  # Don't check dtypes since we might have different numeric types
             check_index_type=True,
             check_column_type=True,

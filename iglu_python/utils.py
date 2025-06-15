@@ -91,8 +91,8 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
         raise ValueError("Data contains no glucose values")
 
     # Check for missing values
-    if data["gl"].isna().any():
-        warnings.warn("Data contains missing glucose values")
+    # if data["gl"].isna().any():
+    #     warnings.warn("Data contains missing glucose values")
 
     # convert time to specified timezone
     # TODO: check if this is correct (R-implementation compatibility)

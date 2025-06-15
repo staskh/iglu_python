@@ -34,6 +34,9 @@ def test_hypo_index_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
+    pd.set_option('future.no_silent_downcasting', True)
+    expected_df = expected_df.replace({None: np.nan})
+
 
     # Read CSV and convert time column to datetime
     df = pd.read_csv(input_file_name, index_col=0)

@@ -71,7 +71,7 @@ def m_value(data: Union[pd.DataFrame, pd.Series], r: float = 90) -> pd.DataFrame
     # Calculate M-value for each subject
     result = (
         data.groupby("id")
-        .apply(lambda x: 1000 * np.mean(np.abs(np.log10(x["gl"] / r)) ** 3))
+        .apply(lambda x: 1000 * np.mean(np.abs(np.log10(x["gl"] / r)) ** 3), include_groups=False)
         .reset_index()
     )
     result.columns = ["id", "M_value"]

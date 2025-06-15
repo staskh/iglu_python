@@ -135,13 +135,13 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[
     
     # 1. SDw - vertical within days
     # Standard deviation within each day, then mean across days
-    daily_sds = np.nanstd(gd2d, axis=1, ddof=1)  # ddof=1 for sample std
-    result['SDw'] = np.nanmean(daily_sds)
+    daily_sds = _safe_nanstd(gd2d, axis=1, ddof=1)  # ddof=1 for sample std
+    result['SDw'] = _safe_nanmean(daily_sds)
     
     # 2. SDhhmm - between time points
     # Mean at each time point across days, then SD of those means
-    timepoint_means = np.nanmean(gd2d, axis=0)
-    result['SDhhmm'] = np.nanstd(timepoint_means, ddof=1)
+    timepoint_means = _safe_nanmean(gd2d, axis=0)
+    result['SDhhmm'] = _safe_nanstd(timepoint_means, ddof=1)
     
     # 3. SDwsh - within series (1-hour windows)
     # Rolling standard deviation over 1-hour windows
@@ -150,24 +150,24 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[
     
     # Calculate rolling standard deviation
     rolling_sds = _rolling_std(gs, window=win)
-    result['SDwsh'] = np.nanmean(rolling_sds)
+    result['SDwsh'] = _safe_nanmean(rolling_sds)
     
     # 4. SDdm - horizontal sd (between daily means)
     # Standard deviation of daily mean glucose values
-    daily_means = np.nanmean(gd2d, axis=1)
-    result['SDdm'] = np.nanstd(daily_means, ddof=1)
+    daily_means = _safe_nanmean(gd2d, axis=1)
+    result['SDdm'] = _safe_nanstd(daily_means, ddof=1)
     
     # 5. SDb - between days, within timepoints
     # SD across days for each time point, then mean of those SDs
-    timepoint_sds = np.nanstd(gd2d, axis=0, ddof=1)
-    result['SDb'] = np.nanmean(timepoint_sds)
+    timepoint_sds = _safe_nanstd(gd2d, axis=0, ddof=1)
+    result['SDb'] = _safe_nanmean(timepoint_sds)
     
     # 6. SDbdm - between days, within timepoints, corrected for daily means
     # Subtract daily mean from each value, then calculate SDb on corrected values
     daily_means_matrix = daily_means[:, np.newaxis]  # Convert to column vector
     corrected_gd2d = gd2d - daily_means_matrix
-    corrected_timepoint_sds = np.nanstd(corrected_gd2d, axis=0, ddof=1)
-    result['SDbdm'] = np.nanmean(corrected_timepoint_sds)
+    corrected_timepoint_sds = _safe_nanstd(corrected_gd2d, axis=0, ddof=1)
+    result['SDbdm'] = _safe_nanmean(corrected_timepoint_sds)
     
     return result
 
@@ -200,9 +200,72 @@ def _rolling_std(data: np.ndarray, window: int) -> np.ndarray:
     for i in range(n - window + 1):
         window_data = valid_data[i:i + window]
         if len(window_data) == window:  # Full window
-            rolling_stds.append(np.nanstd(window_data, ddof=1))
+            rolling_stds.append(_safe_nanstd(window_data, ddof=1))
     
     return np.array(rolling_stds) if rolling_stds else np.array([np.nan])
+
+def _safe_nanstd(data: np.ndarray, axis: Optional[int] = None, ddof: int = 1) -> float:
+    """
+    Safe version of np.nanstd that handles insufficient data gracefully
+    
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data
+    axis : int, optional
+        Axis along which the standard deviation is computed
+    ddof : int
+        Delta degrees of freedom
+        
+    Returns
+    -------
+    float
+        Standard deviation or np.nan if insufficient data
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        
+        if axis is None:
+            # Check if we have enough non-NaN values
+            valid_data = data[~np.isnan(data)]
+            if len(valid_data) <= ddof:
+                return np.nan
+        else:
+            # For axis operations, we need to check each slice
+            # This is more complex, so we'll just suppress warnings
+            pass
+            
+        return np.nanstd(data, axis=axis, ddof=ddof)
+
+
+def _safe_nanmean(data: np.ndarray, axis: Optional[int] = None) -> float:
+    """
+    Safe version of np.nanmean that handles empty slices gracefully
+    
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data
+    axis : int, optional
+        Axis along which the mean is computed
+        
+    Returns
+    -------
+    float
+        Mean or np.nan if no valid data
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        
+        if axis is None:
+            # Check if we have any non-NaN values
+            if np.isnan(data).all():
+                return np.nan
+        else:
+            # For axis operations, suppress warnings and let numpy handle it
+            pass
+            
+        return np.nanmean(data, axis=axis)
 
 
 # Alternative vectorized implementation for better performance
@@ -237,11 +300,11 @@ def _calculate_sd_subtypes_vectorized(gd2d: np.ndarray, dt0: int, subject_id: An
         
         return {
             'id': subject_id,
-            'SDw': np.nanmean(np.nanstd(gd2d, axis=1, ddof=1)),
-            'SDhhmm': np.nanstd(np.nanmean(gd2d, axis=0), ddof=1),
-            'SDwsh': np.nanmean(_rolling_std(gd2d.T.flatten(), round(60/dt0))),
-            'SDdm': np.nanstd(np.nanmean(gd2d, axis=1), ddof=1),
-            'SDb': np.nanmean(np.nanstd(gd2d, axis=0, ddof=1)),
-            'SDbdm': np.nanmean(np.nanstd(gd2d - np.nanmean(gd2d, axis=1, keepdims=True), 
+            'SDw': _safe_nanmean(np.nanstd(gd2d, axis=1, ddof=1)),
+            'SDhhmm': np.nanstd(_safe_nanmean(gd2d, axis=0), ddof=1),
+            'SDwsh': _safe_nanmean(_rolling_std(gd2d.T.flatten(), round(60/dt0))),
+            'SDdm': np.nanstd(_safe_nanmean(gd2d, axis=1), ddof=1),
+            'SDb': _safe_nanmean(np.nanstd(gd2d, axis=0, ddof=1)),
+            'SDbdm': _safe_nanmean(np.nanstd(gd2d - _safe_nanmean(gd2d, axis=1, keepdims=True), 
                                         axis=0, ddof=1))
         }
