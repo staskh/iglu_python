@@ -7,7 +7,7 @@ from .grade import _grade_formula
 from .utils import check_data_columns
 
 
-def grade_hyper(data: Union[pd.DataFrame, pd.Series], upper: int = 140) -> pd.DataFrame:
+def grade_hyper(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], upper: int = 140) -> pd.DataFrame|float:
     """
     Calculate percentage of GRADE score attributable to hyperglycemia.
 
@@ -16,17 +16,17 @@ def grade_hyper(data: Union[pd.DataFrame, pd.Series], upper: int = 140) -> pd.Da
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
     upper : int, default=140
         Upper bound used for hyperglycemia cutoff, in mg/dL
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for GRADE hyperglycemia value. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for GRADE hyperglycemia value. If a Series of glucose values is passed, then a float
+        value is returned.
 
     References
     ----------
@@ -54,43 +54,33 @@ def grade_hyper(data: Union[pd.DataFrame, pd.Series], upper: int = 140) -> pd.Da
     0       65.43
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GRADE_hyper": [np.nan]})
-
-        # Calculate GRADE scores
-        grade_scores = _grade_formula(data)
-
-        # Calculate percentage above upper bound
-        above_upper = data > upper
-        total_grade = np.sum(grade_scores)
-        if total_grade == 0:
-            return pd.DataFrame({"GRADE_hyper": [np.nan]})
-
-        hyper_percent = (np.sum(grade_scores[above_upper]) / total_grade) * 100
-        return pd.DataFrame({"GRADE_hyper": [hyper_percent]})
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return grade_hyper_single(data, upper)
 
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    # Calculate GRADE hyperglycemia for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].dropna(subset=["gl"])
-        if len(subject_data) == 0:
-            continue
+    out = data.groupby('id').agg(
+        GRADE_hyper = ("gl", lambda x: grade_hyper_single(x, upper))
+    ).reset_index()
+    return out
 
-        # Calculate GRADE scores
-        grade_scores = _grade_formula(subject_data["gl"])
+def grade_hyper_single(data: pd.Series, upper: int = 140) -> float:
+    """Calculate GRADE hyperglycemia for a single timeseries"""
+    data = data.dropna()
+    if len(data) == 0:
+        return np.nan
 
-        # Calculate percentage above upper bound
-        above_upper = subject_data["gl"] > upper
-        total_grade = np.sum(grade_scores)
-        if total_grade == 0:
-            continue
+    # Calculate GRADE scores
+    grade_scores = _grade_formula(data)
+    
+    # Calculate percentage above upper bound
+    above_upper = data > upper
+    total_grade = np.sum(grade_scores)
+    if total_grade == 0:
+        return np.nan
 
-        hyper_percent = (np.sum(grade_scores[above_upper]) / total_grade) * 100
-        result.append({"id": subject, "GRADE_hyper": hyper_percent})
-
-    return pd.DataFrame(result)
+    hyper_percent = (np.sum(grade_scores[above_upper]) / total_grade) * 100
+    return hyper_percent

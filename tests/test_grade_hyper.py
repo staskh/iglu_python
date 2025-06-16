@@ -105,11 +105,26 @@ def test_grade_hyper_series_input():
     result = grade_hyper(data)
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "GRADE_hyper" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 89.684900, rtol=1e-3)
 
+def test_grade_hyper_list_input():
+    """Test GRADE hyperglycemia calculation with Series input."""
+    data = [150, 200, 130, 190]
+    result = grade_hyper(data)
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 89.684900, rtol=1e-3)
+
+def test_grade_hyper_numpy_array_input():
+    """Test GRADE hyperglycemia calculation with Series input."""
+    data = np.array([150, 200, 130, 190])
+    result = grade_hyper(data)
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 89.684900, rtol=1e-3)
 
 def test_grade_hyper_custom_upper():
     """Test GRADE hyperglycemia calculation with custom upper bound."""

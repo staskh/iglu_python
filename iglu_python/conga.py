@@ -7,8 +7,8 @@ from .utils import CGMS2DayByDay, check_data_columns
 
 
 def conga(
-    data: Union[pd.DataFrame, pd.Series, list], n: int = 24, tz: str = ""
-) -> pd.DataFrame:
+    data: Union[pd.DataFrame, pd.Series], n: int = 24, tz: str = ""
+) -> pd.DataFrame|float:
     """
     Calculate Continuous Overall Net Glycemic Action (CONGA).
 
@@ -59,58 +59,45 @@ def conga(
     0  35.355
     """
 
-    def conga_single(data: pd.DataFrame, hours: int = 1, tz: str = "") -> float:
-        """Calculate CONGA for a single subject"""
-        # Convert data to day-by-day format
-        # Missing values will be linearly interpolated when close enough to non-missing values.
-        gl_by_id_ip, _, dt0 = CGMS2DayByDay(data, tz=tz)
-
-        # Calculate number of readings per hour
-        hourly_readings = round(60 / dt0)
-
-        # Calculate differences between measurements n hours apart
-        # Flatten the matrix and calculate differences with lag
-        gl_vector = gl_by_id_ip.flatten()
-
-        # Calculate differences between measurements n hours apart
-        # Flatten the matrix and calculate differences with lag
-        lag = hourly_readings * hours
-        diffs = gl_vector[lag:] - gl_vector[:-lag]
-
-        # Check if we have sufficient data for std calculation
-        # Need at least 2 non-NaN values for ddof=1
-        valid_diffs = diffs[~np.isnan(diffs)]
-        if len(valid_diffs) < 2:
-            return np.nan
-
-        return float(np.nanstd(diffs, ddof=1))
-
     # Handle Series input
-    if isinstance(data, (pd.Series, list)):
-        # Convert Series to DataFrame format (assuming that the data is collected with 5-minute intervals)
-        data_df = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
-                "gl": data.values,
-            }
-        )
-        conga_val = conga_single(data_df, hours=n, tz=tz)
-        return pd.DataFrame({"CONGA": [conga_val]})
+    if isinstance(data, (pd.Series)):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+        return conga_single(data, hours=n, tz=tz)
 
     # Handle DataFrame input
     data = check_data_columns(data)
 
     # Calculate CONGA for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].copy()
-        if len(subject_data.dropna(subset=["gl"])) == 0:
-            continue
+    data.set_index("time", inplace=True,drop=True)
+    out = data.groupby('id').agg(
+        CONGA = ("gl", lambda x: conga_single(x, hours=n, tz=tz))
+    ).reset_index()
 
-        conga_val = conga_single(subject_data, hours=n, tz=tz)
-        result.append({"id": subject, "CONGA": conga_val})
+    return out
 
-    return pd.DataFrame(result)
+def conga_single(data: pd.DataFrame|pd.Series, hours: int = 1, tz: str = "") -> float:
+    """Calculate CONGA for a single subject"""
+    # Convert data to day-by-day format
+    # Missing values will be linearly interpolated when close enough to non-missing values.
+    gl_by_id_ip, _, dt0 = CGMS2DayByDay(data, tz=tz)
+
+    # Calculate number of readings per hour
+    hourly_readings = round(60 / dt0)
+
+    # Calculate differences between measurements n hours apart
+    # Flatten the matrix and calculate differences with lag
+    gl_vector = gl_by_id_ip.flatten()
+
+    # Calculate differences between measurements n hours apart
+    # Flatten the matrix and calculate differences with lag
+    lag = hourly_readings * hours
+    diffs = gl_vector[lag:] - gl_vector[:-lag]
+
+    # Check if we have sufficient data for std calculation
+    # Need at least 2 non-NaN values for ddof=1
+    valid_diffs = diffs[~np.isnan(diffs)]
+    if len(valid_diffs) < 2:
+        return np.nan
+
+    return float(np.nanstd(diffs, ddof=1))

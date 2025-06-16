@@ -8,8 +8,8 @@ from .utils import check_data_columns
 
 
 def grade_eugly(
-    data: Union[pd.DataFrame, pd.Series], lower: int = 70, upper: int = 140
-) -> pd.DataFrame:
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: int = 70, upper: int = 140
+) -> pd.DataFrame|float:  
     """
     Calculate percentage of GRADE score attributable to target range.
 
@@ -19,8 +19,8 @@ def grade_eugly(
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
     lower : int, default=70
         Lower bound used for hypoglycemia cutoff, in mg/dL
     upper : int, default=140
@@ -28,10 +28,10 @@ def grade_eugly(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for GRADE euglycemia value. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for GRADE euglycemia value. If a Series of glucose values is passed, then a float
+        value is returned.
 
     References
     ----------
@@ -59,43 +59,36 @@ def grade_eugly(
     0       65.43
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GRADE_eugly": [np.nan]})
-
-        # Calculate GRADE scores
-        grade_scores = _grade_formula(data)
-
-        # Calculate percentage in target range
-        in_range = (data >= lower) & (data <= upper)
-        total_grade = np.sum(grade_scores)
-        if total_grade == 0:
-            return pd.DataFrame({"GRADE_eugly": [np.nan]})
-
-        eugly_percent = (np.sum(grade_scores[in_range]) / total_grade) * 100
-        return pd.DataFrame({"GRADE_eugly": [eugly_percent]})
-
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return grade_eugly_single(data, lower, upper)
+    
     # Handle DataFrame input
     data = check_data_columns(data)
 
     # Calculate GRADE euglycemia for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].dropna(subset=["gl"])
-        if len(subject_data) == 0:
-            continue
+    out = data.groupby('id').agg(
+        GRADE_eugly = ("gl", lambda x: grade_eugly_single(x, lower, upper))
+    ).reset_index()
 
-        # Calculate GRADE scores
-        grade_scores = _grade_formula(subject_data["gl"])
+    return out
 
-        # Calculate percentage in target range
-        in_range = (subject_data["gl"] >= lower) & (subject_data["gl"] <= upper)
-        total_grade = np.sum(grade_scores)
-        if total_grade == 0:
-            continue
 
-        eugly_percent = (np.sum(grade_scores[in_range]) / total_grade) * 100
-        result.append({"id": subject, "GRADE_eugly": eugly_percent})
+def grade_eugly_single(data: pd.Series, lower: int = 70, upper: int = 140) -> float:
+    """Calculate GRADE euglycemia for a single timeseries"""
+    data = data.dropna()
+    if len(data) == 0:
+        return np.nan
 
-    return pd.DataFrame(result)
+    # Calculate GRADE scores
+    grade_scores = _grade_formula(data)
+
+    # Calculate percentage in target range
+    in_range = (data >= lower) & (data <= upper)
+    total_grade = np.sum(grade_scores)
+    if total_grade == 0:
+        return np.nan
+
+    eugly_percent = (np.sum(grade_scores[in_range]) / total_grade) * 100
+    return eugly_percent

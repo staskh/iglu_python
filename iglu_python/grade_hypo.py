@@ -7,7 +7,7 @@ from .grade import _grade_formula
 from .utils import check_data_columns
 
 
-def grade_hypo(data: Union[pd.DataFrame, pd.Series], lower: int = 80) -> pd.DataFrame:
+def grade_hypo(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: int = 80) -> pd.DataFrame|float:
     """
     Calculate percentage of GRADE score attributable to hypoglycemia.
 
@@ -16,17 +16,17 @@ def grade_hypo(data: Union[pd.DataFrame, pd.Series], lower: int = 80) -> pd.Data
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
     lower : int, default=80
         Lower bound used for hypoglycemia cutoff, in mg/dL
 
     Returns
     -------
-    pd.DataFrame
+        pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for GRADE hypoglycemia value. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for GRADE hypoglycemia value. If a Series of glucose values is passed, then a float
+        value is returned.
 
     References
     ----------
@@ -54,43 +54,35 @@ def grade_hypo(data: Union[pd.DataFrame, pd.Series], lower: int = 80) -> pd.Data
     0       35.43
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GRADE_hypo": [np.nan]})
-
-        # Calculate GRADE scores
-        grade_scores = _grade_formula(data)
-
-        # Calculate percentage below lower bound
-        below_lower = data < lower
-        total_grade = np.sum(grade_scores)
-        if total_grade == 0:
-            return pd.DataFrame({"GRADE_hypo": [np.nan]})
-
-        hypo_percent = (np.sum(grade_scores[below_lower]) / total_grade) * 100
-        return pd.DataFrame({"GRADE_hypo": [hypo_percent]})
-
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return grade_hypo_single(data, lower)
+    
     # Handle DataFrame input
     data = check_data_columns(data)
 
     # Calculate GRADE hypoglycemia for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].dropna(subset=["gl"])
-        if len(subject_data) == 0:
-            continue
+    out = data.groupby('id').agg(
+        GRADE_hypo = ("gl", lambda x: grade_hypo_single(x, lower))
+    ).reset_index()
 
-        # Calculate GRADE scores
-        grade_scores = _grade_formula(subject_data["gl"])
+    return out
 
-        # Calculate percentage below lower bound
-        below_lower = subject_data["gl"] < lower
-        total_grade = np.sum(grade_scores)
-        if total_grade == 0:
-            continue
+def grade_hypo_single(data: pd.Series, lower: int = 80) -> float:
+    """Calculate GRADE hypoglycemia for a single timeseries"""
+    data = data.dropna()
+    if len(data) == 0:
+        return np.nan
 
-        hypo_percent = (np.sum(grade_scores[below_lower]) / total_grade) * 100
-        result.append({"id": subject, "GRADE_hypo": hypo_percent})
+    # Calculate GRADE scores
+    grade_scores = _grade_formula(data)
+    
+    # Calculate percentage below lower bound
+    below_lower = data < lower
+    total_grade = np.sum(grade_scores)
+    if total_grade == 0:
+        return np.nan
 
-    return pd.DataFrame(result)
+    hypo_percent = (np.sum(grade_scores[below_lower]) / total_grade) * 100
+    return hypo_percent

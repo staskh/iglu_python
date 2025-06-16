@@ -8,7 +8,6 @@ import iglu_python as iglu
 
 method_name = "adrr"
 
-
 def get_test_scenarios():
     """Get test scenarios for ADRR calculations"""
     # Load expected results
@@ -22,13 +21,6 @@ def get_test_scenarios():
         for scenario in expected_results["test_runs"]
         if scenario["method"] == method_name
     ]
-
-
-@pytest.fixture
-def test_data():
-    """Fixture that provides test data for ADRR calculations"""
-    return get_test_scenarios()
-
 
 @pytest.mark.parametrize("scenario", get_test_scenarios())
 def test_adrr_iglu_r_compatible(scenario):
@@ -69,3 +61,62 @@ def test_adrr_iglu_r_compatible(scenario):
         check_freq=True,
         check_flags=True,
     )
+
+def test_adrr_series_with_datetime_index():
+    """Test ADRR calculation with Series input that has DatetimeIndex."""
+    # Create test data with DatetimeIndex
+    time = pd.to_datetime(['2020-01-01 10:00:00', '2020-01-01 10:05:00', '2020-01-01 10:10:00',
+                          '2020-01-02 10:00:00', '2020-01-02 10:05:00', '2020-01-02 10:10:00'])
+    data = pd.Series(
+        [100, 120, 110,  # Day 1: LBGI=0.5, HBGI=0.8
+         90, 130, 95],   # Day 2: LBGI=0.7, HBGI=1.2
+        index=time
+    )
+    
+    # Calculate ADRR
+    result = iglu.adrr(data)
+    
+    # Expected results:
+    # Day 1: LBGI=0.5, HBGI=0.8, Risk=1.3
+    # Day 2: LBGI=0.7, HBGI=1.2, Risk=1.9
+    # ADRR = mean([1.3, 1.9]) = 1.6
+    expected = 1.538552
+    # Compare results
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=0.001)
+
+def test_adrr_series_without_datetime_index():
+    """Test ADRR calculation with Series input that doesn't have DatetimeIndex."""
+    # Create test data with regular index
+    data = pd.Series(
+        [100, 120, 110, 90, 130, 95],
+        index=range(6)  # Regular integer index instead of DatetimeIndex
+    )
+    
+    # Attempt to calculate ADRR - should raise ValueError
+    with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
+        iglu.adrr(data)
+
+def test_adrr_series_with_missing_values():
+    """Test ADRR calculation with Series input containing missing values."""
+    # Create test data with DatetimeIndex and missing values
+    time = pd.to_datetime(['2020-01-01 10:00:00', '2020-01-01 10:05:00', '2020-01-01 10:10:00',
+                          '2020-01-02 10:00:00', '2020-01-02 10:05:00', '2020-01-02 10:10:00'])
+    data = pd.Series(
+        [100, np.nan, 110,  # Day 1: LBGI=0.5, HBGI=0.8 (after interpolation)
+         90, 130, np.nan],  # Day 2: LBGI=0.7, HBGI=1.2 (after interpolation)
+        index=time
+    )
+    
+    # Calculate ADRR with interpolation
+    result = iglu.adrr(data)
+    
+    # Expected results:
+    # Day 1: LBGI=0.5, HBGI=0.8, Risk=0.48
+    # Day 2: LBGI=0.7, HBGI=1.2, Risk=2.45
+    # ADRR = mean([0.48, 2.45]) = 1.466489
+    expected = 1.466489
+    
+    # Compare results
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=0.001)

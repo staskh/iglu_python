@@ -99,13 +99,15 @@ def test_conga_default():
 
 def test_conga_series():
     """Test CONGA with Series input"""
+    days = 2
     series_data = pd.Series(
-        ([150, 155, 160, 165, 140, 145] * 2) * 10
-    )  # 120 data points/10 hours
+        [150, 155, 160, 165, 140, 145] * 2*24*days,
+        index=pd.date_range(start='2020-01-01', periods=12*24*days, freq='5min')
+    )  # 12 data points/2 hours
     result = iglu.conga(series_data, n=1)  # CONGA to be calculated for 1 hour
-    assert isinstance(result, pd.DataFrame)
-    assert "CONGA" in result.columns
-    assert len(result) == 1
+
+    assert isinstance(result, float)
+    assert result == 0.0 # no change in glucose values over 2 days
 
 
 def test_conga_empty():
@@ -115,15 +117,17 @@ def test_conga_empty():
         iglu.conga(empty_data)
 
 
-def test_conga_constant_glucose():
-    """Test CONGA with constant glucose values"""
-    series_data = pd.Series(
-        ([150, 155, 160, 165, 140, 145] * 2) * 10
-    )  # 120 data points/10 hours
-    result = iglu.conga(series_data, n=1)  # CONGA to be calculated for 1 hour
-    assert len(result) == 1
-    assert result["CONGA"].iloc[0] == 0  # Should be 0 for constant glucose
-
+def test_conga_series_without_datetime_index():
+    """Test CONGA with Series input that doesn't have DatetimeIndex."""
+    # Create test data with regular index
+    data = pd.Series(
+        [100, 120, 110, 90, 130, 95],
+        index=range(6)  # Regular integer index instead of DatetimeIndex
+    )
+    
+    # Attempt to calculate CONGA - should raise ValueError
+    with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
+        iglu.conga(data)
 
 def test_conga_missing_values():
     """Test CONGA with missing values"""

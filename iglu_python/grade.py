@@ -52,8 +52,10 @@ def grade(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0  22.34
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        return pd.DataFrame({"GRADE": [np.mean(_grade_formula(data.dropna()))]})
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return np.mean(_grade_formula(data.dropna()))
 
     # Handle DataFrame input
     data = check_data_columns(data)
