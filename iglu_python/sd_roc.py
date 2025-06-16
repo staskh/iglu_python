@@ -108,7 +108,7 @@ def sd_roc_single(data: pd.Series,
                   dt0: int = 5,
                   inter_gap: int = 45,
                   tz: str = "") -> float:
-    
+
     roc_data = roc(data, timelag=timelag, dt0=dt0, inter_gap=inter_gap, tz=tz)
     sd_roc = np.nanstd(roc_data.dropna()['roc'], ddof=1)
     return sd_roc

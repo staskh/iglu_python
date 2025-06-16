@@ -86,12 +86,12 @@ def igc(
     return out
 
 def igc_single(
-    gl: pd.Series, 
-    LLTR: int = 80, 
-    ULTR: int = 140, 
-    a: float = 1.1, 
-    b: float = 2, 
-    c: int = 30, 
+    gl: pd.Series,
+    LLTR: int = 80,
+    ULTR: int = 140,
+    a: float = 1.1,
+    b: float = 2,
+    c: int = 30,
     d: int = 30
 ) -> float:
     """

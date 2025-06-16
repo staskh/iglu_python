@@ -188,7 +188,7 @@ def test_active_percent_single_subject_no_gaps():
             "gl": [150, 155, 160],
         }
     )
-    
+
     result = iglu.active_percent(single_subject, dt0=5)
     assert len(result) == 1
     assert result["active_percent"].iloc[0] == 100.0  # Should be 100% active with no gaps
@@ -203,7 +203,7 @@ def test_active_percent_series_with_datetime_index():
          90, 130, 95],   # Day 2: 3 measurements
         index=time
     )
-    
+
     # Calculate active_percent
     result = iglu.active_percent(data)
 
@@ -212,13 +212,13 @@ def test_active_percent_series_with_datetime_index():
     assert "ndays" in result
     assert "start_date" in result
     assert "end_date" in result
-    
+
     # Expected results:
     # Total possible measurements: 2 days * 24 hours * 12 measurements per hour = 576
     # Actual measurements: 6
     # active_percent = (6 / 576) * 100 = 1.042
     expected = 2.061856
-    
+
     # Compare results
     np.testing.assert_allclose(result["active_percent"], expected, rtol=0.001)
 
@@ -229,7 +229,7 @@ def test_active_percent_series_without_datetime_index():
         [100, 120, 110, 90, 130, 95],
         index=range(6)  # Regular integer index instead of DatetimeIndex
     )
-    
+
     # Attempt to calculate active_percent - should raise ValueError
     with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
         iglu.active_percent(data)
@@ -244,7 +244,7 @@ def test_active_percent_series_with_missing_values():
          90, 130, np.nan],  # Day 2: 2 measurements
         index=time
     )
-    
+
     # Calculate active_percent
     result = iglu.active_percent(data)
     assert isinstance(result, dict)
@@ -252,13 +252,13 @@ def test_active_percent_series_with_missing_values():
     assert "ndays" in result
     assert "start_date" in result
     assert "end_date" in result
-    
+
     # Expected results:
     # Total possible measurements: 2 days * 24 hours * 12 measurements per hour = 576
     # Actual measurements (excluding NaN): 4
     # active_percent = (4 / 576) * 100 = 0.694
     expected = 2.068966
-    
+
     # Compare results
     np.testing.assert_allclose(result["active_percent"], expected, rtol=0.001)
 

@@ -106,7 +106,7 @@ def test_modd_default_output():
 
 def test_modd_custom_lag():
     """Test modd calculation with custom lag value"""
-    samples_per_day = int(24*60/5)  # sample each 5 min 
+    samples_per_day = int(24*60/5)  # sample each 5 min
     data = pd.DataFrame(
         {
             "id": ["subject1"] * 3 * samples_per_day,
@@ -123,7 +123,7 @@ def test_modd_custom_lag():
 
 def test_modd_series_input():
     """Test modd calculation with Series input"""
-    samples_per_day = int(24*60/5)  # sample each 5 min 
+    samples_per_day = int(24*60/5)  # sample each 5 min
     series_data = pd.Series(
         [150]*samples_per_day + [200]*samples_per_day + [250]*samples_per_day,
         index=pd.date_range(start="2020-01-01 00:00:00", periods=3*samples_per_day, freq="5min")

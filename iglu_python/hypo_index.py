@@ -67,7 +67,7 @@ def hypo_index(
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return hypo_index_single(data, LLTR, b, d)
-    
+
     data = check_data_columns(data)
     out = data.groupby('id').agg(
         hypo_index = ("gl", lambda x: hypo_index_single(x, LLTR, b, d))

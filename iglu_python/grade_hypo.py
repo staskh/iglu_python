@@ -58,7 +58,7 @@ def grade_hypo(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: in
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return grade_hypo_single(data, lower)
-    
+
     # Handle DataFrame input
     data = check_data_columns(data)
 
@@ -77,7 +77,7 @@ def grade_hypo_single(data: pd.Series, lower: int = 80) -> float:
 
     # Calculate GRADE scores
     grade_scores = _grade_formula(data)
-    
+
     # Calculate percentage below lower bound
     below_lower = data < lower
     total_grade = np.sum(grade_scores)

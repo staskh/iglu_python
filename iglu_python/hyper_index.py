@@ -90,4 +90,4 @@ def hyper_index_single(
     hyper_values = gl[gl > ULTR] - ULTR
     hyper_index = np.sum(hyper_values**a) / (len(gl) * c)
 
-    return hyper_index   
+    return hyper_index

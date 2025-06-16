@@ -123,7 +123,7 @@ def test_iqr_glu_output_format():
     result_array = iglu.iqr_glu(array_data)
     assert isinstance(result_array, float)
     np.testing.assert_allclose(result_array, 12.5, rtol=1e-3)
-    
+
     # Test with empty data
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):

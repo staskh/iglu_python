@@ -1,9 +1,9 @@
-import warnings
 
 import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns
+
 
 def adrr(data: pd.DataFrame|pd.Series) -> pd.DataFrame|float:
     """
@@ -83,7 +83,7 @@ def adrr_single(data: pd.DataFrame|pd.Series) -> float:
     data_filtered = data.dropna()
     if len(data_filtered) == 0:
         return np.nan
-    
+
     # Group by date and calculate daily risk for each day
     daily_risks = data_filtered.groupby(data_filtered.index.date).apply(
         lambda x: _calculate_daily_risk(x)

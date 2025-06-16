@@ -73,23 +73,23 @@ def test_process_data_basic():
     """Test basic process_data functionality."""
     data = pd.DataFrame({
         'subject_id': ['A', 'A', 'B', 'B'],
-        'datetime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00', 
+        'datetime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00',
                      '2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'glucose': [120, 130, 110, 125]
     })
-    
+
     result = iglu.process_data(data, id='subject_id', timestamp='datetime', glu='glucose')
-    
+
     # Check output structure
     assert isinstance(result, pd.DataFrame)
     assert list(result.columns) == ['id', 'time', 'gl']
     assert len(result) == 4
-    
+
     # Check data types
     assert pd.api.types.is_string_dtype(result['id'])
     for col in ['gl']:
         assert np.issubdtype(result[col].dtype, np.number)
-    
+
     # Check values
     assert set(result['id'].unique()) == {'A', 'B'}
     assert all(result['gl'] >= 0)
@@ -101,21 +101,21 @@ def test_process_data_default_id():
         'datetime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'glucose': [120, 130]
     })
-    
+
     # Capture the print output
     import io
     import sys
     captured_output = io.StringIO()
     sys.stdout = captured_output
-    
+
     result = iglu.process_data(data, timestamp='datetime', glu='glucose')
-    
+
     # Restore stdout
     sys.stdout = sys.__stdout__
-    
+
     # Check that the default id message was printed
     assert "No 'id' parameter passed, defaulting id to 1" in captured_output.getvalue()
-    
+
     # Check result
     assert list(result.columns) == ['id', 'time', 'gl']
     assert all(result['id'] == '1')
@@ -128,9 +128,9 @@ def test_process_data_case_insensitive():
         'DateTime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'Glucose': [120, 130]
     })
-    
+
     result = iglu.process_data(data, id='subject_id', timestamp='datetime', glu='glucose')
-    
+
     assert list(result.columns) == ['id', 'time', 'gl']
     assert len(result) == 2
 
@@ -142,9 +142,9 @@ def test_process_data_mmol_conversion():
         'time': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'glucose_mmol/l': [6.7, 7.2]  # mmol/L values
     })
-    
+
     result = iglu.process_data(data, id='id', timestamp='time', glu='glucose_mmol/l')
-    
+
     # Check conversion (6.7 mmol/L * 18 = 120.6 mg/dL)
     assert abs(result['gl'].iloc[0] - 120.6) < 0.1
     assert abs(result['gl'].iloc[1] - 129.6) < 0.1
@@ -154,9 +154,9 @@ def test_process_data_series_with_datetime_index():
     """Test process_data with Series input having datetime index."""
     dates = pd.date_range('2020-01-01 10:00:00', periods=3, freq='5min')
     series_data = pd.Series([120, 130, 125], index=dates)
-    
+
     result = iglu.process_data(series_data)
-    
+
     assert list(result.columns) == ['id', 'time', 'gl']
     assert len(result) == 3
     assert all(result['id'] == '1')
@@ -173,7 +173,7 @@ def test_process_data_series_without_datetime_index():
 def test_process_data_list_input():
     """Test process_data with list input."""
     glucose_list = [120, 130, 125, 140]
-    
+
     with pytest.raises(ValueError):
         iglu.process_data(glucose_list)
 
@@ -181,23 +181,23 @@ def test_process_data_list_input():
 def test_process_data_numpy_array():
     """Test process_data with numpy array input."""
     glucose_array = np.array([120, 130, 125, 140])
-    
+
     with pytest.raises(ValueError):
         iglu.process_data(glucose_array)
-    
+
 
 
 def test_process_data_missing_values():
     """Test handling of missing values."""
     data = pd.DataFrame({
         'id': ['A', 'A', 'A', 'A'],
-        'time': ['2020-01-01 10:00:00', '2020-01-01 10:05:00', 
+        'time': ['2020-01-01 10:00:00', '2020-01-01 10:05:00',
                  '2020-01-01 10:10:00', '2020-01-01 10:15:00'],
         'gl': [120, np.nan, 125, 140]
     })
-    
+
     result = iglu.process_data(data, id='id', timestamp='time', glu='gl')
-    
+
     # Should remove rows with NaN glucose values
     assert len(result) == 3
     assert not result['gl'].isna().any()
@@ -210,11 +210,11 @@ def test_process_data_glucose_warnings():
         'time': ['2020-01-01 10:00:00', '2020-01-01 10:05:00', '2020-01-01 10:10:00'],
         'gl': [10, 120, 600]  # Very low and very high values
     })
-    
+
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         result = iglu.process_data(data, id='id', timestamp='time', glu='gl')
-        
+
         # Should generate warnings for extreme values
         warning_messages = [str(warning.message) for warning in w]
         assert any("below 20" in msg for msg in warning_messages)
@@ -233,12 +233,12 @@ def test_process_data_column_rename():
 
     # Check column names and order
     assert list(result.columns) == ['id', 'time', 'gl']
-    
+
     # Check data types
     assert pd.api.types.is_string_dtype(result['id'])
     assert pd.api.types.is_datetime64_any_dtype(result['time'])
     assert pd.api.types.is_numeric_dtype(result['gl'])
-    
+
     # Check values were preserved
     assert all(result['id'] == 'A')
     assert result['gl'].tolist() == [120, 130]
@@ -251,15 +251,15 @@ def test_process_data_column_not_found_errors():
         'datetime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'glucose': [120, 130]
     })
-    
+
     # Test missing id column
     with pytest.raises(ValueError, match="Column 'wrong_id' not found"):
         iglu.process_data(data, id='wrong_id', timestamp='datetime', glu='glucose')
-    
+
     # Test missing timestamp column
     with pytest.raises(ValueError, match="Column 'wrong_time' not found"):
         iglu.process_data(data, id='subject', timestamp='wrong_time', glu='glucose')
-    
+
     # Test missing glucose column
     with pytest.raises(ValueError, match="Column 'wrong_glucose' not found"):
         iglu.process_data(data, id='subject', timestamp='datetime', glu='wrong_glucose')
@@ -272,7 +272,7 @@ def test_process_data_alternative_column_suggestion():
         'time': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'gl': [120, 130]
     })
-    
+
     # Test suggestion for id column
     with pytest.raises(ValueError, match="Fix user-defined argument name for id"):
         iglu.process_data(data, id='wrong_id', timestamp='time', glu='gl')
@@ -283,14 +283,14 @@ def test_process_data_invalid_data_types():
     # Test invalid data type
     with pytest.raises(TypeError, match="Invalid data type"):
         iglu.process_data("invalid_data")
-    
+
     # Test invalid parameter types
     data = pd.DataFrame({
         'id': ['A', 'A'],
         'time': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'gl': [120, 130]
     })
-    
+
     with pytest.raises(ValueError, match="User-defined id name must be string"):
         iglu.process_data(data, id=123, timestamp='time', glu='gl')
 
@@ -302,13 +302,13 @@ def test_process_data_custom_time_parser():
         'time': ['01/01/2020 10:00:00', '01/01/2020 10:05:00'],
         'gl': [120, 130]
     })
-    
+
     # Custom parser for MM/DD/YYYY format
     custom_parser = lambda x: pd.to_datetime(x, format='%m/%d/%Y %H:%M:%S')
-    
-    result = iglu.process_data(data, id='id', timestamp='time', glu='gl', 
+
+    result = iglu.process_data(data, id='id', timestamp='time', glu='gl',
                               time_parser=custom_parser)
-    
+
     assert len(result) == 2
     assert pd.api.types.is_datetime64_any_dtype(result['time'])
 
@@ -320,7 +320,7 @@ def test_process_data_empty_after_processing():
         'time': ['2020-01-01 10:00:00', '2020-01-01 10:05:00'],
         'gl': [np.nan, np.nan]  # All NaN glucose values
     })
-    
+
     with pytest.raises(ValueError):
         iglu.process_data(data, id='id', timestamp='time', glu='gl')
 
@@ -328,7 +328,7 @@ def test_process_data_empty_after_processing():
 def test_process_data_empty_input():
     """Test error handling for empty input."""
     empty_data = pd.DataFrame()
-    
+
     with pytest.raises(ValueError, match="No data remaining after removing NAs"):
         iglu.process_data(empty_data)
 
@@ -336,9 +336,9 @@ def test_process_data_empty_input():
 def test_process_data_list_with_column_specs_error():
     """Test error when providing column specs with list input."""
     glucose_list = [120, 130, 125]
-    
+
     with pytest.raises(ValueError, match="Cannot process list/array data with column specifications"):
-        iglu.process_data(glucose_list, id='id', timestamp='time', glu='gl') 
+        iglu.process_data(glucose_list, id='id', timestamp='time', glu='gl')
 
 
 def test_process_data_output_dtypes():
@@ -349,10 +349,10 @@ def test_process_data_output_dtypes():
         'time': dates,
         'gl': np.random.normal(120, 20, 48)
     })
-    
+
     result = iglu.process_data(data, id='id', timestamp='time', glu='gl')
-    
+
     # Check data types
     assert pd.api.types.is_string_dtype(result['id'])
     assert pd.api.types.is_datetime64_any_dtype(result['time'])
-    assert pd.api.types.is_numeric_dtype(result['gl']) 
+    assert pd.api.types.is_numeric_dtype(result['gl'])

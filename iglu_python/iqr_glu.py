@@ -51,7 +51,7 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFr
             return np.nan
         # Calculate IQR for Series
         iqr_val = iqr_glu_single(data)
-        return iqr_val   
+        return iqr_val
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -85,4 +85,4 @@ def iqr_glu_single(
         return np.nan
     # Calculate IQR for Series
     iqr_val = np.percentile(gl, 75) - np.percentile(gl, 25)
-    return iqr_val 
+    return iqr_val

@@ -200,15 +200,15 @@ def test_ea1c_list_input():
     """Test EA1c calculation with list input."""
     # Create test data as a list
     data = [100, 120, 110, 90, 130, 95]  # mean = 107.5
-    
+
     # Calculate EA1c
     result = iglu.ea1c(data)
-    
+
     # Expected results:
     # EA1c = (mean_glucose + 46.7) / 28.7
     # EA1c = (107.5 + 46.7) / 28.7 = 5.376
     expected = 5.376
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -218,15 +218,15 @@ def test_ea1c_numpy_array_input():
     """Test EA1c calculation with numpy array input."""
     # Create test data as a numpy array
     data = np.array([100, 120, 110, 90, 130, 95])  # mean = 107.5
-    
+
     # Calculate EA1c
     result = iglu.ea1c(data)
-    
+
     # Expected results:
     # EA1c = (mean_glucose + 46.7) / 28.7
     # EA1c = (107.5 + 46.7) / 28.7 = 5.376
     expected = 5.376
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -236,15 +236,15 @@ def test_ea1c_list_with_missing_values():
     """Test EA1c calculation with list input containing missing values."""
     # Create test data as a list with None values
     data = [100, None, 110, 90, 130, None]  # mean = 107.5 (excluding None)
-    
+
     # Calculate EA1c
     result = iglu.ea1c(data)
-    
+
     # Expected results:
     # EA1c = (mean_glucose + 46.7) / 28.7
     # EA1c = (107.5 + 46.7) / 28.7 = 5.376
     expected = 5.376
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -254,15 +254,15 @@ def test_ea1c_numpy_array_with_nan():
     """Test EA1c calculation with numpy array input containing NaN values."""
     # Create test data as a numpy array with NaN values
     data = np.array([100, np.nan, 110, 90, 130, np.nan])  # mean = 107.5 (excluding NaN)
-    
+
     # Calculate EA1c
     result = iglu.ea1c(data)
-    
+
     # Expected results:
     # EA1c = (mean_glucose + 46.7) / 28.7
     # EA1c = (107.5 + 46.7) / 28.7 = 5.376
     expected = 5.376
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -274,7 +274,7 @@ def test_ea1c_empty_input():
     result = iglu.ea1c([])
     assert isinstance(result, float)
     assert np.isnan(result)
-    
+
     # Test with empty numpy array
     result = iglu.ea1c(np.array([]))
     assert isinstance(result, float)

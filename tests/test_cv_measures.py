@@ -1,9 +1,11 @@
 """Unit tests for CV measures (CVmean and CVsd) calculation."""
 
 import json
+
 import numpy as np
 import pandas as pd
 import pytest
+
 import iglu_python as iglu
 
 method_name = "cv_measures"
@@ -40,10 +42,10 @@ def test_cv_measures_iglu_r_compatible(scenario):
     df = pd.read_csv(input_file_name, index_col=0)
     if "time" in df.columns:
         df["time"] = pd.to_datetime(df["time"])
-    
+
     # Calculate CV measures
     result_df = iglu.cv_measures(df,**kwargs)
-    
+
     # Compare with expected results
     pd.testing.assert_frame_equal(
         result_df.round(3),
@@ -73,10 +75,10 @@ def test_cv_measures_basic():
         'gl': [100, 120, 110,  # Day 1: mean=110, std=10, CV=9.09
                90, 130, 95]     # Day 2: mean=105, std=21.21, CV=20.75
     })
-    
+
     # Calculate CV measures
     result = iglu.cv_measures(data)
-    
+
     # Expected results:
     # CVmean = np.mean([9.09, 20.75]) = 14.92
     # CVsd = np.std([9.09, 20.75],ddof=1) = 8.244
@@ -85,7 +87,7 @@ def test_cv_measures_basic():
         'CVmean': [14.92],
         'CVsd': [8.244]
     })
-    
+
     pd.testing.assert_frame_equal(
         result,
         expected,
@@ -109,10 +111,10 @@ def test_cv_measures_multiple_subjects():
                80, 100, 90,     # Subject 2, Day 1: CV=11.11
                70, 110, 80]     # Subject 2, Day 2: CV=25.00
     })
-    
+
     # Calculate CV measures
     result = iglu.cv_measures(data)
-    
+
     # Expected results:
     # Subject 1: CVmean=14.92, CVsd=8.244
     # Subject 2: CVmean=17.565, CVsd=9.127
@@ -121,7 +123,7 @@ def test_cv_measures_multiple_subjects():
         'CVmean': [14.92, 17.565],
         'CVsd': [8.244, 9.127]
     })
-    
+
     pd.testing.assert_frame_equal(
         result,
         expected,
@@ -141,10 +143,10 @@ def test_cv_measures_missing_values():
         'gl': [100, np.nan, 110,  # Day 1: CV=7.07 (after interpolation)
                90, 130, np.nan]    # Day 2: CV=28.28 (after interpolation)
     })
-    
+
     # Calculate CV measures
     result = iglu.cv_measures(data, inter_gap=45)  # Allow interpolation
-    
+
     # Expected results:
     # CVmean = mean([7.07, 28.28]) = 17.68
     # CVsd = np.std([7.07, 28.28],ddof=1) = 13.419
@@ -153,7 +155,7 @@ def test_cv_measures_missing_values():
         'CVmean': [16.223],
         'CVsd': [13.419]
     })
-    
+
     pd.testing.assert_frame_equal(
         result,
         expected,
@@ -173,10 +175,10 @@ def test_cv_measures_constant_glucose():
         'gl': [100, 100, 100,  # Day 1: CV=0
                100, 100, 100]   # Day 2: CV=0
     })
-    
+
     # Calculate CV measures
     result = iglu.cv_measures(data)
-    
+
     # Expected results:
     # CVmean = mean([0, 0]) = 0
     # CVsd = std([0, 0]) = 0
@@ -185,7 +187,7 @@ def test_cv_measures_constant_glucose():
         'CVmean': [0.0],
         'CVsd': [0.0]
     })
-    
+
     pd.testing.assert_frame_equal(
         result,
         expected,
@@ -201,10 +203,10 @@ def test_cv_measures_single_day():
         'time': pd.date_range('2020-01-01 10:00:00', periods=3, freq='5min'),
         'gl': [100, 120, 110]  # CV=9.09
     })
-    
+
     # Calculate CV measures
     result = iglu.cv_measures(data)
-    
+
     # Expected results:
     # CVmean = 9.09 (only one day)
     # CVsd = NaN (can't calculate std with one value)
@@ -213,7 +215,7 @@ def test_cv_measures_single_day():
         'CVmean': [9.09],
         'CVsd': [np.nan]
     })
-    
+
     pd.testing.assert_frame_equal(
         result,
         expected,
@@ -239,17 +241,17 @@ def test_cv_measures_custom_dt0():
         'gl': [100, 120, 110,  # Day 1
                90, 130, 95]     # Day 2
     })
-    
+
     # Calculate CV measures with custom dt0
     result = iglu.cv_measures(data, dt0=5)  # 5-minute intervals
-    
+
     # The results should be the same as without dt0 since our data is already in 5-minute intervals
     expected = pd.DataFrame({
         'id': ['1'],
         'CVmean': [14.92],
         'CVsd': [8.244]
     })
-    
+
     pd.testing.assert_frame_equal(
         result,
         expected,
@@ -267,10 +269,10 @@ def test_cv_measures_series_with_datetime_index():
          90, 130, 95],   # Day 2: mean=105, std=21.21, CV=20.75
         index=time
     )
-    
+
     # Calculate CV measures
     result = iglu.cv_measures(data)
-    
+
     # Expected results:
     # CVmean = np.mean([9.09, 20.75]) = 14.92
     # CVsd = np.std([9.09, 20.75], ddof=1) = 8.244
@@ -278,7 +280,7 @@ def test_cv_measures_series_with_datetime_index():
         'CVmean': 14.92,
         'CVsd': 8.244
     }
-    
+
     # Compare results
     assert isinstance(result, dict)
     np.testing.assert_allclose(result['CVmean'], expected['CVmean'], rtol=0.001)
@@ -291,7 +293,7 @@ def test_cv_measures_series_without_datetime_index():
         [100, 120, 110, 90, 130, 95],
         index=range(6)  # Regular integer index instead of DatetimeIndex
     )
-    
+
     # Attempt to calculate CV measures - should raise ValueError
     with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
         iglu.cv_measures(data)
@@ -306,10 +308,10 @@ def test_cv_measures_series_with_missing_values():
          90, 130, np.nan],  # Day 2: CV=28.28 (after interpolation)
         index=time
     )
-    
+
     # Calculate CV measures with interpolation
     result = iglu.cv_measures(data, inter_gap=45)
-    
+
     # Expected results:
     # CVmean = 16.223
     # CVsd = 13.419
@@ -317,7 +319,7 @@ def test_cv_measures_series_with_missing_values():
         'CVmean': 16.223,
         'CVsd': 13.419
     }
-    
+
     # Compare results
     assert isinstance(result, dict)
     np.testing.assert_allclose(result['CVmean'], expected['CVmean'], rtol=0.001)

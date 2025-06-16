@@ -75,7 +75,7 @@ def grade_hyper_single(data: pd.Series, upper: int = 140) -> float:
 
     # Calculate GRADE scores
     grade_scores = _grade_formula(data)
-    
+
     # Calculate percentage above upper bound
     above_upper = data > upper
     total_grade = np.sum(grade_scores)
