@@ -110,15 +110,27 @@ def test_hypo_index_series_input():
 
     # Calculate hypo_index
     result = iglu.hypo_index(data)
+    expected = 7.638889
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "hypo_index" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
-    # Check that hypo_index value is non-negative
-    assert result["hypo_index"].iloc[0] >= 0
+def test_hypo_index_list_input():
+    """Test hypo_index calculation with list input."""
+    data = [70, 60, 75, 65, 85, 55]
+    result = iglu.hypo_index(data)
+    expected = 7.638889
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
+def test_hypo_index_numpy_array_input():
+    """Test hypo_index calculation with numpy array input."""
+    data = np.array([70, 60, 75, 65, 85, 55])
+    result = iglu.hypo_index(data)
+    expected = 7.638889
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
 
 def test_hypo_index_custom_parameters():

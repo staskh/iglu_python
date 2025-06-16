@@ -44,7 +44,8 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | gri |Glycemia Risk Index | ✅ | ✅ returns float |
 | gvp |Glucose Variability Percentage| ✅ | ✅ only Series(DatetimeIndex) returns float
 | hbgi |High Blood Glucose Index| ✅ | ✅ returns float |
-| hyper_index |Hyperglycemia Index| ✅ |
+| hyper_index |Hyperglycemia Index| ✅ |✅ returns float |
+| hyper_index |Hyperglycemia Index| ✅ |✅ returns float |
 | hypo_index |Hypoglycemia Index| ✅ |
 | igc |Index of Glycemic Control| ✅ |
 | in_range_percent |percentage of values within target ranges| ✅ | ✅ returns dict

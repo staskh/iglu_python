@@ -101,6 +101,29 @@ def test_hyper_index_basic():
     subject2_index = result[result["id"] == "subject2"]["hyper_index"].iloc[0]
     assert subject1_index > subject2_index
 
+def test_hyper_index_list_input():
+
+    # Create test data as Series
+    data = [150, 200, 180, 130, 190, 160]
+
+    # Calculate hyper_index
+    result = iglu.hyper_index(data)
+    expected = 1.453976 
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
+def test_hyper_index_numpy_array_input():
+
+    # Create test data as Series
+    data = np.array([150, 200, 180, 130, 190, 160])
+
+    # Calculate hyper_index
+    result = iglu.hyper_index(data)
+    expected = 1.453976 
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
 def test_hyper_index_series_input():
     """Test hyper_index calculation with Series input."""
@@ -109,15 +132,11 @@ def test_hyper_index_series_input():
 
     # Calculate hyper_index
     result = iglu.hyper_index(data)
-
+    expected = 1.453976 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "hyper_index" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
-    # Check that hyper_index value is non-negative
-    assert result["hyper_index"].iloc[0] >= 0
 
 
 def test_hyper_index_custom_parameters():

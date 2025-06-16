@@ -7,8 +7,8 @@ from .utils import check_data_columns
 
 
 def hypo_index(
-    data: Union[pd.DataFrame, pd.Series], LLTR: int = 80, b: float = 2, d: int = 30
-) -> pd.DataFrame:
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, list], LLTR: int = 80, b: float = 2, d: int = 30
+) -> pd.DataFrame|float:
     """
     Calculate Hypoglycemia Index.
 
@@ -19,8 +19,9 @@ def hypo_index(
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        or a numpy array or list of glucose values
     LLTR : int, default=80
         Lower Limit of Target Range, in mg/dL
     b : float, default=2
@@ -31,10 +32,10 @@ def hypo_index(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
         for the Hypoglycemia Index value. If a Series of glucose values is passed,
-        then a DataFrame without the subject id is returned.
+        then a float is returned.
 
     References
     ----------
@@ -62,50 +63,27 @@ def hypo_index(
     0  0.106
     """
     # Handle Series input
-    is_vector = False
-    if isinstance(data, (list, np.ndarray)):
-        data = pd.Series(data)
-    if isinstance(data, pd.Series):
-        is_vector = True
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GVP": [np.nan]})
-
-        # Convert to DataFrame format for processing
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
-                "gl": data.values,
-            }
-        )
-
-    # Check and prepare data
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return hypo_index_single(data, LLTR, b, d)
+    
     data = check_data_columns(data)
-
-    # Calculate hypo_index for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject]
-        # Remove NA values
-        subject_data = subject_data.dropna(subset=["gl"])
-
-        if len(subject_data) == 0:
-            continue
-
-        # Calculate hypo_index
-        hypo_values = LLTR - subject_data[subject_data["gl"] < LLTR]["gl"]
-        hypo_index = np.sum(hypo_values**b) / (len(subject_data) * d)
-
-        result.append({"id": subject, "hypo_index": hypo_index})
-
-    # Convert to DataFrame
-    out = pd.DataFrame(result)
-
-    # Remove id column if input was a Series
-    if is_vector and not out.empty:
-        out = out.drop("id", axis=1)
-
+    out = data.groupby('id').agg(
+        hypo_index = ("gl", lambda x: hypo_index_single(x, LLTR, b, d))
+    ).reset_index()
     return out
+
+def hypo_index_single(
+    gl: pd.Series, LLTR: int = 80, b: float = 2, d: int = 30
+) -> float:
+    """
+    Calculate Hypoglycemia Index for a single subject.
+    """
+    gl = gl.dropna()
+    if len(gl) == 0:
+        return np.nan
+    # Calculate hypo_index
+    hypo_values = LLTR - gl[gl < LLTR]
+    hypo_index = np.sum(hypo_values**b) / (len(gl) * d)
+    return hypo_index

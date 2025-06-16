@@ -7,8 +7,8 @@ from .utils import check_data_columns
 
 
 def hyper_index(
-    data: Union[pd.DataFrame, pd.Series], ULTR: int = 140, a: float = 1.1, c: int = 30
-) -> pd.DataFrame:
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, list], ULTR: int = 140, a: float = 1.1, c: int = 30
+) -> pd.DataFrame|float:
     """
     Calculate Hyperglycemia Index.
 
@@ -19,8 +19,8 @@ def hyper_index(
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
     ULTR : int, default=140
         Upper Limit of Target Range, in mg/dL
     a : float, default=1.1
@@ -31,10 +31,10 @@ def hyper_index(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
         for the Hyperglycemia Index value. If a Series of glucose values is passed,
-        then a DataFrame without the subject id is returned.
+        then a float is returned.
 
     References
     ----------
@@ -62,50 +62,32 @@ def hyper_index(
     0  0.106
     """
     # Handle Series input
-    is_vector = False
-    if isinstance(data, (list, np.ndarray)):
-        data = pd.Series(data)
-    if isinstance(data, pd.Series):
-        is_vector = True
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GVP": [np.nan]})
-
-        # Convert to DataFrame format for processing
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
-                "gl": data.values,
-            }
-        )
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return hyper_index_single(data, ULTR, a, c)
 
     # Check and prepare data
     data = check_data_columns(data)
 
     # Calculate hyper_index for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject]
-        # Remove NA values
-        subject_data = subject_data.dropna(subset=["gl"])
-
-        if len(subject_data) == 0:
-            continue
-
-        # Calculate hyper_index
-        hyper_values = subject_data[subject_data["gl"] > ULTR]["gl"] - ULTR
-        hyper_index = np.sum(hyper_values**a) / (len(subject_data) * c)
-
-        result.append({"id": subject, "hyper_index": hyper_index})
-
-    # Convert to DataFrame
-    out = pd.DataFrame(result)
-
-    # Remove id column if input was a Series
-    if is_vector and not out.empty:
-        out = out.drop("id", axis=1)
+    out = data.groupby('id').agg(
+        hyper_index = ("gl", lambda x: hyper_index_single(x, ULTR, a, c))
+    ).reset_index()
 
     return out
+
+def hyper_index_single(
+    gl: pd.Series, ULTR: int = 140, a: float = 1.1, c: int = 30
+) -> float:
+    """
+    Calculate Hyperglycemia Index for a single subject.
+    """
+    gl = gl.dropna()
+    if len(gl) == 0:
+        return np.nan
+    # Calculate hyper_index
+    hyper_values = gl[gl > ULTR] - ULTR
+    hyper_index = np.sum(hyper_values**a) / (len(gl) * c)
+
+    return hyper_index   
