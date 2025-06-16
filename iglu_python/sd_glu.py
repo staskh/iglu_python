@@ -1,11 +1,12 @@
 from typing import Union
 
+import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns
 
 
-def sd_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def sd_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataFrame|float:
     """
     Calculate standard deviation of glucose values.
 
@@ -44,14 +45,16 @@ def sd_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0  38.89
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        return pd.DataFrame({"SD": [data.std()]})
+    if isinstance(data, (list, np.ndarray, pd.Series)):
+        if isinstance(data, (list,np.ndarray)):
+            data = pd.Series(data)
+        return data.std(ddof=1)
 
     # Handle DataFrame input
     data = check_data_columns(data)
 
     # Calculate standard deviation for each subject
-    out = data.groupby("id")["gl"].std().reset_index()
+    out = data.groupby("id")["gl"].std(ddof=1).reset_index()
     out.columns = ["id", "SD"]
 
     return out

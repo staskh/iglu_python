@@ -1,18 +1,18 @@
-from typing import Union
 import warnings
+from typing import Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from .utils import check_data_columns
 
 
-def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
+def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame|dict[str,float]:
     """
     Calculate summary glucose level
-    
+
     The function summary_glu is a wrapper that produces summary statistics
-    for glucose data. Output is a DataFrame object with subject id and the 
+    for glucose data. Output is a DataFrame object with subject id and the
     summary values: Minimum, 1st Quartile, Median, Mean, 3rd Quartile and Max.
 
     Parameters
@@ -25,8 +25,8 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
     -------
     pd.DataFrame
         If a DataFrame object is passed, then a DataFrame object with
-        a column for subject id and then a column for each summary value is returned. 
-        If a vector of glucose values is passed, then a DataFrame object without 
+        a column for subject id and then a column for each summary value is returned.
+        If a vector of glucose values is passed, then a DataFrame object without
         the subject id is returned.
 
     Details
@@ -48,11 +48,9 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
     ['id', 'Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
     """
     # Handle vector input (Series, list, or numpy array)
-    is_vector = False
-    
+
     if isinstance(data, (pd.Series, list, np.ndarray)):
-        is_vector = True
-        
+
         # Convert to numpy array for consistent handling
         if isinstance(data, pd.Series):
             glucose_values = data.values
@@ -60,33 +58,33 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
             glucose_values = np.array(data)
         else:  # numpy array
             glucose_values = data
-        
+
         # Remove NaN values
         glucose_values = glucose_values[~np.isnan(glucose_values)]
-        
+
         if len(glucose_values) == 0:
             raise ValueError("No valid glucose values found")
-        
+
         # Calculate summary statistics
         summary_stats = _calculate_summary_stats(glucose_values)
-        
-        # Return DataFrame without id column
-        return pd.DataFrame([summary_stats])
-    
+
+        # Return dictionary without id column
+        return summary_stats
+
     # Handle DataFrame input
     else:
         # Check data format
         data = check_data_columns(data)
-        
+
         # Filter out missing glucose values and group by id
         result_rows = []
-        
+
         for subject_id in data['id'].unique():
             subject_data = data[data['id'] == subject_id]
             glucose_values = subject_data['gl'].dropna().values
-            
+
             if len(glucose_values) == 0:
-                warnings.warn(f"No valid glucose values found for subject {subject_id}")
+                warnings.warn(f"No valid glucose values found for subject {subject_id}", stacklevel=2)
                 # Still include the subject with NaN values
                 summary_stats = {
                     'Min.': np.nan,
@@ -98,14 +96,14 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
                 }
             else:
                 summary_stats = _calculate_summary_stats(glucose_values)
-            
+
             # Add subject id to the summary
             summary_stats['id'] = subject_id
             result_rows.append(summary_stats)
-        
+
         # Create result DataFrame with id column first
         result_df = pd.DataFrame(result_rows)
-        
+
         # Reorder columns to match R output (id first, then summary stats)
         column_order = ['id', 'Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
         return result_df[column_order]
@@ -114,14 +112,14 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
 def _calculate_summary_stats(glucose_values: np.ndarray) -> dict:
     """
     Calculate summary statistics for glucose values.
-    
+
     This mimics R's summary() function output for numeric vectors.
-    
+
     Parameters
     ----------
     glucose_values : np.ndarray
         Array of glucose values (without NaN)
-    
+
     Returns
     -------
     dict
@@ -134,4 +132,4 @@ def _calculate_summary_stats(glucose_values: np.ndarray) -> dict:
         'Mean': np.mean(glucose_values),
         '3rd Qu.': np.percentile(glucose_values, 75),
         'Max.': np.max(glucose_values)
-    } 
+    }

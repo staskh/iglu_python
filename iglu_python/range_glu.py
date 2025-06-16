@@ -1,11 +1,12 @@
 from typing import Union
 
+import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns
 
 
-def range_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def range_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
     """
     Calculate glucose level range.
 
@@ -14,15 +15,16 @@ def range_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        or a numpy array or list of glucose values
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with columns:
         - id: subject identifier (if DataFrame input)
-        - range: range of glucose values (max - min)
+        - range: range of glucose values (max - min). If a Series of glucose values is passed, then a float is returned.
 
     Examples
     --------
@@ -43,10 +45,12 @@ def range_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0     70
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
         # Calculate range for Series
-        range_val = data.max() - data.min()
-        return pd.DataFrame({"range": [range_val]})
+        range_val = float(data.max() - data.min())
+        return range_val
 
     # Handle DataFrame input
     data = check_data_columns(data)

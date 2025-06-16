@@ -1,11 +1,12 @@
 from typing import Union
 
 import pandas as pd
+import numpy as np
 
 from .utils import check_data_columns
 
 
-def median_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def median_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
     """
     Calculate median glucose value for each subject.
 
@@ -15,15 +16,15 @@ def median_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        or a numpy array or list of glucose values
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for median glucose value. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for median glucose value. If a Series of glucose values is passed, then a float is returned.
 
     Examples
     --------
@@ -44,8 +45,10 @@ def median_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0   160.0
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        return pd.DataFrame({"median": [data.median()]})
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return data.median()
 
     # Handle DataFrame input
     data = check_data_columns(data)

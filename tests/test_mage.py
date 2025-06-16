@@ -143,14 +143,18 @@ def test_mage_naive_version(base_data):
     assert np.isnan(result.iloc[1]["MAGE"])
 
 
-def test_mage_series_input():
+def test_mage_series_without_datetime_index():
     """Test MAGE calculation with Series input"""
     series_data = pd.Series([150, 200, 180, 160, 140, 190])
-    result = iglu.mage(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "MAGE" in result.columns
-    assert len(result) == 1
+    with pytest.raises(ValueError):
+        iglu.mage(series_data)
 
+
+def test_mage_series_with_datetime_index():
+    """Test MAGE calculation with Series input"""
+    series_data = pd.Series([150, 200, 180, 160, 140, 190], index=pd.date_range(start="2020-01-01 00:00:00", periods=6, freq="5min"))
+    result = iglu.mage(series_data)
+    assert isinstance(result, (float,np.float64))
 
 def test_mage_empty_data():
     """Test MAGE calculation with empty DataFrame"""

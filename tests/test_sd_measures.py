@@ -300,4 +300,54 @@ def test_sd_measures_reproducibility():
     result2 = iglu.sd_measures(data)
     
     # Results should be identical
-    pd.testing.assert_frame_equal(result1, result2) 
+    pd.testing.assert_frame_equal(result1, result2)
+
+
+def test_sd_measures_series_with_datetime_index():
+    """Test SD measures calculation with Series input that has DatetimeIndex."""
+    # Create test data with DatetimeIndex
+    time = pd.to_datetime(['2020-01-01 10:00:00', '2020-01-01 10:05:00', '2020-01-01 10:10:00',
+                          '2020-01-02 10:00:00', '2020-01-02 10:05:00', '2020-01-02 10:10:00'])
+    data = pd.Series(
+        [100, 120, 110,  # Day 1: mean=110, std=10
+         90, 130, 95],   # Day 2: mean=105, std=21.21
+        index=time
+    )
+    
+    # Calculate SD measures
+    result = iglu.sd_measures(data)
+    
+    # Expected results:
+    # SDmean = mean([10, 21.21]) = 15.605
+    # SDsd = std([10, 21.21], ddof=1) = 7.931
+    expected = {
+        'SDw': 15.8972,
+        'SDhhmm':15.612495,
+        'SDwsh': 16.341298,
+        'SDdm': 3.535534,
+        'SDb': 8.249579,   
+        'SDbdm': 7.071068
+    }
+    
+    # Compare results
+    assert isinstance(result, dict)
+    assert len(result) == 6
+    np.testing.assert_allclose(result['SDw'], expected['SDw'], rtol=0.001)
+    np.testing.assert_allclose(result['SDhhmm'], expected['SDhhmm'], rtol=0.001)
+    np.testing.assert_allclose(result['SDwsh'], expected['SDwsh'], rtol=0.001)
+    np.testing.assert_allclose(result['SDdm'], expected['SDdm'], rtol=0.001)
+    np.testing.assert_allclose(result['SDb'], expected['SDb'], rtol=0.001)
+    np.testing.assert_allclose(result['SDbdm'], expected['SDbdm'], rtol=0.001)
+
+
+def test_sd_measures_series_without_datetime_index():
+    """Test SD measures calculation with Series input that doesn't have DatetimeIndex."""
+    # Create test data with regular index
+    data = pd.Series(
+        [100, 120, 110, 90, 130, 95],
+        index=range(6)  # Regular integer index instead of DatetimeIndex
+    )
+    
+    # Attempt to calculate SD measures - should raise ValueError
+    with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
+        iglu.sd_measures(data)

@@ -3,8 +3,9 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from .utils import check_data_columns
 
-def adrr(data: pd.DataFrame) -> pd.DataFrame:
+def adrr(data: pd.DataFrame|pd.Series) -> pd.DataFrame|float:
     """
     Calculate average daily risk range (ADRR)
 
@@ -12,14 +13,15 @@ def adrr(data: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    data : pd.DataFrame
+    data : pd.DataFrame|pd.Series   
         DataFrame object with column names "id", "time", and "gl".
+        or a Timeseries of glucose values.
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         A DataFrame object with two columns: subject id and corresponding
-        ADRR value.
+        ADRR value. or a float value for a Timeseries of glucose values.
 
     Details
     -------
@@ -50,77 +52,59 @@ def adrr(data: pd.DataFrame) -> pd.DataFrame:
     >>> iglu.adrr(data)
     """
 
-    def adrr_multi(data: pd.DataFrame) -> pd.DataFrame:
-        """Internal function to calculate ADRR for multiple subjects"""
-
-        # Ensure time column is datetime
-        if not pd.api.types.is_datetime64_any_dtype(data["time"]):
-            try:
-                data["time"] = pd.to_datetime(data["time"])
-            except Exception as e:
-                raise ValueError(f"Could not convert 'time' column to datetime: {e}")
-
-        # Extract date from time
-        data = data.copy()
-        data["date"] = data["time"].dt.date
-
-        # Filter out NaN glucose values
-        data_filtered = data.dropna(subset=["gl"])
-
-        if len(data_filtered) == 0:
-            warnings.warn("All glucose values are NaN. Returning empty DataFrame.")
-            return pd.DataFrame(columns=["id", "ADRR"])
-
-        # Group by id and date, then calculate BGI and daily risk range
-        result = (
-            data_filtered.groupby(["id", "date"])
-            .apply(lambda group: _calculate_daily_risk(group), include_groups=False)
-            .reset_index()
-            .groupby("id")["drr"]
-            .mean()
-            .reset_index()
-            .rename(columns={"drr": "ADRR"})
-        )
-
-        return result
-
-    def _calculate_daily_risk(group: pd.DataFrame) -> pd.Series:
-        """Calculate daily risk range for a single day and subject"""
-
-        # Calculate BGI (Blood Glucose Index)
-        bgi = (np.log(group["gl"]) ** 1.084) - 5.381
-
-        # Calculate max and min BGI values for the day
-        max_bgi = np.maximum(bgi.max(), 0)
-        min_bgi = np.minimum(bgi.min(), 0)
-
-        # Calculate risk components
-        max_risk = 22.77 * (max_bgi**2)
-        min_risk = 22.77 * (min_bgi**2)
-
-        # Daily risk range is the sum of max and min risks
-        drr = min_risk + max_risk
-
-        return pd.Series({"drr": drr})
 
     # Validate input
-    if not isinstance(data, pd.DataFrame):
-        raise TypeError("Data must be a pandas DataFrame")
+    if isinstance(data, pd.Series):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+        return adrr_single(data)
 
-    required_columns = ["id", "time", "gl"]
-    missing_columns = [col for col in required_columns if col not in data.columns]
+    data = check_data_columns(data)
 
-    if missing_columns:
-        raise ValueError(
-            f"Data must contain columns: {required_columns}. "
-            f"Missing columns: {missing_columns}"
-        )
+    data.set_index("time", inplace=True,drop=True)
+    out = data.groupby("id").agg(
+        ADRR = ("gl", lambda x: adrr_single(x))
+    ).reset_index()
 
-    if len(data) == 0:
-        warnings.warn("Input DataFrame is empty. Returning empty DataFrame.")
-        return pd.DataFrame(columns=["id", "ADRR"])
+    return out
 
-    # Calculate ADRR
-    result = adrr_multi(data)
 
-    return result
+def adrr_single(data: pd.DataFrame|pd.Series) -> float:
+    """Internal function to calculate ADRR for a single subject or timeseries of glucose values"""
+
+    if isinstance(data, pd.Series):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+    elif isinstance(data, pd.DataFrame):
+        data = data.set_index("time")["gl"]
+    else:
+        raise ValueError("Data  must be a pandas DataFrame or Series")
+
+    data_filtered = data.dropna()
+    if len(data_filtered) == 0:
+        return np.nan
+    
+    # Group by date and calculate daily risk for each day
+    daily_risks = data_filtered.groupby(data_filtered.index.date).apply(
+        lambda x: _calculate_daily_risk(x)
+    )
+    return daily_risks.mean()
+
+def _calculate_daily_risk(gl: pd.Series) -> float:
+    """Calculate daily risk range for a single day and subject"""
+
+    # Calculate BGI (Blood Glucose Index)
+    bgi = (np.log(gl) ** 1.084) - 5.381
+
+    # Calculate max and min BGI values for the day
+    max_bgi = np.maximum(bgi.max(), 0)
+    min_bgi = np.minimum(bgi.min(), 0)
+
+    # Calculate risk components
+    max_risk = 22.77 * (max_bgi**2)
+    min_risk = 22.77 * (min_bgi**2)
+
+    # Daily risk range is the sum of max and min risks
+    drr = min_risk + max_risk
+
+    return drr

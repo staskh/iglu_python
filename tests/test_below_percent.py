@@ -117,15 +117,14 @@ def test_below_percent_series_input():
     result = iglu.below_percent(data)
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "below_54" in result.columns
-    assert "below_70" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, dict)
+    assert "below_54" in result
+    assert "below_70" in result
+    assert len(result) == 2
 
     # Check that percentages are between 0 and 100
-    assert (result["below_54"].iloc[0] >= 0) and (result["below_54"].iloc[0] <= 100)
-    assert (result["below_70"].iloc[0] >= 0) and (result["below_70"].iloc[0] <= 100)
+    assert (result["below_54"] >= 0) and (result["below_54"] <= 100)
+    assert (result["below_70"] >= 0) and (result["below_70"] <= 100)
 
 
 def test_below_percent_custom_targets():

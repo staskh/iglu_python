@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def m_value(data: Union[pd.DataFrame, pd.Series], r: float = 90) -> pd.DataFrame:
+def m_value(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], r: float = 90) -> pd.DataFrame|float:
     r"""
     Calculate the M-value of Schlichtkrull et al. (1965) for each subject.
 
@@ -22,17 +22,16 @@ def m_value(data: Union[pd.DataFrame, pd.Series], r: float = 90) -> pd.DataFrame
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
     r : float, default=90
         A reference value corresponding to basal glycemia in normal subjects
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for M-value. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for M-value. If a Series of glucose values is passed, then a float is returned.
 
     References
     ----------
@@ -60,20 +59,26 @@ def m_value(data: Union[pd.DataFrame, pd.Series], r: float = 90) -> pd.DataFrame
     0   111.11
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        return pd.DataFrame(
-            {"M_value": [1000 * np.mean(np.abs(np.log10(data / r)) ** 3)]}
-        )
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return m_value_single(data, r)
 
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    # Calculate M-value for each subject
-    result = (
-        data.groupby("id")
-        .apply(lambda x: 1000 * np.mean(np.abs(np.log10(x["gl"] / r)) ** 3), include_groups=False)
-        .reset_index()
-    )
-    result.columns = ["id", "M_value"]
+    out = data.groupby('id').agg(
+        M_value = ("gl", lambda x: m_value_single(x, r))
+    ).reset_index()
+    return out
 
-    return result
+def m_value_single(gl:  pd.Series, r: float = 90) -> float:
+    """
+    Calculate the M-value of Schlichtkrull et al. (1965) for a single subject.
+    """
+    gl = gl.dropna()
+    if len(gl) == 0:
+        return np.nan
+    m_value = 1000 * np.mean(np.abs(np.log10(gl / r)) ** 3)
+    return m_value
+

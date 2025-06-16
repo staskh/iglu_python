@@ -6,14 +6,13 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns, is_iglu_r_compatible
 
 
-
 def mag(
     data: Union[pd.DataFrame, pd.Series],
     n: int = 60,
     dt0: Optional[int] = None,
     inter_gap: int = 45,
     tz: str = "",
-) -> pd.DataFrame:
+) -> pd.DataFrame|float:
     """
     Calculate Mean Absolute Glucose (MAG).
 
@@ -41,10 +40,11 @@ def mag(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with columns:
         - id: subject identifier (if DataFrame input)
         - MAG: Mean Absolute Glucose value
+        If a Series of glucose values is passed, then a float is returned.
 
     References
     ----------
@@ -71,84 +71,65 @@ def mag(
     0  66.0
     """
 
-    def mag_single(data: pd.DataFrame, n: int) -> float:
-        """Calculate MAG for a single subject"""
-        # Convert data to day-by-day format
-        data_ip = CGMS2DayByDay(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
-        dt0_actual = data_ip[2]  # Time between measurements in minutes
-
-        # Ensure n is not less than data collection frequency
-        if n < dt0_actual:
-            n = dt0_actual
-
-        # Calculate number of readings per interval
-        readings_per_interval = round(n / dt0_actual)
-
-        # Get glucose values and calculate differences
-        gl_values = data_ip[0].flatten()  # Flatten the matrix
-        # gl_values = gl_values[~np.isnan(gl_values)]  # Remove NaN values
-
-        if len(gl_values) <= 1:
-            return 0.0
-
-        # Calculate absolute differences between readings n minutes apart
-        lag = readings_per_interval
-
-        if is_iglu_r_compatible():
-            idx = np.arange(0,len(gl_values),lag)
-            gl_values_idx = gl_values[idx]
-            diffs = gl_values_idx[1:] - gl_values_idx[:-1]
-            diffs = np.abs(diffs)
-            diffs = diffs[~np.isnan(diffs)]
-            # to be IGLU-R test compatible, imho they made error.
-            # has to be total_time_hours = ((len(diffs)) * n) / 60   
-            total_time_hours = ((len(gl_values_idx[~np.isnan(gl_values_idx)])) * n) / 60
-            if total_time_hours == 0:
-                return 0.0
-            mag = float(np.sum(diffs) / total_time_hours)
-        else:
-            diffs = gl_values[lag:] - gl_values[:-lag]
-            diffs = np.abs(diffs)
-            diffs = diffs[~np.isnan(diffs)]
-
-            # Calculate MAG: sum of absolute differences divided by total time in hours
-            total_time_hours = ((len(diffs)) * n) / 60   
-            if total_time_hours == 0:
-                return 0.0
-            mag = float(np.sum(diffs) / total_time_hours)
-
-        return mag
-
     # Handle Series input
     if isinstance(data, pd.Series):
-        # Convert Series to DataFrame format
-        data_df = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
-                "gl": data.values,
-            }
-        )
-        mag_val = mag_single(data_df, n)
-        return pd.DataFrame({"MAG": [mag_val]})
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+        return mag_single(data, n, dt0, inter_gap, tz)
 
     # Handle DataFrame input
     data = check_data_columns(data)
+    data.set_index('time', drop=True, inplace=True)
 
-    # Ensure n is an integer
-    if not isinstance(n, int):
-        n = round(n)
+    out = data.groupby('id').agg(
+        MAG = ("gl", lambda x: mag_single(x, n, dt0, inter_gap, tz))
+    ).reset_index()
+    return out
 
-    # Calculate MAG for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].copy()
-        if len(subject_data.dropna(subset=["gl"])) == 0:
-            continue
+def mag_single(gl: pd.Series, n: int = 60, dt0: Optional[int] = None, inter_gap: int = 45, tz: str = "") -> float:
+    """Calculate MAG for a single subject"""
+    # Convert data to day-by-day format
+    data_ip = CGMS2DayByDay(gl, dt0=dt0, inter_gap=inter_gap, tz=tz)
+    dt0_actual = data_ip[2]  # Time between measurements in minutes
 
-        mag_val = mag_single(subject_data, n)
-        result.append({"id": subject, "MAG": mag_val})
+    # Ensure n is not less than data collection frequency
+    if n < dt0_actual:
+        n = dt0_actual
 
-    return pd.DataFrame(result)
+    # Calculate number of readings per interval
+    readings_per_interval = round(n / dt0_actual)
+
+    # Get glucose values and calculate differences
+    gl_values = data_ip[0].flatten()  # Flatten the matrix
+    # gl_values = gl_values[~np.isnan(gl_values)]  # Remove NaN values
+
+    if len(gl_values) <= 1:
+        return 0.0
+
+    # Calculate absolute differences between readings n minutes apart
+    lag = readings_per_interval
+
+    if is_iglu_r_compatible():
+        idx = np.arange(0,len(gl_values),lag)
+        gl_values_idx = gl_values[idx]
+        diffs = gl_values_idx[1:] - gl_values_idx[:-1]
+        diffs = np.abs(diffs)
+        diffs = diffs[~np.isnan(diffs)]
+        # to be IGLU-R test compatible, imho they made error.
+        # has to be total_time_hours = ((len(diffs)) * n) / 60
+        total_time_hours = ((len(gl_values_idx[~np.isnan(gl_values_idx)])) * n) / 60
+        if total_time_hours == 0:
+            return 0.0
+        mag = float(np.sum(diffs) / total_time_hours)
+    else:
+        diffs = gl_values[lag:] - gl_values[:-lag]
+        diffs = np.abs(diffs)
+        diffs = diffs[~np.isnan(diffs)]
+
+        # Calculate MAG: sum of absolute differences divided by total time in hours
+        total_time_hours = ((len(diffs)) * n) / 60
+        if total_time_hours == 0:
+            return 0.0
+        mag = float(np.sum(diffs) / total_time_hours)
+
+    return mag

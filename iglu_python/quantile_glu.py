@@ -7,8 +7,8 @@ from .utils import check_data_columns
 
 
 def quantile_glu(
-    data: Union[pd.DataFrame, pd.Series], quantiles: List[float] = [0, 25, 50, 75, 100]
-) -> pd.DataFrame:
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, list], quantiles: List[float] = None
+) -> pd.DataFrame|list[float]:
     """
     Calculate glucose level quantiles.
 
@@ -18,17 +18,17 @@ def quantile_glu(
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        or a numpy array or list of glucose values
     quantiles : List[float], default=[0, 25, 50, 75, 100]
         List of quantile values between 0 and 100
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|list[float]
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for each quantile. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for each quantile. If a Series of glucose values is passed, then a list of floats is returned.
 
     Notes
     -----
@@ -56,10 +56,14 @@ def quantile_glu(
     0  130.0  145.0  182.5  200.0
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
+    if quantiles is None:
+        quantiles = [0, 25, 50, 75, 100]
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
         # Calculate quantiles for Series
         quantile_vals = np.quantile(data.dropna(), np.array(quantiles) / 100)
-        return pd.DataFrame([quantile_vals], columns=quantiles)
+        return quantile_vals.tolist()
 
     # Handle DataFrame input
     data = check_data_columns(data)

@@ -1,19 +1,20 @@
 from datetime import datetime
 from typing import Optional, Union
 
+import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns, localize_naive_timestamp
 
 
 def active_percent(
-    data: pd.DataFrame,
+    data: Union[pd.DataFrame, pd.Series],
     dt0: Optional[int] = None,
     tz: str = "",
     range_type: str = "automatic",
     ndays: int = 14,
     consistent_end_date: Optional[Union[str, datetime]] = None,
-) -> pd.DataFrame:
+) -> pd.DataFrame|dict[str:float]:
     """
     Calculate percentage of time CGM was active.
 
@@ -70,6 +71,12 @@ def active_percent(
     0  subject1      66.67    0.0  2020-01-01 00:00:00  2020-01-01 00:10:00
     1  subject2     100.00    0.0  2020-01-01 00:00:00  2020-01-01 00:05:00
     """
+
+    if isinstance(data, pd.Series):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+        return active_percent_single(data, dt0, tz, range_type, ndays, consistent_end_date)
+
     # Check data format and convert time to datetime
     data = check_data_columns(data, tz)
 
@@ -85,75 +92,92 @@ def active_percent(
             .sort_values("time")
         )
 
-        if len(sub_data) == 0:
-            continue
+        timeseries = sub_data.set_index("time")["gl"]
+        active_percent_dict = active_percent_single(timeseries, dt0, tz, range_type, ndays, consistent_end_date)
+        active_percent_dict["id"] = subject
+        active_perc_data.append(active_percent_dict)
 
-        # Calculate time differences between consecutive measurements
-        time_diffs = (
-            sub_data["time"].diff().dt.total_seconds() / 60
-        )  # Convert to minutes
-
-        # Automatically determine dt0 if not provided
-        if dt0 is None:
-            dt0 = round(time_diffs.median())
-
-        if range_type == "automatic":
-            # Determine range of observed data
-            min_time = sub_data["time"].min()
-            max_time = sub_data["time"].max()
-
-            # Calculate theoretical number of measurements
-            total_minutes = (max_time - min_time).total_seconds() / 60
-            theoretical_gl_vals = round(total_minutes / dt0) + 1
-
-            # Calculate missing values due to gaps
-            gaps = time_diffs[time_diffs > dt0]
-            gap_minutes = gaps.sum()
-            n_gaps = len(gaps)
-            missing_gl_vals = round((gap_minutes - n_gaps * dt0) / dt0)
-
-            # Calculate number of days
-            ndays = (max_time - min_time).total_seconds() / (24 * 3600)
-
-            # Calculate active percentage
-            active_percent = (
-                (theoretical_gl_vals - missing_gl_vals) / theoretical_gl_vals
-            ) * 100
-        elif range_type == "manual":
-            # Handle consistent end date if provided
-            if consistent_end_date is not None:
-                end_date = localize_naive_timestamp(pd.to_datetime(consistent_end_date))
-            else:
-                end_date = sub_data["time"].max()
-            start_date = end_date - pd.Timedelta(days=int(ndays))
-
-            # Filter data to the specified date range
-            mask = (sub_data["time"] >= start_date) & (sub_data["time"] <= end_date)
-            sub_data = sub_data[mask]
-
-            # Recalculate active percentage for the specified range
-            active_percent = (len(sub_data) / (ndays * (24 * (60 / dt0)))) * 100
-            min_time = start_date
-            max_time = end_date
-            ndays = (end_date - start_date).total_seconds() / (24 * 3600)
-        else:
-            raise ValueError(f"Invalid range_type: {range_type}")
-
-        active_perc_data.append(
-            {
-                "id": subject,
-                "active_percent": active_percent,
-                "ndays": round(ndays, 1),
-                "start_date": min_time,
-                "end_date": max_time,
-            }
-        )
 
     # Convert to DataFrame
-    result = pd.DataFrame(active_perc_data)
+    df = pd.DataFrame(active_perc_data)
+    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    return df
 
-    # If input was a Series (glucose values only), remove id column
-    if hasattr(data, "is_vector") and data.is_vector:
-        result = result.drop("id", axis=1)
 
-    return result
+def active_percent_single(
+    data: pd.Series,
+    dt0: Optional[int] = None,
+    tz: str = "",
+    range_type: str = "automatic",
+    ndays: int = 14,
+    consistent_end_date: Optional[Union[str, datetime]] = None,
+) -> dict[str:float]:
+    """
+    Calculate percentage of time CGM was active for a single series/subject.
+    """
+
+    if not isinstance(data, pd.Series):
+        raise ValueError("Input must be a Series")
+
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("Series must have a DatetimeIndex")
+
+    data = data.dropna()
+    if len(data) == 0:
+        return {"active_percent": 0, "ndays": 0, "start_date": None, "end_date": None}
+
+    # Calculate time differences between consecutive measurements
+    time_diffs = np.array(
+        data.index.diff().total_seconds() / 60
+    )  # Convert to minutes
+
+    # Automatically determine dt0 if not provided
+    if dt0 is None:
+        dt0 = round(np.nanmedian(time_diffs))
+
+    if range_type == "automatic":
+        # Determine range of observed data
+        min_time = data.index.min()
+        max_time = data.index.max()
+
+        # Calculate theoretical number of measurements
+        total_minutes = (max_time - min_time).total_seconds() / 60
+        theoretical_gl_vals = round(total_minutes / dt0) + 1
+
+        # Calculate missing values due to gaps
+        gaps = time_diffs[time_diffs > dt0]
+        gap_minutes = gaps.sum()
+        n_gaps = len(gaps)
+        missing_gl_vals = round((gap_minutes - n_gaps * dt0) / dt0)
+
+        # Calculate number of days
+        ndays = (max_time - min_time).total_seconds() / (24 * 3600)
+
+        # Calculate active percentage
+        active_percent = (
+            (theoretical_gl_vals - missing_gl_vals) / theoretical_gl_vals
+        ) * 100
+    elif range_type == "manual":
+        # Handle consistent end date if provided
+        if consistent_end_date is not None:
+            end_date = localize_naive_timestamp(pd.to_datetime(consistent_end_date))
+        else:
+            end_date = data.index.max()
+        start_date = end_date - pd.Timedelta(days=int(ndays))
+
+        # Filter data to the specified date range
+        mask = (data.index >= start_date) & (data.index <= end_date)
+        data = data[mask]
+
+        # Recalculate active percentage for the specified range
+        active_percent = (len(data) / (ndays * (24 * (60 / dt0)))) * 100
+        min_time = start_date
+        max_time = end_date
+        ndays = (end_date - start_date).total_seconds() / (24 * 3600)
+    else:
+        raise ValueError(f"Invalid range_type: {range_type}")
+
+    return {"active_percent": active_percent, "ndays": round(ndays, 1), "start_date": min_time, "end_date": max_time}
+
+
+

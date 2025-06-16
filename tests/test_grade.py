@@ -123,11 +123,26 @@ def test_grade_series_input():
     result = grade(data)
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "GRADE" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 3.747116, rtol=1e-3)
 
+def test_grade_list_input():
+    """Test GRADE calculation with list input."""
+    data = [100, 200, 100, 100]
+    result = grade(data)
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 3.747116, rtol=1e-3)
+
+def test_grade_numpy_array_input():
+    """Test GRADE calculation with numpy array input."""
+    data = np.array([100, 200, 100, 100])
+    result = grade(data)
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 3.747116, rtol=1e-3)
 
 def test_grade_empty_data():
     """Test GRADE calculation with empty DataFrame."""

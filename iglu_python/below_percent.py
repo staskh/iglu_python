@@ -1,13 +1,14 @@
 from typing import List, Union
 
+import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns
 
 
 def below_percent(
-    data: Union[pd.DataFrame, pd.Series, list], targets_below: List[int] = [54, 70]
-) -> pd.DataFrame:
+    data: Union[pd.DataFrame, pd.Series, list,np.ndarray], targets_below: List[int] = None
+) -> pd.DataFrame|dict[str:float]:
     """
     Calculate percentage of values below target thresholds.
 
@@ -57,26 +58,16 @@ def below_percent(
     0       25.0      50.0
     """
     # Handle Series input
-    if isinstance(data, (pd.Series, list)):
-        # Convert targets to float
-        targets_below = [int(t) for t in targets_below]
+    if targets_below is None:
+        targets_below = [54, 70]
+    if isinstance(data, (pd.Series, list,np.ndarray)):
+        if isinstance(data, (list, np.ndarray)):
+            data = pd.Series(data)
+        return below_percent_single(data, targets_below)
 
-        # Calculate total non-NA readings
-        total_readings = len(data.dropna())
-        if total_readings == 0:
-            return pd.DataFrame(columns=[f"below_{t}" for t in targets_below])
-
-        # Calculate percentages for each target
-        percentages = {}
-        for target in targets_below:
-            below_count = len(data[data < target])
-            percentages[f"below_{target}"] = (below_count / total_readings) * 100
-
-        return pd.DataFrame([percentages])
 
     # Handle DataFrame input
     data = check_data_columns(data)
-    targets_below = [int(t) for t in targets_below]
 
     # Initialize result list
     result = []
@@ -84,19 +75,35 @@ def below_percent(
     # Process each subject
     for subject in data["id"].unique():
         subject_data = data[data["id"] == subject]
-        total_readings = len(subject_data.dropna(subset=["gl"]))
 
-        if total_readings == 0:
-            continue
-
-        # Calculate percentages for each target
-        percentages = {}
-        for target in targets_below:
-            below_count = len(subject_data[subject_data["gl"] < target])
-            percentages[f"below_{target}"] = (below_count / total_readings) * 100
-
+        percentages = below_percent_single(subject_data["gl"], targets_below)
         percentages["id"] = subject
         result.append(percentages)
 
     # Convert to DataFrame
-    return pd.DataFrame(result)
+    df = pd.DataFrame(result)
+    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    return df
+
+def below_percent_single(data: pd.Series, targets_below: List[int] = None) -> dict[str:float]:
+    """
+    Calculate percentage of values below target thresholds for a single series/subject.
+    """
+    # Convert targets to float
+    if targets_below is None:
+        targets_below = [54, 70]
+    targets_below = [int(t) for t in targets_below]
+
+    # Calculate total non-NA readings
+    total_readings = len(data.dropna())
+    if total_readings == 0:
+        return {f"below_{t}": 0 for t in targets_below}
+
+    # Calculate percentages for each target
+    percentages = {}
+    for target in targets_below:
+        below_count = len(data[data < target])
+        percentages[f"below_{target}"] = (below_count / total_readings) * 100
+
+    return percentages
+

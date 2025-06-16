@@ -108,10 +108,8 @@ def test_range_glu_series_input():
     series_data = pd.Series([150, 155, 160, 165, 140, 145])
     result = iglu.range_glu(series_data)
 
-    assert isinstance(result, pd.DataFrame)
-    assert "range" in result.columns
-    assert len(result) == 1
-    assert result["range"].iloc[0] == 25  # max(165) - min(140)
+    assert isinstance(result, (float,np.float64))
+    np.testing.assert_allclose(result, 25, rtol=1e-3)
 
 
 def test_range_glu_empty_data():

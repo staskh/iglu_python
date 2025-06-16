@@ -87,7 +87,11 @@ def roc(
     3   NaN
     """
 
-    def roc_single(data: pd.DataFrame, timelag: int, dt0: int = None , inter_gap: int = 45, tz: str = "")  -> np.ndarray:
+    def roc_single(data: pd.DataFrame,
+                   timelag: int,
+                   dt0: int = None ,
+                   inter_gap: int = 45,
+                   tz: str = "")  -> np.ndarray:
         """Calculate ROC for a single subject's data"""
         data_ip = CGMS2DayByDay(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
         gl_ip_vec = data_ip[0].flatten()  # Flatten the interpolated glucose matrix
@@ -114,17 +118,16 @@ def roc(
 
     # Handle Series input
     if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"ROC": [np.nan]})
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series input must have a datetime index")
+        if len(data.dropna()) == 0:
+            return pd.DataFrame({"roc": [np.nan]})
 
         # Convert Series to DataFrame format
         data = pd.DataFrame(
             {
                 "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq=f"{dt0}min"
-                ),
+                "time": data.index,
                 "gl": data.values,
             }
         )

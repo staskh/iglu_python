@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def ea1c(data: Union[pd.DataFrame, pd.Series, list]) -> pd.DataFrame:
+def ea1c(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame|float:
     """
     Calculate estimated A1C (eA1C) values.
 
@@ -16,15 +16,15 @@ def ea1c(data: Union[pd.DataFrame, pd.Series, list]) -> pd.DataFrame:
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
+    data : Union[pd.DataFrame, pd.Series, list, np.ndarray]
         DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for eA1C values. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for eA1C values. If a Series of glucose values is passed, then a float value
+        is returned.
 
     References
     ----------
@@ -51,27 +51,30 @@ def ea1c(data: Union[pd.DataFrame, pd.Series, list]) -> pd.DataFrame:
     0  7.67
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"eA1C": [np.nan]})
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return ea1c_single(data)
 
-        mean_glucose = data.mean()
-        ea1c_value = (46.7 + mean_glucose) / 28.7
-        return pd.DataFrame({"eA1C": [ea1c_value]})
 
     # Handle DataFrame input
     data = check_data_columns(data)
 
     # Calculate eA1C for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].dropna(subset=["gl"])
-        if len(subject_data) == 0:
-            continue
+    out = data.groupby('id').agg(
+        eA1C = ("gl", lambda x: ea1c_single(x))
+    ).reset_index()
 
-        mean_glucose = subject_data["gl"].mean()
-        ea1c_value = (46.7 + mean_glucose) / 28.7
-        result.append({"id": subject, "eA1C": ea1c_value})
+    return out
 
-    return pd.DataFrame(result)
+
+def ea1c_single(data: pd.Series) -> float:
+    """Calculate eA1C for a single subject"""
+    if not isinstance(data, pd.Series):
+        raise ValueError("Data must be a pandas Series")
+    
+    data = data.dropna()
+    if len(data) == 0:
+        return np.nan
+
+    return (46.7 + data.mean()) / 28.7

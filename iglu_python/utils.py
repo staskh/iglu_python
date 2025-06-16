@@ -1,4 +1,3 @@
-import warnings
 from datetime import datetime
 from typing import Optional, Tuple
 from zoneinfo import ZoneInfo
@@ -78,14 +77,14 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
     if not pd.api.types.is_numeric_dtype(data["gl"]):
         try:
             data["gl"] = pd.to_numeric(data["gl"])
-        except:
-            raise ValueError("Column 'gl' must be numeric")
+        except Exception as e:
+            raise ValueError("Column 'gl' must be numeric") from e
 
     if not pd.api.types.is_datetime64_any_dtype(data["time"]):
         try:
             data["time"] = pd.to_datetime(data["time"])
-        except:
-            raise ValueError("Column 'time' must be datetime")
+        except Exception as e:
+            raise ValueError("Column 'time' must be datetime") from e
 
     if not pd.api.types.is_string_dtype(data["id"]):
         data["id"] = data["id"].astype(str)
@@ -121,7 +120,7 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
 
 
 def CGMS2DayByDay(
-    data: pd.DataFrame,
+    data: pd.DataFrame|pd.Series,
     dt0: Optional[pd.Timestamp] = None,
     inter_gap: int = 45,
     tz: str = "",
@@ -133,7 +132,7 @@ def CGMS2DayByDay(
     with each row representing a day and each column representing a time point.
     Missing values are linearly interpolated when close enough to non-missing values.
 
-    data : pd.DataFrame
+    data : pd.DataFrame or pd.Series
         DataFrame with columns 'id', 'time', and 'gl'. Should only be data for 1 subject.
         In case multiple subject ids are detected, a warning is produced and only 1st subject is used.
     dt0 : int, optional
@@ -165,6 +164,17 @@ def CGMS2DayByDay(
     >>> print(gd2d.shape)  # Shape will be (1, 288) for one day with 5-min intervals
     (1, 288)
     """
+    # Handle Series input
+    if isinstance(data, pd.Series):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+        data = pd.DataFrame(
+            {
+                "id": ["subject1"] * len(data.values),
+                "time": data.index,
+                "gl": data.values,
+            }
+        )
     # Check data format
     data = check_data_columns(data, tz)
 
@@ -224,8 +234,8 @@ def CGMS2DayByDay(
         gap_end_time = data["time"].iloc[gap_end_idx]
         # find the index of the gap end in the time grid
         gap_end_idx_in_time_grid = int(
-            np.floor(((gap_end_time - start_time).total_seconds() -1 ) / (60 * dt0)) # -1sec to indicate time before measurement
-        )
+            # -1sec to indicate time before measurement
+            np.floor(((gap_end_time - start_time).total_seconds() -1 ) / (60 * dt0)))
         # put nan in the gap
         interp_data[gap_start_idx_in_time_grid:gap_end_idx_in_time_grid] = np.nan
 
@@ -245,7 +255,7 @@ def CGMS2DayByDay(
     if is_iglu_r_compatible():
         # convert start_time into naive datetime
         start_time = start_time.tz_localize(None)
-        
+
     actual_dates = [start_time + pd.Timedelta(days=i) for i in range(n_days)]
 
     return interp_data, actual_dates, dt0

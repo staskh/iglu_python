@@ -111,9 +111,8 @@ def test_mad_glu_output_format():
     # Test with Series input
     series_data = pd.Series([150, 155, 160, 165, 140, 145])
     result_series = iglu.mad_glu(series_data)
-    assert isinstance(result_series, pd.DataFrame)
-    assert "MAD" in result_series.columns
-    assert len(result_series) == 1
+    assert isinstance(result_series, float)
+    np.testing.assert_allclose(result_series, 11.1195, rtol=1e-3)
 
     # Test with empty data
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])

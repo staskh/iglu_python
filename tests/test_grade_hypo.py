@@ -96,18 +96,28 @@ def test_grade_hypo_default():
     assert all(result["GRADE_hypo"] <= 100)  # Percentages should not exceed 100%
 
 
-def test_grade_hypo_series():
+def test_grade_hypo_series_input():
     """Test GRADE hypoglycemia with Series input"""
     series_data = pd.Series(
         [150, 75, 160, 65, 140, 85]
     )  # Include some hypoglycemic values
     result = iglu.grade_hypo(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "GRADE_hypo" in result.columns
-    assert len(result) == 1
-    assert result["GRADE_hypo"].iloc[0] >= 0
-    assert result["GRADE_hypo"].iloc[0] <= 100
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 19.225537, rtol=1e-3)
 
+def test_grade_hypo_list_input():
+    """Test GRADE hypoglycemia with Series input"""
+    list_data = [150, 75, 160, 65, 140, 85]
+    result = iglu.grade_hypo(list_data)
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 19.225537, rtol=1e-3)
+
+def test_grade_hypo_numpy_array_input():
+    """Test GRADE hypoglycemia with Series input"""
+    array_data = np.array([150, 75, 160, 65, 140, 85])
+    result = iglu.grade_hypo(array_data)
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 19.225537, rtol=1e-3)
 
 def test_grade_hypo_empty():
     """Test GRADE hypoglycemia with empty data"""
@@ -121,18 +131,14 @@ def test_grade_hypo_constant_glucose():
     # Test with constant glucose above lower bound
     series_data = pd.Series([150] * 10)
     result = iglu.grade_hypo(series_data)
-    assert len(result) == 1
-    assert (
-        result["GRADE_hypo"].iloc[0] == 0
-    )  # Should be 0 for constant glucose above lower bound
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 0, rtol=1e-3)
 
     # Test with constant glucose below lower bound
     series_data = pd.Series([70] * 10)
     result = iglu.grade_hypo(series_data)
-    assert len(result) == 1
-    assert (
-        result["GRADE_hypo"].iloc[0] == 100
-    )  # Should be 100 for constant glucose below lower bound
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 100, rtol=1e-3)
 
 
 def test_grade_hypo_missing_values():

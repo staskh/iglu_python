@@ -12,7 +12,7 @@ from .utils import check_data_columns
 
 def pgs(
     data: Union[pd.DataFrame, pd.Series], dur_length: int = 20, end_length: int = 30
-) -> pd.DataFrame:
+) -> pd.DataFrame|float:
     """
     Calculate Personal Glycemic State (PGS).
 
@@ -23,7 +23,8 @@ def pgs(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values.
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        or a numpy array or list of glucose values
         Should only be data for 1 subject. In case multiple subject ids are detected,
         a warning is produced and only 1st subject is used.
     dur_length : int, optional
@@ -36,9 +37,9 @@ def pgs(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for PGS value.
+        for PGS value. If a Series of glucose values is passed, then a float is returned.
 
     Notes
     -----
@@ -82,57 +83,48 @@ def pgs(
     if isinstance(data, pd.Series):
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series must have a DatetimeIndex")
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data.values),
-                "time": data.index,
-                "gl": data.values,
-            }
-        )
+        return pgs_single(data, dur_length, end_length)
 
     # Handle DataFrame input
     data = check_data_columns(data)
+    data.set_index('time', drop=True, inplace=True)
 
-    def pgs_single(subj_data: pd.DataFrame) -> float:
-        """Calculate PGS for a single subject"""
-        # Calculate components
-        gvp_val = gvp(subj_data)["GVP"].iloc[0]
-        mean_val = mean_glu(subj_data)["mean"].iloc[0]
-        ptir_val = in_range_percent(subj_data, target_ranges=[[70, 180]])["in_range_70_180"].iloc[0]
+    out = data.groupby('id').agg(
+        PGS = ("gl", lambda x: pgs_single(x, dur_length, end_length))
+    ).reset_index()
+    return out
 
-        # Calculate episode components
-        eps = episode_calculation(
-            subj_data,
-            lv1_hypo=70,
-            lv2_hypo=54,
-            dur_length=dur_length,
-            end_length=end_length,
-        )
-        n54 = eps["avg_ep_per_day"].iloc[1] * 7  # Convert to weekly episodes
-        n70 = eps["avg_ep_per_day"].iloc[5] * 7  # Use lv1 exclusive, not lv1 super set
+def pgs_single(gl: pd.Series, dur_length: int = 20, end_length: int = 30) -> float:
+    """Calculate PGS for a single subject"""
+    # Calculate components
+    gvp_val = gvp(gl)
+    mean_val = mean_glu(gl)
+    ptir_val = in_range_percent(gl, target_ranges=[[70, 180]])['in_range_70_180']
 
-        # Calculate PGS components
-        f_gvp = 1 + (9 / (1 + np.exp(-0.049 * (gvp_val - 65.47))))
-        f_ptir = 1 + (9 / (1 + np.exp(0.0833 * (ptir_val - 55.04))))
-        f_mg = 1 + 9 * (
-            (1 / (1 + np.exp(0.1139 * (mean_val - 72.08))))
-            + (1 / (1 + np.exp(-0.09195 * (mean_val - 157.57))))
-        )
+    # Calculate episode components
+    eps = episode_calculation(
+        gl,
+        lv1_hypo=70,
+        lv2_hypo=54,
+        dur_length=dur_length,
+        end_length=end_length,
+    )
+    n54 = eps["avg_ep_per_day"].iloc[1] * 7  # Convert to weekly episodes
+    n70 = eps["avg_ep_per_day"].iloc[5] * 7  # Use lv1 exclusive, not lv1 super set
 
-        f_h54 = 0.5 + 4.5 * (1 - np.exp(-0.91093 * n54))
-        f_h70 = 0.5714 * n70 + 0.625 if n70 <= 7.65 else 5
+    # Calculate PGS components
+    f_gvp = 1 + (9 / (1 + np.exp(-0.049 * (gvp_val - 65.47))))
+    f_ptir = 1 + (9 / (1 + np.exp(0.0833 * (ptir_val - 55.04))))
+    f_mg = 1 + 9 * (
+        (1 / (1 + np.exp(0.1139 * (mean_val - 72.08))))
+        + (1 / (1 + np.exp(-0.09195 * (mean_val - 157.57))))
+    )
 
-        # Calculate final PGS score
-        pgs_score = f_gvp + f_ptir + f_mg + f_h54 + f_h70
+    f_h54 = 0.5 + 4.5 * (1 - np.exp(-0.91093 * n54))
+    f_h70 = 0.5714 * n70 + 0.625 if n70 <= 7.65 else 5
 
-        return pgs_score
+    # Calculate final PGS score
+    pgs_score = f_gvp + f_ptir + f_mg + f_h54 + f_h70
 
+    return pgs_score
 
-    # Calculate PGS for each subject
-    results = []
-    for subject_id in data["id"].unique():
-        subject_data = data[data["id"] == subject_id].copy()
-        pgs_value = pgs_single(subject_data)
-        results.append({"id": subject_id, "PGS": pgs_value})
-    
-    return pd.DataFrame(results)

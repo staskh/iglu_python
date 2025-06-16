@@ -102,11 +102,8 @@ def test_gri_series():
         [150, 50, 160, 260, 140, 85]
     )  # Include values in all GRI ranges
     result = iglu.gri(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "GRI" in result.columns
-    assert len(result) == 1
-    assert result["GRI"].iloc[0] >= 0
-    assert result["GRI"].iloc[0] <= 100
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 76.66, rtol=0.001)
 
 
 def test_gri_empty():
@@ -121,16 +118,14 @@ def test_gri_constant_glucose():
     # Test with constant glucose in target range
     series_data = pd.Series([150] * 10)
     result = iglu.gri(series_data)
-    assert len(result) == 1
-    assert (
-        result["GRI"].iloc[0] == 0
-    )  # Should be 0 for constant glucose in target range
+    assert isinstance(result, (np.int64, float,int))
+    np.testing.assert_allclose(result, 0, rtol=0.001)
 
     # Test with constant glucose in severe hypoglycemia range
     series_data = pd.Series([40] * 10)
     result = iglu.gri(series_data)
-    assert len(result) == 1
-    assert result["GRI"].iloc[0] > 0  # Should be positive for constant glucose below 54
+    assert isinstance(result, (np.int64, float,int))
+    np.testing.assert_allclose(result, 100, rtol=0.001)
 
 
 def test_gri_missing_values():

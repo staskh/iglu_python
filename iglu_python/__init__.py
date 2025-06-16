@@ -5,8 +5,11 @@ from .auc import auc
 from .below_percent import below_percent
 from .cogi import cogi
 from .conga import conga
+from .cv_glu import cv_glu
+from .cv_measures import cv_measures
 from .ea1c import ea1c
 from .episode_calculation import episode_calculation
+from .gmi import gmi
 from .grade import grade
 from .grade_eugly import grade_eugly
 from .grade_hyper import grade_hyper
@@ -37,7 +40,7 @@ from .sd_glu import sd_glu
 from .sd_measures import sd_measures
 from .sd_roc import sd_roc
 from .summary_glu import summary_glu
-from .utils import set_iglu_r_compatible, is_iglu_r_compatible, CGMS2DayByDay, check_data_columns, gd2d_to_df
+from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, is_iglu_r_compatible, set_iglu_r_compatible
 
 __all__ = [
     "above_percent",
@@ -49,6 +52,8 @@ __all__ = [
     "CGMS2DayByDay",
     "cogi",
     "conga",
+    "cv_glu",
+    "cv_measures",
     "ea1c",
     "episode_calculation",
     "gd2d_to_df",
@@ -56,6 +61,7 @@ __all__ = [
     "grade_eugly",
     "grade_hyper",
     "grade_hypo",
+    "gmi",
     "gri",
     "gvp",
     "hbgi",

@@ -9,14 +9,14 @@ from .utils import check_data_columns
 
 
 def igc(
-    data: Union[pd.DataFrame, pd.Series],
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, list],
     LLTR: int = 80,
     ULTR: int = 140,
     a: float = 1.1,
     b: float = 2,
     c: int = 30,
     d: int = 30,
-) -> pd.DataFrame:
+) -> pd.DataFrame|float:
     """
     Calculate Index of Glycemic Control (IGC).
 
@@ -25,8 +25,8 @@ def igc(
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
     LLTR : int, default=80
         Lower Limit of Target Range, in mg/dL
     ULTR : int, default=140
@@ -42,10 +42,9 @@ def igc(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for the IGC value. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for the IGC value. If a Series of glucose values is passed, then a float is returned.
 
     References
     ----------
@@ -73,40 +72,34 @@ def igc(
     0  0.106
     """
     # Handle Series input
-    is_vector = False
-    if isinstance(data, (list, np.ndarray)):
-        data = pd.Series(data)
-    if isinstance(data, pd.Series):
-        is_vector = True
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GVP": [np.nan]})
-
-        # Convert to DataFrame format for processing
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
-                "gl": data.values,
-            }
-        )
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return igc_single(data, LLTR, ULTR, a, b, c, d)
 
     # Check and prepare data
     data = check_data_columns(data)
 
-    # Calculate hyper_index and hypo_index
-    out_hyper = hyper_index(data, ULTR=ULTR, a=a, c=c)
-    out_hypo = hypo_index(data, LLTR=LLTR, b=b, d=d)
+    out = data.groupby('id').agg(
+        IGC = ("gl", lambda x: igc_single(x, LLTR, ULTR, a, b, c, d))
+    ).reset_index()
+    return out
 
-    # Combine the indices
-    out = pd.merge(out_hyper, out_hypo, on="id")
-    out["IGC"] = out["hyper_index"] + out["hypo_index"]
-    out = out[["id", "IGC"]]
+def igc_single(
+    gl: pd.Series, 
+    LLTR: int = 80, 
+    ULTR: int = 140, 
+    a: float = 1.1, 
+    b: float = 2, 
+    c: int = 30, 
+    d: int = 30
+) -> float:
+    """
+    Calculate Index of Glycemic Control for a single subject.
+    """
+        # Calculate hyper_index and hypo_index
+    out_hyper = hyper_index(gl, ULTR=ULTR, a=a, c=c)
+    out_hypo = hypo_index(gl, LLTR=LLTR, b=b, d=d)
 
-    # Remove id column if input was a Series
-    if is_vector:
-        out = out.drop("id", axis=1)
-
+    out = out_hyper + out_hypo
     return out

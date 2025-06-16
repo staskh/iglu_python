@@ -105,11 +105,12 @@ def test_mag_basic():
 
 def test_mag_series_input():
     """Test mag function with Series input"""
-    series_data = pd.Series([150, 155, 160, 165, 140, 145])
-    result = iglu.mag(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "MAG" in result.columns
-    assert len(result) == 1
+    series_data = pd.Series([150, 160, 170, 180, 190, 200, 210, 220],
+        index=pd.date_range(start="2020-01-01 10:00:00", periods=8, freq="5min"))
+    result = iglu.mag(series_data,n=20)
+    expected = 60
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
 
 def test_mag_empty_data():
