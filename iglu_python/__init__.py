@@ -5,12 +5,15 @@ from .auc import auc
 from .below_percent import below_percent
 from .cogi import cogi
 from .conga import conga
+from .cv_glu import cv_glu
+from .cv_measures import cv_measures
 from .ea1c import ea1c
 from .episode_calculation import episode_calculation
 from .grade import grade
 from .grade_eugly import grade_eugly
 from .grade_hyper import grade_hyper
 from .grade_hypo import grade_hypo
+from .gmi import gmi
 from .gri import gri
 from .gvp import gvp
 from .hbgi import hbgi
@@ -49,6 +52,8 @@ __all__ = [
     "CGMS2DayByDay",
     "cogi",
     "conga",
+    "cv_glu",
+    "cv_measures",
     "ea1c",
     "episode_calculation",
     "gd2d_to_df",
@@ -56,6 +61,7 @@ __all__ = [
     "grade_eugly",
     "grade_hyper",
     "grade_hypo",
+    "gmi",
     "gri",
     "gvp",
     "hbgi",

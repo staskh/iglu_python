@@ -19,50 +19,75 @@ A significant focus of this project has been ensuring compatibility with the ori
 This approach ensures that the Python implementation produces results consistent with the original R package.
 
 ## Unit Test Status
-Unless noted, iglu-r test is considered successful if it achieves precision of 0.001
+The current version of IGLU-PYTHON is test-compatible with IGLU-R v4.2.2
 
-| Function | IGLU-R test compatibility | array/list/Series | TZ | Comments |
-|----------|---------------------------|-------------------|----|----------|
-| above_percent | ✅ | |||
-| active_percent | ✅ |
-| adrr | ✅ |
-| auc| 🟡 (0.01 precision) | || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
-| below_percent| ✅ |
-| cogi | ✅ |
-| conga | ✅ |
-| cv_glu | ✅ |
-| cv_measures | ✅ |
-| ea1c | ✅ |
-| episode_calculation |  ✅| || |
-| gmi | ✅ |
-| grade_eugly | ✅ |
-| grade_hyper | ✅ |
-| grade_hypo | ✅ |
-| grade | ✅ |
-| gri | ✅ |
-| gvp | ✅ |
-| hbgi | ✅ |
-| hyper_index | ✅ |
-| hypo_index | ✅ |
-| igc | ✅ |
-| j_index | ✅ |
-| lbgi | ✅ |
-| mad_glu | ✅ |
-| mag |  ✅ | || IMHO, Original R implementation has an error |
-| mage | ✅ | || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
-| mean_glu | ✅ |
-| median_glu | ✅ |
-| modd | ✅ |
-| pgs |  ✅  | || |
-| quantile_glu |  ✅ |
-| range_glu | ✅ |
-| roc | ✅ |
-| sd_glu | ✅ |
-| sd_measures | ✅ |
-| sd_roc |  ✅ | |||
-| process_data | ✅ |
-| summary_glu | ✅ |
-| CGMS2DayByDay | ✅ |
+Unless noted, IGLU-R test compatability is considered successful if it achieves precision of 0.001
+
+| Function | Description | IGLU-R test compatibility | list /ndarray /Series input | TZ | Comments |
+|----------|-------------|-------------|-------------------|----|----------|
+| above_percent | percentage of values above target thresholds| ✅ | |||
+| active_percent | percentage of time CGM was active | ✅ |
+| adrr | average daily risk range | ✅ |
+| auc| Area Under Curve | 🟡 (0.01 precision) | || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
+| below_percent| percentage of values below target thresholds| ✅ |
+| cogi |Coefficient of Glucose Irregularity | ✅ |
+| conga | Continuous Overall Net Glycemic Action |✅ |
+| cv_glu | Coefficient of Variation | ✅|  ✅ returns float |
+| cv_measures | |✅  |✅ returns dict[str:float]| | 
+| ea1c |estimated A1C (eA1C) values| ✅ |
+| episode_calculation | Hypo/Hyperglycemic episodes with summary statistics|  ✅| || |
+| gmi | Glucose Management Indicator | ✅ |
+| grade_eugly |percentage of GRADE score attributable to target range| ✅ |
+| grade_hyper |percentage of GRADE score attributable to hyperglycemia| ✅ |
+| grade_hypo |percentage of GRADE score attributable to hypoglycemia| ✅ |
+| grade |mean GRADE score| ✅ |
+| gri |Glycemia Risk Index | ✅ |
+| gvp |Glucose Variability Percentage| ✅ |
+| hbgi |High Blood Glucose Index| ✅ |
+| hyper_index |Hyperglycemia Index| ✅ |
+| hypo_index |Hypoglycemia Index| ✅ |
+| igc |Index of Glycemic Control| ✅ |
+| in_range_percent |percentage of values within target ranges| ✅ |
+| iqr_glu |glucose level interquartile range|✅ |
+| j_index |J-Index score for glucose measurements| ✅ |
+| lbgi | Low Blood Glucose Index| ✅ |
+| m_value | M-value of Schlichtkrull et al | ✅ |
+| mad_glu | Median Absolute Deviation | ✅ |
+| mag | Mean Absolute Glucose| ✅ | || IMHO, Original R implementation has an error |
+| mage | Mean Amplitude of Glycemic Excursions|  ✅ | || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
+| mean_glu | Mean glucose value | ✅ |
+| median_glu |Median glucose value| ✅ |
+| modd | Mean of Daily Differences| ✅ |
+| pgs | Personal Glycemic State | ✅  | || |
+| quantile_glu |glucose level quantiles|  ✅ |
+| range_glu |glucose level range| ✅ |
+| roc | Rate of Change| ✅ |
+| sd_glu | standard deviation of glucose values| ✅ |
+| sd_measures |various standard deviation subtypes| ✅ |
+| sd_roc | standard deviation of the rate of change| ✅ | |||
+| summary_glu | summary glucose level| ✅ |
+| process_data | Data Pre-Processor | ✅ |
+| CGMS2DayByDay |Interpolate glucose input| ✅ |
+
+### Input & Output 
+The implementation maintains compatibility with the R version while following Python best practices. The metrics can be used as:
+
+```Python
+import iglu_python ias iglu
+
+# With DataFrame input
+result_df = iglu.cv_glu(data)  # data should have 'id', 'time', and 'gl' columns
+# Return DataFrame with "id' and column(s) with value(s)
+
+# With Series input (some metrics require Series with DateTimeIndex)
+result_float = iglu.cv_glu(glucose_series)  # just glucose values
+# returns a single float value
+
+# Same with function that support list or ndarray
+result_float = iglu.cv_glu(glucose_list)  # list of glucose values
+# returns a single float value
+
+```
 
 # Installation
 

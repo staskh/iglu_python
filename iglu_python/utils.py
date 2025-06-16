@@ -121,7 +121,7 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
 
 
 def CGMS2DayByDay(
-    data: pd.DataFrame,
+    data: pd.DataFrame|pd.Series,
     dt0: Optional[pd.Timestamp] = None,
     inter_gap: int = 45,
     tz: str = "",
@@ -133,7 +133,7 @@ def CGMS2DayByDay(
     with each row representing a day and each column representing a time point.
     Missing values are linearly interpolated when close enough to non-missing values.
 
-    data : pd.DataFrame
+    data : pd.DataFrame or pd.Series
         DataFrame with columns 'id', 'time', and 'gl'. Should only be data for 1 subject.
         In case multiple subject ids are detected, a warning is produced and only 1st subject is used.
     dt0 : int, optional
@@ -165,6 +165,17 @@ def CGMS2DayByDay(
     >>> print(gd2d.shape)  # Shape will be (1, 288) for one day with 5-min intervals
     (1, 288)
     """
+    # Handle Series input
+    if isinstance(data, pd.Series):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+        data = pd.DataFrame(
+            {
+                "id": ["subject1"] * len(data.values),
+                "time": data.index,
+                "gl": data.values,
+            }
+        )
     # Check data format
     data = check_data_columns(data, tz)
 
