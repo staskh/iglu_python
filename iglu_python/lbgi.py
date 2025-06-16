@@ -5,42 +5,6 @@ import pandas as pd
 
 from .utils import check_data_columns
 
-
-def calculate_lbgi(glucose_values: pd.Series) -> float:
-    """
-    Calculate LBGI for a single series of glucose values.
-
-    Parameters
-    ----------
-    glucose_values : pd.Series
-        Series of glucose values in mg/dL
-
-    Returns
-    -------
-    float
-        LBGI value
-    """
-    # Remove NaN values
-    glucose_values = glucose_values.dropna()
-
-    if len(glucose_values) == 0:
-        return np.nan
-
-    # Calculate LBGI using the formula from the R implementation
-    # LBGI = 22.77 * mean(fbg[gl < 112.5]^2)
-    # where fbg = max(0, 1.509 * (log(gl)^1.084 - 5.381))
-
-    # Calculate fbg values
-    fbg = 1.509 * (np.log(glucose_values) ** 1.084 - 5.381)
-    fbg = np.minimum(fbg, 0)  # Take min with 0
-
-    # Calculate LBGI
-    n = len(glucose_values)
-    lbgi = 10 * np.sum(fbg[glucose_values < 112.5] ** 2) / n
-
-    return lbgi
-
-
 def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     r"""
     Calculate the Low Blood Glucose Index (LBGI) for each subject.
@@ -117,3 +81,39 @@ def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
         results.append({"id": subject_id, "LBGI": lbgi_value})
 
     return pd.DataFrame(results)
+
+
+def calculate_lbgi(glucose_values: pd.Series) -> float:
+    """
+    Calculate LBGI for a single series of glucose values.
+
+    Parameters
+    ----------
+    glucose_values : pd.Series
+        Series of glucose values in mg/dL
+
+    Returns
+    -------
+    float
+        LBGI value
+    """
+    # Remove NaN values
+    glucose_values = glucose_values.dropna()
+
+    if len(glucose_values) == 0:
+        return np.nan
+
+    # Calculate LBGI using the formula from the R implementation
+    # LBGI = 22.77 * mean(fbg[gl < 112.5]^2)
+    # where fbg = max(0, 1.509 * (log(gl)^1.084 - 5.381))
+
+    # Calculate fbg values
+    fbg = 1.509 * (np.log(glucose_values) ** 1.084 - 5.381)
+    fbg = np.minimum(fbg, 0)  # Take min with 0
+
+    # Calculate LBGI
+    n = len(glucose_values)
+    lbgi = 10 * np.sum(fbg[glucose_values < 112.5] ** 2) / n
+
+    return lbgi
+

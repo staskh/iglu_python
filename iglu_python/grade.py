@@ -5,25 +5,6 @@ import pandas as pd
 
 from .utils import check_data_columns
 
-
-def _grade_formula(x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
-    """
-    Helper function to calculate GRADE score for individual glucose values.
-
-    Parameters
-    ----------
-    x : Union[pd.Series, np.ndarray]
-        Glucose values in mg/dL
-
-    Returns
-    -------
-    Union[pd.Series, np.ndarray]
-        GRADE scores for each glucose value
-    """
-    grade = 425 * (np.log10(np.log10(x / 18)) + 0.16) ** 2
-    return np.minimum(grade, 50)  # Cap at 50
-
-
 def grade(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     """
     Calculate mean GRADE score for each subject.
@@ -85,3 +66,22 @@ def grade(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     result.columns = ["id", "GRADE"]
 
     return result
+
+
+def _grade_formula(x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    """
+    Helper function to calculate GRADE score for individual glucose values.
+
+    Parameters
+    ----------
+    x : Union[pd.Series, np.ndarray]
+        Glucose values in mg/dL
+
+    Returns
+    -------
+    Union[pd.Series, np.ndarray]
+        GRADE scores for each glucose value
+    """
+    grade = 425 * (np.log10(np.log10(x / 18)) + 0.16) ** 2
+    return np.minimum(grade, 50)  # Cap at 50
+

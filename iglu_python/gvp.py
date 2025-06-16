@@ -5,55 +5,6 @@ import pandas as pd
 
 from .utils import CGMS2DayByDay, check_data_columns
 
-
-def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
-    """
-    Calculate GVP for a single series of glucose values.
-
-    Parameters
-    ----------
-    glucose_values : pd.Series
-        Series of glucose values in mg/dL
-    timestamps : pd.Series
-        Series of timestamps corresponding to glucose values
-
-    Returns
-    -------
-    float
-        Glucose Variability Percentage
-    """
-    # Remove NaN values
-    mask = ~(glucose_values.isna() | timestamps.isna())
-    glucose_values = glucose_values[mask]
-    timestamps = timestamps[mask]
-
-    if len(glucose_values) < 2:
-        return np.nan
-
-    # Sort by timestamp
-    sort_idx = timestamps.argsort()
-    glucose_values = glucose_values.iloc[sort_idx]
-    timestamps = timestamps.iloc[sort_idx]
-
-    # Calculate time differences in minutes
-    time_diffs = np.diff(timestamps.astype(np.int64) // 10**9) / 60.0
-
-    # Calculate glucose differences
-    glucose_diffs = np.diff(glucose_values)
-
-    # Calculate total length of glucose trace
-    added_length = np.sqrt(time_diffs**2 + glucose_diffs**2)
-    total_length = np.sum(added_length)
-
-    # Calculate length of flat trace
-    base_length = np.sum(time_diffs)
-
-    # Calculate GVP
-    gvp = (total_length / base_length - 1) * 100
-
-    return gvp
-
-
 def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
     r"""
     Calculate Glucose Variability Percentage (GVP).
@@ -164,3 +115,52 @@ def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
     if is_vector:
         df = df.drop(columns=["id"])
     return df
+
+
+def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
+    """
+    Calculate GVP for a single series of glucose values.
+
+    Parameters
+    ----------
+    glucose_values : pd.Series
+        Series of glucose values in mg/dL
+    timestamps : pd.Series
+        Series of timestamps corresponding to glucose values
+
+    Returns
+    -------
+    float
+        Glucose Variability Percentage
+    """
+    # Remove NaN values
+    mask = ~(glucose_values.isna() | timestamps.isna())
+    glucose_values = glucose_values[mask]
+    timestamps = timestamps[mask]
+
+    if len(glucose_values) < 2:
+        return np.nan
+
+    # Sort by timestamp
+    sort_idx = timestamps.argsort()
+    glucose_values = glucose_values.iloc[sort_idx]
+    timestamps = timestamps.iloc[sort_idx]
+
+    # Calculate time differences in minutes
+    time_diffs = np.diff(timestamps.astype(np.int64) // 10**9) / 60.0
+
+    # Calculate glucose differences
+    glucose_diffs = np.diff(glucose_values)
+
+    # Calculate total length of glucose trace
+    added_length = np.sqrt(time_diffs**2 + glucose_diffs**2)
+    total_length = np.sum(added_length)
+
+    # Calculate length of flat trace
+    base_length = np.sum(time_diffs)
+
+    # Calculate GVP
+    gvp = (total_length / base_length - 1) * 100
+
+    return gvp
+
