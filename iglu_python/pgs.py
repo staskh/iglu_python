@@ -23,7 +23,7 @@ def pgs(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
         or a numpy array or list of glucose values
         Should only be data for 1 subject. In case multiple subject ids are detected,
         a warning is produced and only 1st subject is used.

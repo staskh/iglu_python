@@ -213,7 +213,7 @@ def test_process_data_glucose_warnings():
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        result = iglu.process_data(data, id='id', timestamp='time', glu='gl')
+        iglu.process_data(data, id='id', timestamp='time', glu='gl')
 
         # Should generate warnings for extreme values
         warning_messages = [str(warning.message) for warning in w]
@@ -304,7 +304,8 @@ def test_process_data_custom_time_parser():
     })
 
     # Custom parser for MM/DD/YYYY format
-    custom_parser = lambda x: pd.to_datetime(x, format='%m/%d/%Y %H:%M:%S')
+    def custom_parser(x):
+        return pd.to_datetime(x, format='%m/%d/%Y %H:%M:%S')
 
     result = iglu.process_data(data, id='id', timestamp='time', glu='gl',
                               time_parser=custom_parser)

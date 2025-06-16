@@ -17,7 +17,7 @@ def median_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.Dat
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
         or a numpy array or list of glucose values
 
     Returns

@@ -41,7 +41,7 @@ def sd_roc(
     -------
     pd.DataFrame|float
         DataFrame with two columns: subject id and standard deviation of the rate of change
-        values for each subject. 
+        values for each subject.
         If a Series of glucose values is passed, then a float is returned.
 
     Notes

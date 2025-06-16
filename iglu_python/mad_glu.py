@@ -19,7 +19,7 @@ def mad_glu(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
         or a numpy array or list of glucose values
     constant : float, default=1.4826
         Scaling factor to multiply the MAD value. The default value of 1.4826
@@ -31,7 +31,7 @@ def mad_glu(
     pd.DataFrame|float
         DataFrame with columns:
         - id: subject identifier (if DataFrame input)
-        - MAD: MAD value (median absolute deviation of glucose values). 
+        - MAD: MAD value (median absolute deviation of glucose values).
         If a Series of glucose values is passed, then a float is returned.
 
     Examples

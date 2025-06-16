@@ -32,7 +32,7 @@ def sd_measures(data: pd.DataFrame|pd.Series,
     Returns
     -------
     pd.DataFrame
-        A DataFrame with columns for id and each of the six SD subtypes. 
+        A DataFrame with columns for id and each of the six SD subtypes.
         If a Series of glucose values is passed, then a dictionary is returned.
         - SDw: vertical within days
         - SDhhmm: between time points

@@ -13,7 +13,7 @@ def adrr(data: pd.DataFrame|pd.Series) -> pd.DataFrame|float:
 
     Parameters
     ----------
-    data : pd.DataFrame|pd.Series   
+    data : pd.DataFrame|pd.Series
         DataFrame object with column names "id", "time", and "gl".
         or a Timeseries of glucose values.
 
