@@ -103,16 +103,31 @@ def test_lbgi_series_input():
     """Test LBGI calculation with Series input."""
     data = pd.Series([70, 80, 60, 50])
     result = iglu.lbgi(data)
+    expected = 11.960402
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "LBGI" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
-    # Check that LBGI is calculated (should be positive due to hypoglycemia)
-    assert result.loc[0, "LBGI"] > 0
+def test_lbgi_list_input():
+    """Test LBGI calculation with list input."""
+    data = [70, 80, 60, 50]
+    result = iglu.lbgi(data)
+    expected = 11.960402
 
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
+def test_lbgi_numpy_array_input():
+    """Test LBGI calculation with numpy array input."""
+    data = np.array([70, 80, 60, 50])
+    result = iglu.lbgi(data)
+    expected = 11.960402
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
 def test_lbgi_empty_data():
     """Test LBGI calculation with empty DataFrame."""

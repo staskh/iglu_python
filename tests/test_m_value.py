@@ -106,13 +106,31 @@ def test_m_value_series_input():
     """Test M-value calculation with Series input."""
     data = pd.Series([90, 180, 90, 90])
     result = iglu.m_value(data)
+    expected = 6.819764  
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "M_value" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
+def test_m_value_list_input():
+    """Test M-value calculation with list input."""
+    data = [90, 180, 90, 90]
+    result = iglu.m_value(data)
+    expected = 6.819764
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
+def test_m_value_numpy_array_input():
+    """Test M-value calculation with numpy array input."""
+    data = np.array([90, 180, 90, 90])
+    result = iglu.m_value(data)
+    expected = 6.819764
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
 def test_m_value_custom_reference():
     """Test M-value calculation with custom reference value."""

@@ -25,15 +25,15 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 
 | Function | Description | IGLU-R test compatibility | list /ndarray /Series input | TZ | Comments |
 |----------|-------------|-------------|-------------------|----|----------|
-| above_percent | percentage of values above target thresholds| ✅ |✅ returns dict |||
-| active_percent | percentage of time CGM was active | ✅ | ✅ only Series(DatetimeIndex) returns dict[str:float]
+| above_percent | percentage of values above target thresholds| ✅ |✅ returns Dict[str,float] |||
+| active_percent | percentage of time CGM was active | ✅ | ✅ only Series(DatetimeIndex) returns Dict[str,float]|
 | adrr | average daily risk range | ✅ |✅ only Series(DatetimeIndex) returns float |
 | auc| Area Under Curve | 🟡 (0.01 precision) |✅ only Series(DatetimeIndex) returns float  || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
-| below_percent| percentage of values below target thresholds| ✅ | ✅ returns dict
+| below_percent| percentage of values below target thresholds| ✅ | ✅ returns Dict[str,float]|
 | cogi |Coefficient of Glucose Irregularity | ✅ | ✅ returns float
 | conga | Continuous Overall Net Glycemic Action |✅ | ✅ only Series(DatetimeIndex) returns float
 | cv_glu | Coefficient of Variation | ✅|  ✅ returns float |
-| cv_measures |Coefficient of Variation subtypes (CVmean and CVsd) |✅  |✅ only Series(DatetimeIndex) returns dict| | 
+| cv_measures |Coefficient of Variation subtypes (CVmean and CVsd) |✅  |✅ only Series(DatetimeIndex) returns Dict[str,float]| | 
 | ea1c |estimated A1C (eA1C) values| ✅ | ✅ returns float |
 | episode_calculation | Hypo/Hyperglycemic episodes with summary statistics|  ✅|  🟡 always returns DataFrame(s)|| |
 | gmi | Glucose Management Indicator | ✅ | ✅ returns float |
@@ -47,16 +47,16 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | hyper_index |Hyperglycemia Index| ✅ |✅ returns float |
 | hypo_index |Hypoglycemia Index| ✅ |✅ returns float |
 | igc |Index of Glycemic Control| ✅ |✅ returns float |
-| in_range_percent |percentage of values within target ranges| ✅ | ✅ returns dict
+| in_range_percent |percentage of values within target ranges| ✅ | ✅ returns Dict[str,float]|
 | iqr_glu |glucose level interquartile range|✅ |✅ returns float |
 | j_index |J-Index score for glucose measurements| ✅ |✅ returns float |
-| lbgi | Low Blood Glucose Index| ✅ |
-| m_value | M-value of Schlichtkrull et al | ✅ |
-| mad_glu | Median Absolute Deviation | ✅ |
-| mag | Mean Absolute Glucose| ✅ | || IMHO, Original R implementation has an error |
+| lbgi | Low Blood Glucose Index| ✅ |✅ returns float |
+| m_value | M-value of Schlichtkrull et al | ✅ |✅ returns float |
+| mad_glu | Median Absolute Deviation | ✅ |✅ returns float |
+| mag | Mean Absolute Glucose| ✅ | ✅ only Series(DatetimeIndex) returns float ||| IMHO, Original R implementation has an error |
 | mage | Mean Amplitude of Glycemic Excursions|  ✅ |✅ only Series(DatetimeIndex) returns float || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
 | mean_glu | Mean glucose value | ✅ | ✅ returns float|
-| median_glu |Median glucose value| ✅ |
+| median_glu |Median glucose value| ✅ |✅ returns float |
 | modd | Mean of Daily Differences| ✅ |
 | pgs | Personal Glycemic State | ✅  | || |
 | quantile_glu |glucose level quantiles|  ✅ |

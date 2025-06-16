@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def lbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
     r"""
     Calculate the Low Blood Glucose Index (LBGI) for each subject.
 
@@ -21,15 +21,15 @@ def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns ['id', 'time', 'gl'] or Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns ['id', 'time', 'gl'] or Series of glucose values, or a numpy array or list of glucose values
         in mg/dL
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with columns ['id', 'LBGI'] containing LBGI values for each subject
-        If input is a Series, returns DataFrame with single row and column 'LBGI'
+        If input is a Series, returns a float.
 
     References
     ----------
@@ -63,26 +63,18 @@ def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
            LBGI
     0  0.123456
     """
-    if isinstance(data, pd.Series):
-        lbgi_value = calculate_lbgi(data)
-        return pd.DataFrame({"LBGI": [lbgi_value]})
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return calculate_lbgi(data)
 
     # Check DataFrame format
     check_data_columns(data)
 
-    if len(data) == 0:
-        raise ValueError("Empty DataFrame provided")
-
-    # Calculate LBGI for each subject
-    results = []
-
-    for subject_id in data["id"].unique():
-        subject_data = data[data["id"] == subject_id]["gl"]
-        lbgi_value = calculate_lbgi(subject_data)
-        results.append({"id": subject_id, "LBGI": lbgi_value})
-
-    return pd.DataFrame(results)
-
+    out = data.groupby('id').agg(
+        LBGI = ("gl", lambda x: calculate_lbgi(x))
+    ).reset_index()
+    return out
 
 def calculate_lbgi(glucose_values: pd.Series) -> float:
     """

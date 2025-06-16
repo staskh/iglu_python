@@ -103,10 +103,8 @@ def test_median_glu_series():
     """Test median_glu with Series input"""
     series_data = pd.Series([150, 155, 160, 165, 140, 145])
     result = iglu.median_glu(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "median" in result.columns
-    assert len(result) == 1
-    assert result["median"].iloc[0] == 152.5  # Median of all values
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 152.5, rtol=1e-3)
 
 
 def test_median_glu_empty():

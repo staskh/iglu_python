@@ -7,8 +7,8 @@ from .utils import check_data_columns
 
 
 def mad_glu(
-    data: Union[pd.DataFrame, pd.Series], constant: float = 1.4826
-) -> pd.DataFrame:
+    data: Union[pd.DataFrame, pd.Series, np.ndarray, list], constant: float = 1.4826
+) -> pd.DataFrame|float:
     """
     Calculate Median Absolute Deviation (MAD) of glucose values.
 
@@ -18,8 +18,9 @@ def mad_glu(
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        or a numpy array or list of glucose values
     constant : float, default=1.4826
         Scaling factor to multiply the MAD value. The default value of 1.4826
         makes the MAD consistent with the standard deviation for normally
@@ -27,10 +28,11 @@ def mad_glu(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with columns:
         - id: subject identifier (if DataFrame input)
-        - MAD: MAD value (median absolute deviation of glucose values)
+        - MAD: MAD value (median absolute deviation of glucose values). 
+        If a Series of glucose values is passed, then a float is returned.
 
     Examples
     --------
@@ -51,26 +53,25 @@ def mad_glu(
     0  27.5
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        # Calculate MAD for the Series
-        mad_val = np.median(np.abs(data - np.median(data))) * constant
-        return pd.DataFrame({"MAD": [mad_val]})
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return mad_glu_single(data, constant)
 
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    # Calculate MAD for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject]
-        if len(subject_data.dropna(subset=["gl"])) == 0:
-            continue
+    out = data.groupby('id').agg(
+        MAD = ("gl", lambda x: mad_glu_single(x, constant))
+    ).reset_index()
+    return out
 
-        # Calculate MAD for this subject
-        mad_val = (
-            np.median(np.abs(subject_data["gl"] - np.median(subject_data["gl"])))
-            * constant
-        )
-        result.append({"id": subject, "MAD": mad_val})
-
-    return pd.DataFrame(result)
+def mad_glu_single(gl: pd.Series, constant: float = 1.4826) -> float:
+    """
+    Calculate Median Absolute Deviation (MAD) of glucose values for a single subject.
+    """
+    gl = gl.dropna()
+    if len(gl) == 0:
+        return np.nan
+    mad_val = np.median(np.abs(gl - np.median(gl))) * constant
+    return mad_val
