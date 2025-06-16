@@ -108,7 +108,8 @@ def test_roc_default():
 
 def test_roc_series():
     """Test ROC with Series input"""
-    series_data = pd.Series([150, 160, 170, 180, 190, 200])
+    series_data = pd.Series([150, 160, 170, 180, 190, 200],
+            index=pd.date_range(start="2020-01-01 00:00:00", periods=6, freq="5min"))
     result = iglu.roc(series_data)
     assert isinstance(result, pd.DataFrame)
     assert all(col in result.columns for col in ["id", "time", "roc"])
