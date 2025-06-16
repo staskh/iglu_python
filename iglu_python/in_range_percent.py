@@ -1,7 +1,7 @@
 from typing import List, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from .utils import check_data_columns
 
@@ -95,7 +95,7 @@ def in_range_percent_single(data: pd.Series, target_ranges: List[List[int]] = [[
     # Calculate total non-NA readings
     total_readings = len(data.dropna())
     if total_readings == 0:
-        return {f"in_range_{min(range_vals)}_{max(range_vals)}": 0 
+        return {f"in_range_{min(range_vals)}_{max(range_vals)}": 0
                 for range_vals in target_ranges}
 
     # Calculate percentages for each range

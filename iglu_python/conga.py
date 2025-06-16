@@ -82,7 +82,7 @@ def conga(
         valid_diffs = diffs[~np.isnan(diffs)]
         if len(valid_diffs) < 2:
             return np.nan
-        
+
         return float(np.nanstd(diffs, ddof=1))
 
     # Handle Series input

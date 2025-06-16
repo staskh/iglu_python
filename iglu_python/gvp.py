@@ -5,6 +5,7 @@ import pandas as pd
 
 from .utils import CGMS2DayByDay, check_data_columns
 
+
 def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
     r"""
     Calculate Glucose Variability Percentage (GVP).

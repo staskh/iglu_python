@@ -59,7 +59,7 @@ def gri(data: Union[pd.DataFrame, pd.Series,list,np.ndarray], tz: str = "") -> p
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return gri_single(data, tz)
-    
+
     # Handle DataFrame input
     data = check_data_columns(data, tz=tz)
 

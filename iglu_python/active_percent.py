@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Optional, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from .utils import check_data_columns, localize_naive_timestamp
 
@@ -76,7 +76,7 @@ def active_percent(
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series must have a DatetimeIndex")
         return active_percent_single(data, dt0, tz, range_type, ndays, consistent_end_date)
-    
+
     # Check data format and convert time to datetime
     data = check_data_columns(data, tz)
 
@@ -111,14 +111,14 @@ def active_percent_single(data: pd.Series, dt0: Optional[int] = None, tz: str = 
 
     if not isinstance(data, pd.Series):
         raise ValueError("Input must be a Series")
-    
+
     if not isinstance(data.index, pd.DatetimeIndex):
         raise ValueError("Series must have a DatetimeIndex")
 
     data = data.dropna()
     if len(data) == 0:
         return {"active_percent": 0, "ndays": 0, "start_date": None, "end_date": None}
-    
+
     # Calculate time differences between consecutive measurements
     time_diffs = np.array(
         data.index.diff().total_seconds() / 60
@@ -172,6 +172,5 @@ def active_percent_single(data: pd.Series, dt0: Optional[int] = None, tz: str = 
 
     return {"active_percent": active_percent, "ndays": round(ndays, 1), "start_date": min_time, "end_date": max_time}
 
-        
-    
-    
+
+

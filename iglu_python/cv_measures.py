@@ -11,9 +11,11 @@ References:
     doi:10.1016/j.amjms.2018.09.010.
 """
 
-import pandas as pd
 import numpy as np
-from .utils import check_data_columns, CGMS2DayByDay, is_iglu_r_compatible
+import pandas as pd
+
+from .utils import CGMS2DayByDay, check_data_columns
+
 
 def cv_measures(data, dt0=None, inter_gap=45, tz="")->pd.DataFrame|dict[str:float]:
     """Calculate Coefficient of Variation subtypes (CVmean and CVsd).
@@ -51,28 +53,28 @@ def cv_measures(data, dt0=None, inter_gap=45, tz="")->pd.DataFrame|dict[str:floa
     if isinstance(data, pd.Series):
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series must have a DatetimeIndex")
-        
+
         results_dict = _calculate_series_cv(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
         return results_dict
 
     # Check and prepare data
     data = check_data_columns(data)
-    
-    
+
+
     # Process each subject
     results = []
     for subject_id in data['id'].unique():
         subject_data = data[data['id'] == subject_id]
-        
+
         results_dict = _calculate_series_cv(subject_data, dt0=dt0, inter_gap=inter_gap, tz=tz)
-        
+
         results.append({
             'id': subject_id,
             'CVmean': results_dict['CVmean'],
             'CVsd': results_dict['CVsd']
         })
-    
-    return pd.DataFrame(results) 
+
+    return pd.DataFrame(results)
 
 def _calculate_series_cv(subject_data: pd.DataFrame|pd.Series, dt0=None, inter_gap=45, tz="") -> dict[str:float]:
     """Calculate CV for series/single subject input"""

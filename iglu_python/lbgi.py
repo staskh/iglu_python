@@ -5,6 +5,7 @@ import pandas as pd
 
 from .utils import check_data_columns
 
+
 def lbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     r"""
     Calculate the Low Blood Glucose Index (LBGI) for each subject.

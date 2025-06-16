@@ -1,4 +1,3 @@
-import warnings
 from datetime import datetime
 from typing import Optional, Tuple
 from zoneinfo import ZoneInfo
@@ -256,7 +255,7 @@ def CGMS2DayByDay(
     if is_iglu_r_compatible():
         # convert start_time into naive datetime
         start_time = start_time.tz_localize(None)
-        
+
     actual_dates = [start_time + pd.Timedelta(days=i) for i in range(n_days)]
 
     return interp_data, actual_dates, dt0

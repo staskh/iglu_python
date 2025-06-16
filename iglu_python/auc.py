@@ -5,7 +5,6 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, is_iglu_r_compatible
 
 
-
 def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
     """
     Calculate Area Under Curve (AUC) for glucose measurements.
@@ -60,10 +59,10 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
     if isinstance(data, pd.Series):
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series must have a DatetimeIndex")
-        
+
         auc = auc_single(data,tz=tz)
         return auc
-    
+
     # Check data format and convert time to datetime
     data = check_data_columns(data)
 

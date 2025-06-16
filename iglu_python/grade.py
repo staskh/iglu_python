@@ -5,6 +5,7 @@ import pandas as pd
 
 from .utils import check_data_columns
 
+
 def grade(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     """
     Calculate mean GRADE score for each subject.

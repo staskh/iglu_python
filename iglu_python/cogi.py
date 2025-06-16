@@ -1,7 +1,7 @@
 from typing import List, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from .below_percent import below_percent
 from .in_range_percent import in_range_percent
@@ -74,7 +74,7 @@ def cogi(
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return cogi_single(data, targets, weights)
-    
+
     data = check_data_columns(data)
 
     out = data.groupby("id").agg(

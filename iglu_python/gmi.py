@@ -11,9 +11,10 @@ References:
     doi:10.2337/dc18-1581.
 """
 
-import pandas as pd
-import numpy as np
 from typing import Union
+
+import numpy as np
+import pandas as pd
 
 from iglu_python.utils import check_data_columns
 
@@ -47,7 +48,7 @@ def gmi(data: Union[pd.DataFrame, pd.Series, list]) -> float|pd.DataFrame:
         # Calculate GMI for Series
         gmi_val = 3.31 + (0.02392 * data.mean())
         return gmi_val
-    
+
     # Check and prepare data
     data = check_data_columns(data)
     is_vector = getattr(data, "is_vector", False)
@@ -57,4 +58,4 @@ def gmi(data: Union[pd.DataFrame, pd.Series, list]) -> float|pd.DataFrame:
         GMI=("gl", lambda x: 3.31 + (0.02392 * x.mean()))
     ).reset_index()
 
-    return out 
+    return out

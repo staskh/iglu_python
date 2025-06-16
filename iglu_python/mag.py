@@ -6,7 +6,6 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns, is_iglu_r_compatible
 
 
-
 def mag(
     data: Union[pd.DataFrame, pd.Series],
     n: int = 60,
@@ -101,7 +100,7 @@ def mag(
             diffs = np.abs(diffs)
             diffs = diffs[~np.isnan(diffs)]
             # to be IGLU-R test compatible, imho they made error.
-            # has to be total_time_hours = ((len(diffs)) * n) / 60   
+            # has to be total_time_hours = ((len(diffs)) * n) / 60
             total_time_hours = ((len(gl_values_idx[~np.isnan(gl_values_idx)])) * n) / 60
             if total_time_hours == 0:
                 return 0.0
@@ -112,7 +111,7 @@ def mag(
             diffs = diffs[~np.isnan(diffs)]
 
             # Calculate MAG: sum of absolute differences divided by total time in hours
-            total_time_hours = ((len(diffs)) * n) / 60   
+            total_time_hours = ((len(diffs)) * n) / 60
             if total_time_hours == 0:
                 return 0.0
             mag = float(np.sum(diffs) / total_time_hours)

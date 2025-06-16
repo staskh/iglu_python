@@ -11,9 +11,12 @@ References:
 """
 
 from typing import Union
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from .utils import check_data_columns
+
 
 def cv_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> Union[pd.DataFrame, float]:
     """Calculate Coefficient of Variation (CV) of glucose levels.
@@ -47,14 +50,14 @@ def cv_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> Union[pd.D
         # Calculate CV for Series
         cv_val = 100 * data.std() / data.mean()
         return cv_val
-    
+
     # Check and prepare data
     data = check_data_columns(data)
-    
+
     data = data.dropna()
     # Calculate CV for each subject
     out = data.groupby('id').agg(
         CV=('gl', lambda x: 100 * x.std() / x.mean())
     ).reset_index()
-    
-    return out 
+
+    return out

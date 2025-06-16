@@ -172,7 +172,7 @@ def episode_calculation(
             episode_data_df = subject_episode_data
         else:
             episode_data_df = pd.concat([episode_data_df, subject_episode_data], ignore_index=True)
-        
+
         if episode_summary_df.empty:
             episode_summary_df = subject_summary
         else:
@@ -320,7 +320,7 @@ def episode_single(
         df['group_id'] = df.groupby(['segment', lv1_col]).ngroup()
         group_has_lv2 = df.groupby('group_id')[lv2_col].transform(lambda x: (x > 0).any())
         return df[lv1_col].where(~group_has_lv2, 0)
-    
+
     ep_per_seg['lv1_hypo_excl'] = calculate_exclusion(ep_per_seg, 'lv1_hypo', 'lv2_hypo')
     ep_per_seg['lv1_hyper_excl'] = calculate_exclusion(ep_per_seg, 'lv1_hyper', 'lv2_hyper')
 

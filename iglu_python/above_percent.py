@@ -1,7 +1,7 @@
 from typing import List, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from .utils import check_data_columns
 
@@ -63,7 +63,7 @@ def above_percent(
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return above_percent_single(data, targets_above)
-    
+
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -103,4 +103,3 @@ def above_percent_single(data: pd.Series, targets_above: List[int] = [140, 180, 
         percentages[f"above_{target}"] = (above_count / total_readings) * 100
 
     return percentages
-    

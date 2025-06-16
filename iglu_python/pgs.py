@@ -134,5 +134,5 @@ def pgs(
         subject_data = data[data["id"] == subject_id].copy()
         pgs_value = pgs_single(subject_data)
         results.append({"id": subject_id, "PGS": pgs_value})
-    
+
     return pd.DataFrame(results)

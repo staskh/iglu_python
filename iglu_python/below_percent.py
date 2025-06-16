@@ -1,7 +1,7 @@
 from typing import List, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from .utils import check_data_columns
 
@@ -62,7 +62,7 @@ def below_percent(
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return below_percent_single(data, targets_below)
-    
+
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -103,4 +103,3 @@ def below_percent_single(data: pd.Series, targets_below: List[int] = [54, 70]) -
 
     return percentages
 
-    
