@@ -26,7 +26,7 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | Function | Description | IGLU-R test compatibility | list /ndarray /Series input | TZ | Comments |
 |----------|-------------|-------------|-------------------|----|----------|
 | above_percent | percentage of values above target thresholds| ✅ |✅ returns dict |||
-| active_percent | percentage of time CGM was active | ✅ |
+| active_percent | percentage of time CGM was active | ✅ | ✅ only Series(DatetimeIndex) returns dict[str:float]
 | adrr | average daily risk range | ✅ |
 | auc| Area Under Curve | 🟡 (0.01 precision) |✅ only Series(DatetimeIndex) returns float  || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
 | below_percent| percentage of values below target thresholds| ✅ | ✅ returns dict
