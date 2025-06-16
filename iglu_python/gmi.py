@@ -13,11 +13,12 @@ References:
 
 import pandas as pd
 import numpy as np
+from typing import Union
 
 from iglu_python.utils import check_data_columns
 
 
-def gmi(data):
+def gmi(data: Union[pd.DataFrame, pd.Series, list]) -> float|pd.DataFrame:
     """Calculate GMI (Glucose Management Indicator).
 
     The function gmi produces GMI values in a pandas DataFrame object.
@@ -40,10 +41,12 @@ def gmi(data):
         where G is the vector of Glucose Measurements (mg/dL).
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
+    if isinstance(data, (list, np.ndarray, pd.Series)):
+        if isinstance(data, (list, np.ndarray)):
+            data = pd.Series(data)
         # Calculate GMI for Series
         gmi_val = 3.31 + (0.02392 * data.mean())
-        return pd.DataFrame({"GMI": [gmi_val]})
+        return gmi_val
     
     # Check and prepare data
     data = check_data_columns(data)

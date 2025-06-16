@@ -54,13 +54,10 @@ def test_cogi_series_input():
     result = iglu.cogi(data)
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "COGI" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, (float,np.float64))
 
     # Check that COGI value is between 0 and 100
-    assert (result["COGI"].iloc[0] >= 0) and (result["COGI"].iloc[0] <= 100)
+    np.testing.assert_allclose(result, 81.934259, rtol=0.001)
 
 
 def test_cogi_custom_parameters():

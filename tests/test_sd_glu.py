@@ -109,13 +109,10 @@ def test_sd_glu_series_input():
     result = iglu.sd_glu(data)
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "SD" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, (float,np.float64))
 
     # Check that SD value is non-negative
-    assert result["SD"].iloc[0] >= 0
+    np.testing.assert_allclose(result, 26.394444, rtol=0.001)
 
 
 def test_sd_glu_empty_data():

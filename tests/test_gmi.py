@@ -105,15 +105,13 @@ def test_gmi_series():
     """Test GMI with Series input"""
     series_data = pd.Series([150, 160, 170, 180, 190, 200])
     result = iglu.gmi(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "GMI" in result.columns
-    assert len(result) == 1
+    assert isinstance(result, (float,np.float64))
 
     # Calculate expected GMI
     # Mean glucose = (150 + 160 + 170 + 180 + 190 + 200) / 6 = 175
     # GMI = 3.31 + (0.02392 * 175) = 7.496
     expected_gmi = 3.31 + (0.02392 * 175)
-    assert abs(result["GMI"].iloc[0] - expected_gmi) < 0.001
+    np.testing.assert_allclose(result, expected_gmi, rtol=0.001)
 
 
 def test_gmi_empty():

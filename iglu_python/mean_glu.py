@@ -1,11 +1,12 @@
 from typing import Union
 
+import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns
 
 
-def mean_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def mean_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataFrame|float:
     """
     Calculate mean glucose value for each subject.
 
@@ -44,8 +45,10 @@ def mean_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0     157.5
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        return pd.DataFrame({"mean": [data.mean()]})
+    if isinstance(data, (list, np.ndarray, pd.Series)):
+        if isinstance(data, (list,np.ndarray)):
+            data = pd.Series(data)
+        return data.mean()
 
     # Handle DataFrame input
     data = check_data_columns(data)

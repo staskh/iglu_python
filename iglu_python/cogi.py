@@ -1,6 +1,7 @@
 from typing import List, Union
 
 import pandas as pd
+import numpy as np
 
 from .below_percent import below_percent
 from .in_range_percent import in_range_percent
@@ -9,10 +10,10 @@ from .utils import check_data_columns
 
 
 def cogi(
-    data: Union[pd.DataFrame, pd.Series, list],
+    data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
     targets: List[int] = [70, 180],
     weights: List[float] = [0.5, 0.35, 0.15],
-) -> pd.DataFrame:
+) -> pd.DataFrame|float:
     """
     Calculate Coefficient of Glucose Irregularity (COGI).
 
@@ -66,53 +67,30 @@ def cogi(
     0  68.9
     """
 
-    def weight_features(
-        feature: Union[float, pd.Series, list],
-        scale_range: List[float],
-        weight: float = 1,
-        increasing: bool = False,
-    ) -> Union[float, pd.Series, list]:
-        """Helper function to weight and scale features. If feature is a Series (or a list), the output is a Series (or list) with the same number of rows (or length) as the input, with values clipped (or "inverse" clipped) so that they are between 0 and 1."""
-        if isinstance(feature, pd.Series):
-            scaled = (feature - min(scale_range)) / (
-                max(scale_range) - min(scale_range)
-            )
-            if increasing:
-                out = scaled.clip(lower=0, upper=1)
-            else:
-                out = (1 - scaled).clip(lower=0, upper=1)
-        elif isinstance(feature, list):
-            scaled = [
-                (x - min(scale_range)) / (max(scale_range) - min(scale_range))
-                for x in feature
-            ]
-            if increasing:
-                out = [min(1, max(0, x)) for x in scaled]
-            else:
-                out = [min(1, max(0, 1 - x)) for x in scaled]
-        else:
-            scaled = (feature - min(scale_range)) / (
-                max(scale_range) - min(scale_range)
-            )
-            if increasing:
-                out = min(1, max(0, scaled))
-            else:
-                out = min(1, max(0, 1 - scaled))
-        return out * weight
-
     # Check and prepare data
-    is_vector = isinstance(data, (pd.Series, list))
-    if not is_vector:
-        data = check_data_columns(data)
     targets = sorted([float(t) for t in targets])
 
+    if isinstance(data, (pd.Series, list, np.ndarray)):
+        if isinstance(data, (list, np.ndarray)):
+            data = pd.Series(data)
+        return cogi_single(data, targets, weights)
+    
+    data = check_data_columns(data)
+
+    out = data.groupby("id").agg(
+        COGI=('gl', lambda x: cogi_single(x, targets, weights))
+    ).reset_index()
+
+    return out
+
+def cogi_single(data: pd.Series, targets: List[int] = [70, 180], weights: List[float] = [0.5, 0.35, 0.15]) -> float:
+    """Calculate COGI for a single subject"""
     # Calculate components
     ir_df = in_range_percent(data, [targets])
-    ir = ir_df["in_range_" + "_".join(map(str, targets))]
+    ir = ir_df["in_range_" + "_".join(map(str, targets))].iloc[0]
     br_df = below_percent(data, targets_below=[targets[0]])
-    br = br_df["below_" + str(int(targets[0]))]
-    stddev_df = sd_glu(data)
-    stddev = stddev_df["SD"]
+    br = br_df["below_" + str(int(targets[0]))].iloc[0]
+    stddev = sd_glu(data)
 
     # Calculate weighted features
     weighted_features = (
@@ -121,10 +99,40 @@ def cogi(
         + weight_features(stddev, [18, 108], weight=weights[2])
     )
 
-    # Create output DataFrame
-    out = pd.DataFrame({"COGI": weighted_features * 100})  # Convert to percentage
-    if not is_vector:
-        out["id"] = stddev_df["id"]
-        out = out[["id", "COGI"]]
+    return weighted_features * 100  # Convert to percentage
 
-    return out
+
+
+def weight_features(
+    feature: Union[float, pd.Series, list],
+    scale_range: List[float],
+    weight: float = 1,
+    increasing: bool = False,
+) -> Union[float, pd.Series, list]:
+    """Helper function to weight and scale features. If feature is a Series (or a list), the output is a Series (or list) with the same number of rows (or length) as the input, with values clipped (or "inverse" clipped) so that they are between 0 and 1."""
+    if isinstance(feature, pd.Series):
+        scaled = (feature - min(scale_range)) / (
+            max(scale_range) - min(scale_range)
+        )
+        if increasing:
+            out = scaled.clip(lower=0, upper=1)
+        else:
+            out = (1 - scaled).clip(lower=0, upper=1)
+    elif isinstance(feature, list):
+        scaled = [
+            (x - min(scale_range)) / (max(scale_range) - min(scale_range))
+            for x in feature
+        ]
+        if increasing:
+            out = [min(1, max(0, x)) for x in scaled]
+        else:
+            out = [min(1, max(0, 1 - x)) for x in scaled]
+    else:
+        scaled = (feature - min(scale_range)) / (
+            max(scale_range) - min(scale_range)
+        )
+        if increasing:
+            out = min(1, max(0, scaled))
+        else:
+            out = min(1, max(0, 1 - scaled))
+    return out * weight

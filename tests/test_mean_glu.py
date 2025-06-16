@@ -109,13 +109,10 @@ def test_mean_glu_series_input():
     result = mean_glu(data)
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "mean" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, (float,np.float64))
 
     # Check that mean value is correct
-    assert abs(result["mean"].iloc[0] - 168.33) < 0.01  # 168.33 is the expected mean
+    np.testing.assert_allclose(result, 168.33, rtol=0.001)  # 168.33 is the expected mean
 
 
 def test_mean_glu_empty_data():

@@ -28,15 +28,15 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | above_percent | percentage of values above target thresholds| ✅ | |||
 | active_percent | percentage of time CGM was active | ✅ |
 | adrr | average daily risk range | ✅ |
-| auc| Area Under Curve | 🟡 (0.01 precision) | || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
+| auc| Area Under Curve | 🟡 (0.01 precision) |✅ only Series(DatetimeIndex) returns float  || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
 | below_percent| percentage of values below target thresholds| ✅ |
-| cogi |Coefficient of Glucose Irregularity | ✅ |
+| cogi |Coefficient of Glucose Irregularity | ✅ | ✅ returns float
 | conga | Continuous Overall Net Glycemic Action |✅ |
 | cv_glu | Coefficient of Variation | ✅|  ✅ returns float |
 | cv_measures |Coefficient of Variation subtypes (CVmean and CVsd) |✅  |✅ only Series(DatetimeIndex) returns dict[str:float]| | 
 | ea1c |estimated A1C (eA1C) values| ✅ |
 | episode_calculation | Hypo/Hyperglycemic episodes with summary statistics|  ✅| || |
-| gmi | Glucose Management Indicator | ✅ |
+| gmi | Glucose Management Indicator | ✅ | ✅ returns float |
 | grade_eugly |percentage of GRADE score attributable to target range| ✅ |
 | grade_hyper |percentage of GRADE score attributable to hyperglycemia| ✅ |
 | grade_hypo |percentage of GRADE score attributable to hypoglycemia| ✅ |
@@ -54,15 +54,15 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | m_value | M-value of Schlichtkrull et al | ✅ |
 | mad_glu | Median Absolute Deviation | ✅ |
 | mag | Mean Absolute Glucose| ✅ | || IMHO, Original R implementation has an error |
-| mage | Mean Amplitude of Glycemic Excursions|  ✅ | || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
-| mean_glu | Mean glucose value | ✅ |
+| mage | Mean Amplitude of Glycemic Excursions|  ✅ |✅ only Series(DatetimeIndex) returns float || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
+| mean_glu | Mean glucose value | ✅ | ✅ returns float|
 | median_glu |Median glucose value| ✅ |
 | modd | Mean of Daily Differences| ✅ |
 | pgs | Personal Glycemic State | ✅  | || |
 | quantile_glu |glucose level quantiles|  ✅ |
 | range_glu |glucose level range| ✅ |
 | roc | Rate of Change| ✅ |
-| sd_glu | standard deviation of glucose values| ✅ |
+| sd_glu | standard deviation of glucose values| ✅ | ✅ returns float
 | sd_measures |various standard deviation subtypes| ✅ |
 | sd_roc | standard deviation of the rate of change| ✅ | |||
 | summary_glu | summary glucose level| ✅ |
@@ -117,36 +117,32 @@ import iglu_python as iglu
 # Optional: datetime index or 'time' column
 data = pd.DataFrame({
     'id': ['Subject1'] * 100,
-    'time': pd.date_range(start='2023-01-01', periods=100, freq='5min')
-    'gl': [120, 135, 140, 125, 110, ...],  # glucose values in mg/dL
+    'time': pd.date_range(start='2023-01-01', periods=100, freq='5min'),
+    'gl': [120, 135, 140, 125, 110]*20  # glucose values in mg/dL
 })
 
 # Calculate glucose metrics
 mean_glucose = iglu.mean_glu(data)
 cv = iglu.cv_glu(data)
-time_in_range = iglu.active_percent(data, lltr=70, ultr=180)
+active = iglu.active_percent(data)
 
-print(f"Mean glucose: {mean_glucose}")
-print(f"CV: {cv}")
-print(f"Time in range (70-180 mg/dL): {time_in_range}%")
+print(f"Mean glucose: {mean_glucose['mean'][0]}")
+print(f"CV: {cv['CV'][0]}")
+print(f"CGM active percent: {active['active_percent'][0]}%")
 ```
 
 ### Using with Time Series Data
 
 ```python
 import pandas as pd
+import numpy as np
 import iglu_python as iglu
-from datetime import datetime, timedelta
 
 # Create time series data
 timestamps = pd.date_range(start='2023-01-01', periods=288, freq='5min')
 glucose_values = [120 + 20 * np.sin(i/48) + np.random.normal(0, 5) for i in range(288)]
 
-data = pd.DataFrame({
-    'id': ['Subject1'] * 288,
-    'time': timestamps,
-    'gl': glucose_values
-})
+data = pd.Series(glucose_values, index=timestamps)
 
 # Calculate advanced metrics
 mage = iglu.mage(data)
