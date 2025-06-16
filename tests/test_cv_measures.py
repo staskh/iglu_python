@@ -255,4 +255,70 @@ def test_cv_measures_custom_dt0():
         expected,
         check_dtype=False,
         rtol=1e-2
-    ) 
+    )
+
+def test_cv_measures_series_with_datetime_index():
+    """Test CV measures calculation with Series input that has DatetimeIndex."""
+    # Create test data with DatetimeIndex
+    time = pd.to_datetime(['2020-01-01 10:00:00', '2020-01-01 10:05:00', '2020-01-01 10:10:00',
+                          '2020-01-02 10:00:00', '2020-01-02 10:05:00', '2020-01-02 10:10:00'])
+    data = pd.Series(
+        [100, 120, 110,  # Day 1: mean=110, std=10, CV=9.09
+         90, 130, 95],   # Day 2: mean=105, std=21.21, CV=20.75
+        index=time
+    )
+    
+    # Calculate CV measures
+    result = iglu.cv_measures(data)
+    
+    # Expected results:
+    # CVmean = np.mean([9.09, 20.75]) = 14.92
+    # CVsd = np.std([9.09, 20.75], ddof=1) = 8.244
+    expected = {
+        'CVmean': 14.92,
+        'CVsd': 8.244
+    }
+    
+    # Compare results
+    assert isinstance(result, dict)
+    np.testing.assert_allclose(result['CVmean'], expected['CVmean'], rtol=0.001)
+    np.testing.assert_allclose(result['CVsd'], expected['CVsd'], rtol=0.001)
+
+def test_cv_measures_series_without_datetime_index():
+    """Test CV measures calculation with Series input that doesn't have DatetimeIndex."""
+    # Create test data with regular index
+    data = pd.Series(
+        [100, 120, 110, 90, 130, 95],
+        index=range(6)  # Regular integer index instead of DatetimeIndex
+    )
+    
+    # Attempt to calculate CV measures - should raise ValueError
+    with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
+        iglu.cv_measures(data)
+
+def test_cv_measures_series_with_missing_values():
+    """Test CV measures calculation with Series input containing missing values."""
+    # Create test data with DatetimeIndex and missing values
+    time = pd.to_datetime(['2020-01-01 10:00:00', '2020-01-01 10:05:00', '2020-01-01 10:10:00',
+                          '2020-01-02 10:00:00', '2020-01-02 10:05:00', '2020-01-02 10:10:00'])
+    data = pd.Series(
+        [100, np.nan, 110,  # Day 1: CV=7.07 (after interpolation)
+         90, 130, np.nan],  # Day 2: CV=28.28 (after interpolation)
+        index=time
+    )
+    
+    # Calculate CV measures with interpolation
+    result = iglu.cv_measures(data, inter_gap=45)
+    
+    # Expected results:
+    # CVmean = 16.223
+    # CVsd = 13.419
+    expected = {
+        'CVmean': 16.223,
+        'CVsd': 13.419
+    }
+    
+    # Compare results
+    assert isinstance(result, dict)
+    np.testing.assert_allclose(result['CVmean'], expected['CVmean'], rtol=0.001)
+    np.testing.assert_allclose(result['CVsd'], expected['CVsd'], rtol=0.001)

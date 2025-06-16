@@ -33,7 +33,7 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | cogi |Coefficient of Glucose Irregularity | ✅ |
 | conga | Continuous Overall Net Glycemic Action |✅ |
 | cv_glu | Coefficient of Variation | ✅|  ✅ returns float |
-| cv_measures | |✅  |✅ returns dict[str:float]| | 
+| cv_measures |Coefficient of Variation subtypes (CVmean and CVsd) |✅  |✅ only Series(DatetimeIndex) returns dict[str:float]| | 
 | ea1c |estimated A1C (eA1C) values| ✅ |
 | episode_calculation | Hypo/Hyperglycemic episodes with summary statistics|  ✅| || |
 | gmi | Glucose Management Indicator | ✅ |
