@@ -45,12 +45,11 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | gvp |Glucose Variability Percentage| ✅ | ✅ only Series(DatetimeIndex) returns float
 | hbgi |High Blood Glucose Index| ✅ | ✅ returns float |
 | hyper_index |Hyperglycemia Index| ✅ |✅ returns float |
-| hyper_index |Hyperglycemia Index| ✅ |✅ returns float |
-| hypo_index |Hypoglycemia Index| ✅ |
-| igc |Index of Glycemic Control| ✅ |
+| hypo_index |Hypoglycemia Index| ✅ |✅ returns float |
+| igc |Index of Glycemic Control| ✅ |✅ returns float |
 | in_range_percent |percentage of values within target ranges| ✅ | ✅ returns dict
-| iqr_glu |glucose level interquartile range|✅ |
-| j_index |J-Index score for glucose measurements| ✅ |
+| iqr_glu |glucose level interquartile range|✅ |✅ returns float |
+| j_index |J-Index score for glucose measurements| ✅ |✅ returns float |
 | lbgi | Low Blood Glucose Index| ✅ |
 | m_value | M-value of Schlichtkrull et al | ✅ |
 | mad_glu | Median Absolute Deviation | ✅ |

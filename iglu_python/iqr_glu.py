@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def iqr_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
     """
     Calculate glucose level interquartile range (IQR).
 
@@ -15,15 +15,14 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame with columns:
-        - id: subject identifier (if DataFrame input)
-        - IQR: interquartile range of glucose values (75th percentile - 25th percentile)
+    pd.DataFrame|float
+        DataFrame with 1 row for each subject, a column for subject id and a column
+        for the IQR value. If a Series of glucose values is passed, then a float is returned.
 
     Examples
     --------
@@ -44,10 +43,15 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0   70.0
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
+    if isinstance(data, (pd.Series,list, np.ndarray)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        data = data.dropna()
+        if len(data) == 0:
+            return np.nan
         # Calculate IQR for Series
-        iqr_val = np.percentile(data, 75) - np.percentile(data, 25)
-        return pd.DataFrame({"IQR": [iqr_val]})
+        iqr_val = iqr_glu_single(data)
+        return iqr_val   
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -57,8 +61,28 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     data = data.dropna()
     result = (
         data.groupby("id")
-        .agg(IQR=("gl", lambda x: np.percentile(x, 75) - np.percentile(x, 25)))
+        .agg(IQR=("gl", lambda x: iqr_glu_single(x)))
         .reset_index()
     )
 
     return result
+
+def iqr_glu_single(
+    gl: pd.Series,
+) -> float:
+    """
+    Calculate glucose level interquartile range (IQR) for a single subject.
+
+    Parameters
+    ----------
+    gl : pd.Series
+        Series of glucose values
+
+    Returns
+    """
+    gl = gl.dropna()
+    if len(gl) == 0:
+        return np.nan
+    # Calculate IQR for Series
+    iqr_val = np.percentile(gl, 75) - np.percentile(gl, 25)
+    return iqr_val 

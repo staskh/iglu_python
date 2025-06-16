@@ -96,25 +96,16 @@ def test_j_index_basic():
     # Check calculations
     # For subject1: mean = 175, sd = 25, J-index = 0.001 * (175 + 25)*2 ~~ 40.000
     # For subject2: mean = 160, sd = 30, J-index = 0.001 * (160 + 30)*2 ~~ 38.000
-    assert (
-        abs(result.loc[result["id"] == "subject1", "J_index"].iloc[0] - 45.000) / 45.000
-    ) < 0.1
-    assert (
-        abs(result.loc[result["id"] == "subject2", "J_index"].iloc[0] - 40.000) / 40.000
-    ) < 0.1
+    np.testing.assert_allclose(result.loc[result["id"] == "subject1", "J_index"].iloc[0], 44.249369, rtol=1e-3)
+    np.testing.assert_allclose(result.loc[result["id"] == "subject2", "J_index"].iloc[0], 40.97645, rtol=1e-3)
+
 
     # Test with Series input
     result_series = iglu.j_index(data["gl"])
 
     # Check output format for Series input
-    assert isinstance(result_series, pd.DataFrame)
-    assert "J_index" in result_series.columns
-    assert "id" not in result_series.columns
-    assert len(result_series) == 1
-
-    # Check calculation for Series input
-    # Overall mean = 167.5, sd = 27.5, J-index = 0.001 * (167.5 + 27.5)**2 ~~ 40.000
-    assert (abs(result_series["J_index"].iloc[0] - 40.000) / 40.000) < 0.1
+    assert isinstance(result_series, float)
+    np.testing.assert_allclose(result_series, 40.216444, rtol=1e-3)
 
 
 def test_j_index_empty_data():

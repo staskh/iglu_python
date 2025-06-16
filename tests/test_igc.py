@@ -106,15 +106,28 @@ def test_igc_series_input():
 
     # Calculate IGC
     result = iglu.igc(data)
+    expected = 1.453976
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "IGC" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
-    # Check that IGC value is non-negative
-    assert result["IGC"].iloc[0] >= 0
+def test_igc_list_input():
+    """Test IGC calculation with list input."""
+    data = [150, 200, 180, 130, 190, 160]
+    result = iglu.igc(data)
+    expected = 1.453976
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
+def test_igc_numpy_array_input():
+    """Test IGC calculation with numpy array input."""
+    data = np.array([150, 200, 180, 130, 190, 160])
+    result = iglu.igc(data)
+    expected = 1.453976
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
 
 
 def test_igc_custom_parameters():

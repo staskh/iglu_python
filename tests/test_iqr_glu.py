@@ -111,13 +111,19 @@ def test_iqr_glu_output_format():
     # Test with Series input
     series_data = pd.Series([150, 155, 160, 165, 140, 145])
     result_series = iglu.iqr_glu(series_data)
-    assert isinstance(result_series, pd.DataFrame)
-    assert "IQR" in result_series.columns
-    assert len(result_series) == 1
-    assert (
-        result_series["IQR"].iloc[0] == 12.5
-    )  # 75th percentile (160) - 25th percentile (145)
+    assert isinstance(result_series, float)
+    np.testing.assert_allclose(result_series, 12.5, rtol=1e-3)
 
+    list_data = [150, 155, 160, 165, 140, 145]
+    result_list = iglu.iqr_glu(list_data)
+    assert isinstance(result_list, float)
+    np.testing.assert_allclose(result_list, 12.5, rtol=1e-3)
+
+    array_data = np.array([150, 155, 160, 165, 140, 145])
+    result_array = iglu.iqr_glu(array_data)
+    assert isinstance(result_array, float)
+    np.testing.assert_allclose(result_array, 12.5, rtol=1e-3)
+    
     # Test with empty data
     empty_data = pd.DataFrame(columns=["id", "time", "gl"])
     with pytest.raises(ValueError):

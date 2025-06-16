@@ -119,10 +119,35 @@ def test_in_range_percent_series_input():
     assert len(result) == 2
 
     # Check that percentages are between 0 and 100
-    assert (result["in_range_70_180"] >= 0) and (result["in_range_70_180"] <= 100)
-    assert (result["in_range_63_140"] >= 0) and (result["in_range_63_140"] <= 100)
+    np.testing.assert_allclose(result["in_range_70_180"], 83.33, rtol=1e-3)
+    np.testing.assert_allclose(result["in_range_63_140"], 66.66, rtol=1e-3)
 
+def test_in_range_percent_list_input():
+    """Test in_range_percent calculation with list input."""
+    data = [80, 90, 100, 130, 190, 160]
+    result = iglu.in_range_percent(data)
+    assert isinstance(result, dict)
+    assert "in_range_70_180" in result
+    assert "in_range_63_140" in result
+    assert len(result) == 2
 
+    # Check that percentages are between 0 and 100
+    np.testing.assert_allclose(result["in_range_70_180"], 83.33, rtol=1e-3)
+    np.testing.assert_allclose(result["in_range_63_140"], 66.66, rtol=1e-3)
+
+def test_in_range_percent_numpy_array_input():
+    """Test in_range_percent calculation with numpy array input."""
+    data = np.array([80, 90, 100, 130, 190, 160])
+    result = iglu.in_range_percent(data)
+    assert isinstance(result, dict)
+    assert "in_range_70_180" in result
+    assert "in_range_63_140" in result
+    assert len(result) == 2
+
+    # Check that percentages are between 0 and 100
+    np.testing.assert_allclose(result["in_range_70_180"], 83.33, rtol=1e-3)
+    np.testing.assert_allclose(result["in_range_63_140"], 66.66, rtol=1e-3)
+    
 def test_in_range_percent_custom_targets():
     """Test in_range_percent calculation with custom targets."""
     data = pd.DataFrame(
