@@ -180,7 +180,7 @@ def process_data(
             time_data = time_parser(time_data)
         except Exception as e:
             raise ValueError(f"Failed to parse times, ensure times are in parsable format. "
-                           f"Original error: {str(e)}")
+                           f"Original error: {str(e)}") from e
 
         # Insert at position 1 (after id)
         data.insert(1, 'time', time_data)
@@ -229,7 +229,7 @@ def process_data(
         try:
             gl_data = pd.to_numeric(gl_data, errors='coerce')
         except Exception as e:
-            raise ValueError(f"Failed to convert glucose values to numeric: {str(e)}")
+            raise ValueError(f"Failed to convert glucose values to numeric: {str(e)}") from e
 
         # Convert mmol/L to mg/dL if needed
         if mmol_conversion:

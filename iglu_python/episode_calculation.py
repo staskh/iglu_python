@@ -245,7 +245,8 @@ def episode_single(
             day_one = day_one.tz_convert(local_tz)
         ndays = len(gd2d_tuple[1])
         # generate grid times by starting from day one and cumulatively summing
-        time_ip =  pd.date_range(start=day_one + pd.Timedelta(minutes=dt0), periods=int(ndays * 24 * 60 /dt0), freq=f"{dt0}min")
+        time_ip =  pd.date_range(start=day_one + pd.Timedelta(minutes=dt0), periods=int(ndays * 24 * 60 /dt0),
+                                 freq=f"{dt0}min")
         data_ip = gd2d_tuple[0].flatten().tolist()
         new_data = pd.DataFrame({
             "time": time_ip,

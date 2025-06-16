@@ -77,14 +77,14 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
     if not pd.api.types.is_numeric_dtype(data["gl"]):
         try:
             data["gl"] = pd.to_numeric(data["gl"])
-        except:
-            raise ValueError("Column 'gl' must be numeric")
+        except Exception as e:
+            raise ValueError("Column 'gl' must be numeric") from e
 
     if not pd.api.types.is_datetime64_any_dtype(data["time"]):
         try:
             data["time"] = pd.to_datetime(data["time"])
-        except:
-            raise ValueError("Column 'time' must be datetime")
+        except Exception as e:
+            raise ValueError("Column 'time' must be datetime") from e
 
     if not pd.api.types.is_string_dtype(data["id"]):
         data["id"] = data["id"].astype(str)
@@ -234,8 +234,8 @@ def CGMS2DayByDay(
         gap_end_time = data["time"].iloc[gap_end_idx]
         # find the index of the gap end in the time grid
         gap_end_idx_in_time_grid = int(
-            np.floor(((gap_end_time - start_time).total_seconds() -1 ) / (60 * dt0)) # -1sec to indicate time before measurement
-        )
+            # -1sec to indicate time before measurement
+            np.floor(((gap_end_time - start_time).total_seconds() -1 ) / (60 * dt0)))
         # put nan in the gap
         interp_data[gap_start_idx_in_time_grid:gap_end_idx_in_time_grid] = np.nan
 

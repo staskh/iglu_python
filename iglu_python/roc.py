@@ -87,7 +87,11 @@ def roc(
     3   NaN
     """
 
-    def roc_single(data: pd.DataFrame, timelag: int, dt0: int = None , inter_gap: int = 45, tz: str = "")  -> np.ndarray:
+    def roc_single(data: pd.DataFrame,
+                   timelag: int,
+                   dt0: int = None ,
+                   inter_gap: int = 45,
+                   tz: str = "")  -> np.ndarray:
         """Calculate ROC for a single subject's data"""
         data_ip = CGMS2DayByDay(data, dt0=dt0, inter_gap=inter_gap, tz=tz)
         gl_ip_vec = data_ip[0].flatten()  # Flatten the interpolated glucose matrix

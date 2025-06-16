@@ -282,10 +282,12 @@ def sd_measures_vectorized(data: pd.DataFrame,
 
     results = []
 
-    for subject_id in data['id'].unique():
+    current_dt0 = dt0
+    for i, subject_id in enumerate(data['id'].unique()):
         subject_data = data[data['id'] == subject_id].copy()
         gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(subject_data, tz=tz, dt0=current_dt0, inter_gap=inter_gap)
-
+        if i == 0:
+            current_dt0 = gd2d_dt0
         result = _calculate_sd_subtypes_vectorized(gd2d, gd2d_dt0, subject_id)
         results.append(result)
 

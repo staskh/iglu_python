@@ -58,7 +58,7 @@ def adrr(data: pd.DataFrame) -> pd.DataFrame:
             try:
                 data["time"] = pd.to_datetime(data["time"])
             except Exception as e:
-                raise ValueError(f"Could not convert 'time' column to datetime: {e}")
+                raise ValueError(f"Could not convert 'time' column to datetime: {e}") from e
 
         # Extract date from time
         data = data.copy()

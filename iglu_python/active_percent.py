@@ -104,7 +104,14 @@ def active_percent(
     return df
 
 
-def active_percent_single(data: pd.Series, dt0: Optional[int] = None, tz: str = "", range_type: str = "automatic", ndays: int = 14, consistent_end_date: Optional[Union[str, datetime]] = None) -> dict[str:float]:
+def active_percent_single(
+    data: pd.Series,
+    dt0: Optional[int] = None,
+    tz: str = "",
+    range_type: str = "automatic",
+    ndays: int = 14,
+    consistent_end_date: Optional[Union[str, datetime]] = None,
+) -> dict[str:float]:
     """
     Calculate percentage of time CGM was active for a single series/subject.
     """

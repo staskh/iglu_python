@@ -172,7 +172,11 @@ def mage_naive(data: pd.DataFrame,sd_multiplier:float = 1.0) -> float:
     return float(mage_val) if not pd.isna(mage_val) else np.nan
 
 def mage_ma_single(data: pd.DataFrame, short_ma: int, long_ma: int,
-                    direction:str ='avg', return_type:str = "num",inter_gap:int = 45, max_gap:int = 180, tz:str = "" ) -> pd.DataFrame:
+        direction:str ='avg',
+        return_type:str = "num",
+        inter_gap:int = 45,
+        max_gap:int = 180,
+        tz:str = "" ) -> pd.DataFrame|float:
     """Calculate MAGE using moving average algorithm for a single subject"""
     ## 1. Preprocessing
     # 1.1 Interpolate over uniform grid
@@ -301,7 +305,8 @@ def mage_atomic(data, short_ma,long_ma):
     idx = list(data.index)  # R: idx = as.numeric(rownames(.data))
     types = {'REL_MIN': 0, 'REL_MAX': 1}  # R: types = list2env(list(REL_MIN=0, REL_MAX=1))
 
-    # Create storage lists - R: list_cross <- list("id" = rep.int(NA, nmeasurements), "type" = rep.int(NA, nmeasurements))
+    # Create storage lists - R: list_cross <- list("id" = rep.int(NA, nmeasurements),
+    # "type" = rep.int(NA, nmeasurements))
     list_cross = {
         'id': [np.nan] * nmeasurements,
         'type': [np.nan] * nmeasurements

@@ -117,7 +117,10 @@ def weight_features(
     weight: float = 1,
     increasing: bool = False,
 ) -> Union[float, pd.Series, list]:
-    """Helper function to weight and scale features. If feature is a Series (or a list), the output is a Series (or list) with the same number of rows (or length) as the input, with values clipped (or "inverse" clipped) so that they are between 0 and 1."""
+    """Helper function to weight and scale features.
+    If feature is a Series (or a list), the output is a Series (or list)
+    with the same number of rows (or length) as the input, with values clipped
+    (or "inverse" clipped) so that they are between 0 and 1."""
     if isinstance(feature, pd.Series):
         scaled = (feature - min(scale_range)) / (
             max(scale_range) - min(scale_range)
