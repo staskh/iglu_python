@@ -112,5 +112,15 @@ def test_above_percent_output_format():
 
     # Test with Series input
     result_series = iglu.above_percent(data["gl"], targets_above=custom_targets)
-    assert "id" not in result_series.columns
-    assert len(result_series) == 1  # Single row for Series input
+    assert isinstance(result_series, dict)
+    assert all(f"above_{t}" in result_series for t in custom_targets)
+
+    # Test with list input
+    result_list = iglu.above_percent(data["gl"].tolist(), targets_above=custom_targets)
+    assert isinstance(result_list, dict)
+    assert all(f"above_{t}" in result_list for t in custom_targets)
+
+    # Test with numpy array input
+    result_array = iglu.above_percent(data["gl"].values, targets_above=custom_targets)
+    assert isinstance(result_array, dict)
+    assert all(f"above_{t}" in result_array for t in custom_targets)

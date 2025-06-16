@@ -8,7 +8,7 @@ from .below_percent import below_percent
 from .utils import check_data_columns
 
 
-def gri(data: Union[pd.DataFrame, pd.Series], tz: str = "") -> pd.DataFrame:
+def gri(data: Union[pd.DataFrame, pd.Series,list,np.ndarray], tz: str = "") -> pd.DataFrame|float:
     """
     Calculate Glycemia Risk Index (GRI).
 
@@ -55,61 +55,48 @@ def gri(data: Union[pd.DataFrame, pd.Series], tz: str = "") -> pd.DataFrame:
     0  35.43
     """
     # Handle Series input
-    if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GRI": [np.nan]})
-
-        # Get percentages in each range
-        below_54 = below_percent(data, targets_below=[54])["below_54"].iloc[0]
-        below_70 = below_percent(data, targets_below=[70])["below_70"].iloc[0]
-        above_180 = above_percent(data, targets_above=[180])["above_180"].iloc[0]
-        above_250 = above_percent(data, targets_above=[250])["above_250"].iloc[0]
-
-        # Calculate GRI
-        gri_value = (
-            3.0 * below_54
-            + 2.4 * (below_70 - below_54)
-            + 1.6 * above_250
-            + 0.8 * (above_180 - above_250)
-        )
-
-        # Threshold at 100%
-        gri_value = min(gri_value, 100)
-
-        return pd.DataFrame({"GRI": [gri_value]})
-
+    if isinstance(data, (pd.Series, list,np.ndarray)):
+        if isinstance(data, (list, np.ndarray)):
+            data = pd.Series(data)
+        return gri_single(data, tz)
+    
     # Handle DataFrame input
     data = check_data_columns(data, tz=tz)
 
     # Calculate GRI for each subject
     result = []
+
     for subject in data["id"].unique():
         subject_data = data[data["id"] == subject].dropna(subset=["gl"])
-        if len(subject_data) == 0:
-            continue
-
-        # Get percentages in each range
-        below_54 = below_percent(subject_data, targets_below=[54])["below_54"].iloc[0]
-        below_70 = below_percent(subject_data, targets_below=[70])["below_70"].iloc[0]
-        above_180 = above_percent(subject_data, targets_above=[180])["above_180"].iloc[
-            0
-        ]
-        above_250 = above_percent(subject_data, targets_above=[250])["above_250"].iloc[
-            0
-        ]
-
-        # Calculate GRI
-        gri_value = (
-            3.0 * below_54
-            + 2.4 * (below_70 - below_54)
-            + 1.6 * above_250
-            + 0.8 * (above_180 - above_250)
-        )
-
-        # Threshold at 100%
-        gri_value = min(gri_value, 100)
-
+        gri_value = gri_single(subject_data["gl"], tz)
         result.append({"id": subject, "GRI": gri_value})
 
     return pd.DataFrame(result)
+
+def gri_single(data: pd.Series, tz: str = "") -> float:
+    """
+    Calculate Glycemia Risk Index (GRI) for a single series/subject.
+    """
+    data = data.dropna()
+    if len(data) == 0:
+        return np.nan
+
+
+    # Get percentages in each range
+    below_54 = below_percent(data, targets_below=[54])["below_54"]
+    below_70 = below_percent(data, targets_below=[70])["below_70"]
+    above_180 = above_percent(data, targets_above=[180])["above_180"]
+    above_250 = above_percent(data, targets_above=[250])["above_250"]
+
+    # Calculate GRI
+    gri_value = (
+        3.0 * below_54
+        + 2.4 * (below_70 - below_54)
+        + 1.6 * above_250
+        + 0.8 * (above_180 - above_250)
+    )
+
+    # Threshold at 100%
+    gri_value = min(gri_value, 100.0)
+
+    return gri_value

@@ -1,14 +1,15 @@
 from typing import List, Union
 
 import pandas as pd
+import numpy as np
 
 from .utils import check_data_columns
 
 
 def above_percent(
-    data: Union[pd.DataFrame, pd.Series, list],
+    data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
     targets_above: List[int] = [140, 180, 250],
-) -> pd.DataFrame:
+) -> pd.DataFrame|dict[str:float]:
     """
     Calculate percentage of values above target thresholds.
 
@@ -58,22 +59,11 @@ def above_percent(
     0       75.0       25.0
     """
     # Handle Series input
-    if isinstance(data, (pd.Series, list)):
-        # Convert targets to float
-        targets_above = [int(t) for t in targets_above]
-
-        # Calculate total non-NA readings
-        total_readings = len(data.dropna())
-        if total_readings == 0:
-            return pd.DataFrame(columns=[f"above_{t}" for t in targets_above])
-
-        # Calculate percentages for each target
-        percentages = {}
-        for target in targets_above:
-            above_count = len(data[data > target])
-            percentages[f"above_{target}"] = (above_count / total_readings) * 100
-
-        return pd.DataFrame([percentages])
+    if isinstance(data, (pd.Series, list,np.ndarray)):
+        if isinstance(data, (list, np.ndarray)):
+            data = pd.Series(data)
+        return above_percent_single(data, targets_above)
+    
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -85,19 +75,32 @@ def above_percent(
     # Process each subject
     for subject in data["id"].unique():
         subject_data = data[data["id"] == subject]
-        total_readings = len(subject_data.dropna(subset=["gl"]))
-
-        if total_readings == 0:
-            continue
-
-        # Calculate percentages for each target
-        percentages = {}
-        for target in targets_above:
-            above_count = len(subject_data[subject_data["gl"] > target])
-            percentages[f"above_{target}"] = (above_count / total_readings) * 100
-
+        percentages = above_percent_single(subject_data["gl"], targets_above)
         percentages["id"] = subject
         result.append(percentages)
 
     # Convert to DataFrame
-    return pd.DataFrame(result)
+    df = pd.DataFrame(result)
+    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    return df
+
+def above_percent_single(data: pd.Series, targets_above: List[int] = [140, 180, 250]) -> dict[str:float]:
+    """
+    Calculate percentage of values above target thresholds for a single series/subject.
+    """
+    # Convert targets to float
+    targets_above = [int(t) for t in targets_above]
+
+    # Calculate total non-NA readings
+    total_readings = len(data.dropna())
+    if total_readings == 0:
+        return {f"above_{t}": 0 for t in targets_above}
+
+    # Calculate percentages for each target
+    percentages = {}
+    for target in targets_above:
+        above_count = len(data[data > target])
+        percentages[f"above_{target}"] = (above_count / total_readings) * 100
+
+    return percentages
+    

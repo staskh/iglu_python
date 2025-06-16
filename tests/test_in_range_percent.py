@@ -113,19 +113,14 @@ def test_in_range_percent_series_input():
     result = iglu.in_range_percent(data)
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "in_range_70_180" in result.columns
-    assert "in_range_63_140" in result.columns
-    assert "id" not in result.columns
-    assert len(result) == 1
+    assert isinstance(result, dict)
+    assert "in_range_70_180" in result
+    assert "in_range_63_140" in result
+    assert len(result) == 2
 
     # Check that percentages are between 0 and 100
-    assert (result["in_range_70_180"].iloc[0] >= 0) and (
-        result["in_range_70_180"].iloc[0] <= 100
-    )
-    assert (result["in_range_63_140"].iloc[0] >= 0) and (
-        result["in_range_63_140"].iloc[0] <= 100
-    )
+    assert (result["in_range_70_180"] >= 0) and (result["in_range_70_180"] <= 100)
+    assert (result["in_range_63_140"] >= 0) and (result["in_range_63_140"] <= 100)
 
 
 def test_in_range_percent_custom_targets():

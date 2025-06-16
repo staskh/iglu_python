@@ -25,11 +25,11 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 
 | Function | Description | IGLU-R test compatibility | list /ndarray /Series input | TZ | Comments |
 |----------|-------------|-------------|-------------------|----|----------|
-| above_percent | percentage of values above target thresholds| ✅ | |||
+| above_percent | percentage of values above target thresholds| ✅ |✅ returns dict |||
 | active_percent | percentage of time CGM was active | ✅ |
 | adrr | average daily risk range | ✅ |
 | auc| Area Under Curve | 🟡 (0.01 precision) |✅ only Series(DatetimeIndex) returns float  || see [auc_evaluation.ipynb](https://github.com/staskh/iglu_python/blob/main/notebooks/auc_evaluation.ipynb)|
-| below_percent| percentage of values below target thresholds| ✅ |
+| below_percent| percentage of values below target thresholds| ✅ | ✅ returns dict
 | cogi |Coefficient of Glucose Irregularity | ✅ | ✅ returns float
 | conga | Continuous Overall Net Glycemic Action |✅ |
 | cv_glu | Coefficient of Variation | ✅|  ✅ returns float |
@@ -41,13 +41,13 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | grade_hyper |percentage of GRADE score attributable to hyperglycemia| ✅ |
 | grade_hypo |percentage of GRADE score attributable to hypoglycemia| ✅ |
 | grade |mean GRADE score| ✅ |
-| gri |Glycemia Risk Index | ✅ |
+| gri |Glycemia Risk Index | ✅ | ✅ returns float
 | gvp |Glucose Variability Percentage| ✅ |
 | hbgi |High Blood Glucose Index| ✅ |
 | hyper_index |Hyperglycemia Index| ✅ |
 | hypo_index |Hypoglycemia Index| ✅ |
 | igc |Index of Glycemic Control| ✅ |
-| in_range_percent |percentage of values within target ranges| ✅ |
+| in_range_percent |percentage of values within target ranges| ✅ | ✅ returns dict
 | iqr_glu |glucose level interquartile range|✅ |
 | j_index |J-Index score for glucose measurements| ✅ |
 | lbgi | Low Blood Glucose Index| ✅ |

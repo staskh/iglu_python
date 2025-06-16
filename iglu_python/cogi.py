@@ -86,10 +86,10 @@ def cogi(
 def cogi_single(data: pd.Series, targets: List[int] = [70, 180], weights: List[float] = [0.5, 0.35, 0.15]) -> float:
     """Calculate COGI for a single subject"""
     # Calculate components
-    ir_df = in_range_percent(data, [targets])
-    ir = ir_df["in_range_" + "_".join(map(str, targets))].iloc[0]
-    br_df = below_percent(data, targets_below=[targets[0]])
-    br = br_df["below_" + str(int(targets[0]))].iloc[0]
+    ir_dict = in_range_percent(data, [targets])
+    ir = ir_dict["in_range_" + "_".join(map(str, targets))]
+    br_dict = below_percent(data, targets_below=[targets[0]])
+    br = br_dict["below_" + str(int(targets[0]))]
     stddev = sd_glu(data)
 
     # Calculate weighted features

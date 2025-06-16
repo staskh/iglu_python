@@ -1,14 +1,15 @@
 from typing import List, Union
 
 import pandas as pd
+import numpy as np
 
 from .utils import check_data_columns
 
 
 def in_range_percent(
-    data: Union[pd.DataFrame, pd.Series, list],
+    data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
     target_ranges: List[List[int]] = [[70, 180], [63, 140]],
-) -> pd.DataFrame:
+) -> pd.DataFrame|float:
     """
     Calculate percentage of values within target ranges.
 
@@ -31,8 +32,8 @@ def in_range_percent(
     -------
     pd.DataFrame
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for each target range. If a list of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for each target range. If a list of glucose values is passed, then a dictionary
+        with the percentage is returned.
 
     References
     ----------
@@ -64,24 +65,10 @@ def in_range_percent(
     0             75.0
     """
     # Handle Series input
-    if isinstance(data, (pd.Series, list)):
-        # Calculate total non-NA readings
-        total_readings = len(data.dropna())
-        if total_readings == 0:
-            return pd.DataFrame(
-                columns=[f"in_range_{min(r)}_{max(r)}" for r in target_ranges]
-            )
-
-        # Calculate percentages for each range
-        percentages = {}
-        for range_vals in target_ranges:
-            min_val, max_val = sorted(range_vals)
-            in_range_count = len(data[(data >= min_val) & (data <= max_val)])
-            percentages[f"in_range_{min_val}_{max_val}"] = (
-                in_range_count / total_readings
-            ) * 100
-
-        return pd.DataFrame([percentages])
+    if isinstance(data, (pd.Series, list,np.ndarray)):
+        if isinstance(data, (list, np.ndarray)):
+            data = pd.Series(data)
+        return in_range_percent_single(data, target_ranges)
 
     data = check_data_columns(data)
 
@@ -91,26 +78,33 @@ def in_range_percent(
     # Process each subject
     for subject in data["id"].unique():
         subject_data = data[data["id"] == subject]
-        total_readings = len(subject_data.dropna(subset=["gl"]))
 
-        if total_readings == 0:
-            continue
-
-        # Calculate percentages for each range
-        percentages = {}
-        for range_vals in target_ranges:
-            min_val, max_val = sorted(range_vals)
-            in_range_count = len(
-                subject_data[
-                    (subject_data["gl"] >= min_val) & (subject_data["gl"] <= max_val)
-                ]
-            )
-            percentages[f"in_range_{min_val}_{max_val}"] = (
-                in_range_count / total_readings
-            ) * 100
-
+        percentages = in_range_percent_single(subject_data["gl"], target_ranges)
         percentages["id"] = subject
         result.append(percentages)
 
     # Convert to DataFrame
-    return pd.DataFrame(result)
+    df = pd.DataFrame(result)
+    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    return df
+
+def in_range_percent_single(data: pd.Series, target_ranges: List[List[int]] = [[70, 180], [63, 140]]) -> float:
+    """
+    Calculate percentage of values within target ranges for a single series/subject.
+    """
+    # Calculate total non-NA readings
+    total_readings = len(data.dropna())
+    if total_readings == 0:
+        return {f"in_range_{min(range_vals)}_{max(range_vals)}": 0 
+                for range_vals in target_ranges}
+
+    # Calculate percentages for each range
+    percentages = {}
+    for range_vals in target_ranges:
+        min_val, max_val = sorted(range_vals)
+        in_range_count = len(data[(data >= min_val) & (data <= max_val)])
+        percentages[f"in_range_{min_val}_{max_val}"] = (
+            in_range_count / total_readings
+        ) * 100
+
+    return percentages
