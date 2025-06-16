@@ -101,9 +101,26 @@ def test_quantile_glu_series():
     """Test quantile calculation with Series input"""
     series_data = pd.Series([150, 155, 160, 165, 140, 145])
     result = iglu.quantile_glu(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert all(col in result.columns for col in [0.0, 25.0, 50.0, 75.0, 100.0])
-    assert len(result) == 1
+    assert isinstance(result, list)
+    assert len(result) == 5
+    np.testing.assert_allclose(result, [140, 146.25, 152.5 , 158.75, 165.], rtol=1e-3)
+
+def test_quantile_glu_list():
+    """Test quantile calculation with list input"""
+    list_data = [150, 155, 160, 165, 140, 145]
+    result = iglu.quantile_glu(list_data)
+    assert isinstance(result, list)
+    assert len(result) == 5
+    np.testing.assert_allclose(result, [140, 146.25, 152.5 , 158.75, 165.], rtol=1e-3)
+
+
+def test_quantile_glu_numpy_array():
+    """Test quantile calculation with numpy array input"""
+    numpy_data = np.array([150, 155, 160, 165, 140, 145])
+    result = iglu.quantile_glu(numpy_data)
+    assert isinstance(result, list)
+    assert len(result) == 5
+    np.testing.assert_allclose(result, [140, 146.25, 152.5 , 158.75, 165.], rtol=1e-3)
 
 
 def test_quantile_glu_empty():

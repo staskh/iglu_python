@@ -129,10 +129,8 @@ def test_modd_series_input():
         index=pd.date_range(start="2020-01-01 00:00:00", periods=3*samples_per_day, freq="5min")
     )
     result = iglu.modd(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "MODD" in result.columns
-    assert len(result) == 1
-    assert result["MODD"].iloc[0] == 50.0
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, 50.0, rtol=1e-3)
 
     # Exception for series without DatetimeIndex
     with pytest.raises(ValueError):

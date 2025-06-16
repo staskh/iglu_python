@@ -57,14 +57,14 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | mage | Mean Amplitude of Glycemic Excursions|  ✅ |✅ only Series(DatetimeIndex) returns float || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
 | mean_glu | Mean glucose value | ✅ | ✅ returns float|
 | median_glu |Median glucose value| ✅ |✅ returns float |
-| modd | Mean of Daily Differences| ✅ |
-| pgs | Personal Glycemic State | ✅  | || |
-| quantile_glu |glucose level quantiles|  ✅ |
-| range_glu |glucose level range| ✅ |
-| roc | Rate of Change| ✅ |
+| modd | Mean of Daily Differences| ✅ | ✅ only Series(DatetimeIndex) returns float|
+| pgs | Personal Glycemic State | ✅  |✅ only Series(DatetimeIndex) returns float| || 
+| quantile_glu |glucose level quantiles|  ✅ |✅ returns List[float] |
+| range_glu |glucose level range| ✅ |✅ returns float|
+| roc | Rate of Change| ✅ |🟡 always returns DataFrame|
 | sd_glu | standard deviation of glucose values| ✅ | ✅ returns float
-| sd_measures |various standard deviation subtypes| ✅ |
-| sd_roc | standard deviation of the rate of change| ✅ | |||
+| sd_measures |various standard deviation subtypes| ✅ |✅ only Series(DatetimeIndex) returns Dict[str,float]|
+| sd_roc | standard deviation of the rate of change| ✅ |✅ only Series(DatetimeIndex) returns float ||
 | summary_glu | summary glucose level| ✅ |
 | process_data | Data Pre-Processor | ✅ |
 | CGMS2DayByDay |Interpolate glucose input| ✅ |

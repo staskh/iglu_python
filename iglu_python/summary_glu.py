@@ -7,7 +7,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
+def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame|dict[str,float]:
     """
     Calculate summary glucose level
 
@@ -68,8 +68,8 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
         # Calculate summary statistics
         summary_stats = _calculate_summary_stats(glucose_values)
 
-        # Return DataFrame without id column
-        return pd.DataFrame([summary_stats])
+        # Return dictionary without id column
+        return summary_stats
 
     # Handle DataFrame input
     else:

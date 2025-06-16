@@ -7,10 +7,10 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns
 
 
-def sd_measures(data: pd.DataFrame,
+def sd_measures(data: pd.DataFrame|pd.Series,
                 dt0: Optional[int] = None,
                 inter_gap: int = 45,
-                tz: str = "") -> pd.DataFrame:
+                tz: str = "") -> pd.DataFrame|dict[str, float]:
     """
     Calculate SD subtypes for glucose variability analysis
 
@@ -20,8 +20,8 @@ def sd_measures(data: pd.DataFrame,
 
     Parameters
     ----------
-    data : pd.DataFrame
-        DataFrame with columns 'id', 'time', and 'gl' (glucose)
+    data : pd.DataFrame|pd.Series
+        DataFrame with columns 'id', 'time', and 'gl' (glucose), or a Series of glucose values
     dt0 : int, optional
         The time frequency for interpolation in minutes
     inter_gap : int, default 45
@@ -32,7 +32,8 @@ def sd_measures(data: pd.DataFrame,
     Returns
     -------
     pd.DataFrame
-        A DataFrame with columns for id and each of the six SD subtypes:
+        A DataFrame with columns for id and each of the six SD subtypes. 
+        If a Series of glucose values is passed, then a dictionary is returned.
         - SDw: vertical within days
         - SDhhmm: between time points
         - SDwsh: within series (1-hour windows)
@@ -76,45 +77,38 @@ def sd_measures(data: pd.DataFrame,
     >>> result = sd_measures(glucose_data)
     >>> print(result)
     """
+    if isinstance(data, pd.Series):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series must have a DatetimeIndex")
+        return sd_measures_single(data, dt0, inter_gap, tz)
 
     # Data validation (placeholder - implement check_data_columns equivalent)
     data = check_data_columns(data, time_check=True, tz=tz)
 
-    subjects = data['id'].unique()
-    len(subjects)
-
-    # Calculate uniform grid for all subjects
-    gdall = []
-    current_dt0 = dt0
-
-    for i, subject_id in enumerate(subjects):
-        subject_data = data[data['id'] == subject_id].copy()
-
-        # Convert to day-by-day format (placeholder - implement CGMS2DayByDay equivalent)
-        gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(subject_data, tz=tz, dt0=current_dt0, inter_gap=inter_gap)
-        gdall.append(gd2d)
-
-        # Use the dt0 from first subject for consistency
-        if i == 0:
-            current_dt0 = gd2d_dt0
-
-    dt0 = current_dt0
-
-    # Calculate SD measures for each subject
+    # Convert the dictionary results into a DataFrame with proper columns
     results = []
+    for subject_id in data['id'].unique():
+        subject_data = data[data['id'] == subject_id]
+        result_dict = sd_measures_single(subject_data, dt0, inter_gap, tz)
+        result_dict['id'] = subject_id
+        results.append(result_dict)
 
-    for i, gd2d in enumerate(gdall):
-        subject_id = subjects[i]
-        result = _calculate_sd_subtypes(gd2d, dt0, subject_id)
-        results.append(result)
+    # convert result into dataframe with 'id' on the first place
+    out = pd.DataFrame(results)
+    out = out[['id'] + list(out.columns[:-1])]
+    return out
 
-    # Combine results
-    final_results = pd.DataFrame(results)
+def sd_measures_single(data: pd.DataFrame,
+                dt0: Optional[int] = None,
+                inter_gap: int = 45,
+                tz: str = "") -> dict[str, float]:
+    
+    gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(data, tz=tz, dt0=dt0, inter_gap=inter_gap)
 
-    return final_results
+    return _calculate_sd_subtypes(gd2d, gd2d_dt0)
 
 
-def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[str, Any]:
+def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int) -> Dict[str, Any]:
     """
     Calculate all SD subtypes for a single subject's glucose data matrix
 
@@ -124,8 +118,7 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[
         2D array where rows are days and columns are time points
     dt0 : int
         Time interval in minutes
-    subject_id : Any
-        Subject identifier
+
 
     Returns
     -------
@@ -133,7 +126,7 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[
         Dictionary containing all SD measures
     """
 
-    result = {'id': subject_id}
+    result = {}
 
     # 1. SDw - vertical within days
     # Standard deviation within each day, then mean across days

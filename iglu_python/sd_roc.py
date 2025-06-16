@@ -13,7 +13,7 @@ def sd_roc(
     dt0: int = 5,
     inter_gap: int = 45,
     tz: str = "",
-) -> pd.DataFrame:
+) -> pd.DataFrame|float:
     """
     Calculate the standard deviation of the rate of change.
 
@@ -39,9 +39,10 @@ def sd_roc(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with two columns: subject id and standard deviation of the rate of change
-        values for each subject.
+        values for each subject. 
+        If a Series of glucose values is passed, then a float is returned.
 
     Notes
     -----
@@ -91,35 +92,23 @@ def sd_roc(
         # Convert Series to DataFrame format
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series input must have a datetime index")
-
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data),
-                "time": data.index,
-                "gl": data.values,
-            }
-        )
+        return sd_roc_single(data, timelag, dt0, inter_gap, tz)
 
     # Validate input data
     data = check_data_columns(data, tz=tz)
+    data.set_index('time', drop=True, inplace=True)
 
     # Calculate ROC values for all subjects
+    out = data.groupby('id').apply(lambda x: sd_roc_single(x['gl'], timelag, dt0, inter_gap, tz)).reset_index()
+    out.columns = ['id', 'sd_roc']
+    return out
+
+def sd_roc_single(data: pd.Series,
+                  timelag: int = 15,
+                  dt0: int = 5,
+                  inter_gap: int = 45,
+                  tz: str = "") -> float:
+    
     roc_data = roc(data, timelag=timelag, dt0=dt0, inter_gap=inter_gap, tz=tz)
-
-    # Group by subject and calculate standard deviation of ROC values
-    # Remove NaN values before calculating standard deviation
-    result = (
-        roc_data.groupby("id")["roc"]
-        .apply(lambda x: np.std(x.dropna()))
-        .reset_index()
-    )
-    result.columns = ["id", "sd_roc"]
-
-    # Handle case where Series was input - remove id column
-    if len(data["id"].unique()) == 1 and data["id"].iloc[0] == "subject1":
-        # Check if this was originally a Series input by looking at the time pattern
-        time_diffs = data["time"].diff().dropna()
-        if len(time_diffs.unique()) <= 1:  # Regular time intervals suggest Series input
-            result = result.drop(columns=["id"])
-
-    return result
+    sd_roc = np.nanstd(roc_data.dropna()['roc'], ddof=1)
+    return sd_roc

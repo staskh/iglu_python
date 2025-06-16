@@ -118,17 +118,16 @@ def roc(
 
     # Handle Series input
     if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"ROC": [np.nan]})
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Series input must have a datetime index")
+        if len(data.dropna()) == 0:
+            return pd.DataFrame({"roc": [np.nan]})
 
         # Convert Series to DataFrame format
         data = pd.DataFrame(
             {
                 "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq=f"{dt0}min"
-                ),
+                "time": data.index,
                 "gl": data.values,
             }
         )

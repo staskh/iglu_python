@@ -65,7 +65,7 @@ def test_sd_roc_iglu_r_compatible(scenario):
         check_freq=True,
         check_flags=True,
         check_exact=False,
-        rtol=0.2,
+        rtol=0.001,
     )
 
 
@@ -107,16 +107,20 @@ def test_sd_roc_series_input():
         index=pd.date_range(start="2020-01-01 00:00:00", periods=n_measurements *2, freq="5min"),
     )
     result = sd_roc(data)
+    expected = 1.340302
 
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "sd_roc" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=0.001)
 
-    # Check that SD of ROC is calculated
-    assert not np.isnan(result.loc[0, "sd_roc"])
-    assert result.loc[0, "sd_roc"] > 0
+def test_sd_roc_series_no_timestamp_input():
+    """Test SD of ROC calculation with Series input."""
+    n_measurements = 12*24
+    data = pd.Series(
+        [100, 120] * (n_measurements//2) + [80,100] * (n_measurements//2),
+    )
+    with pytest.raises(ValueError):
+        sd_roc(data)
 
 
 def test_sd_roc_series_input_no_datetime_index():

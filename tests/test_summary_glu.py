@@ -127,19 +127,19 @@ def test_summary_glu_vector_input_series():
     
     result = iglu.summary_glu(glucose_series)
     
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 1
+    assert isinstance(result, dict)
+    assert len(result) == 6
     
     # Should not have id column for vector input
     expected_columns = ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
-    assert list(result.columns) == expected_columns
+    assert list(result.keys()) == expected_columns
     
     # Check values
-    row = result.iloc[0]
-    assert row['Min.'] == 100
-    assert row['Max.'] == 180
-    assert row['Median'] == 140
-    assert row['Mean'] == 140
+
+    assert result['Min.'] == 100
+    assert result['Max.'] == 180
+    assert result['Median'] == 140
+    assert result['Mean'] == 140
 
 
 def test_summary_glu_vector_input_list():
@@ -148,12 +148,12 @@ def test_summary_glu_vector_input_list():
     
     result = iglu.summary_glu(glucose_list)
     
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 1
+    assert isinstance(result, dict)
+    assert len(result) == 6
     
     # Should not have id column for vector input
     expected_columns = ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
-    assert list(result.columns) == expected_columns
+    assert list(result.keys()) == expected_columns
 
 
 def test_summary_glu_vector_input_numpy():
@@ -162,12 +162,12 @@ def test_summary_glu_vector_input_numpy():
     
     result = iglu.summary_glu(glucose_array)
     
-    assert isinstance(result, pd.DataFrame)
-    assert len(result) == 1
+    assert isinstance(result, dict)
+    assert len(result) == 6
     
     # Should not have id column for vector input
     expected_columns = ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
-    assert list(result.columns) == expected_columns
+    assert list(result.keys()) == expected_columns
 
 
 def test_summary_glu_missing_values():
@@ -194,12 +194,11 @@ def test_summary_glu_missing_values_vector():
     
     result = iglu.summary_glu(glucose_series)
     
-    assert len(result) == 1
+    assert len(result) == 6
     # Should calculate stats only on non-NaN values: [100, 140, 160, 180]
-    row = result.iloc[0]
-    assert row['Min.'] == 100
-    assert row['Max.'] == 180
-    assert row['Mean'] == 145
+    assert result['Min.'] == 100
+    assert result['Max.'] == 180
+    assert result['Mean'] == 145
 
 
 def test_summary_glu_all_missing_values():

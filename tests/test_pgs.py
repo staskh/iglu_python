@@ -108,10 +108,14 @@ def test_pgs_series():
         )
     )
     result = iglu.pgs(series_data)
-    assert isinstance(result, pd.DataFrame)
-    assert "PGS" in result.columns
-    assert len(result) == 1
-    assert result["PGS"].iloc[0] > 0  # PGS should always be positive
+    expected = 16.494037
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
+    # Exception for series without DatetimeIndex
+    with pytest.raises(ValueError):
+        iglu.pgs(series_data.reset_index(drop=True))
+
 
 
 def test_pgs_empty():
