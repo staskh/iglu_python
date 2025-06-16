@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns
 
 
-def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
+def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame|float:
     r"""
     Calculate Glucose Variability Percentage (GVP).
 
@@ -27,10 +27,9 @@ def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for GVP value. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for GVP value. If a Series of glucose values is passed, then a float is returned.
 
     References
     ----------
@@ -58,64 +57,19 @@ def gvp(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
     0  42.30
     """
     # Handle Series input
-    is_vector = False
-    if isinstance(data, (list, np.ndarray)):
-        data = pd.Series(data)
-    if isinstance(data, pd.Series):
-        is_vector = True
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"GVP": [np.nan]})
-
-        # Convert to DataFrame format for processing
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data),
-                "time": pd.date_range(
-                    start="2020-01-01", periods=len(data), freq="5min"
-                ),
-                "gl": data.values,
-            }
-        )
+    if isinstance(data, (list, pd.Series)):
+        if not isinstance(data.index, pd.DatetimeIndex):
+            raise ValueError("Data must be a Series with a DatetimeIndex")
+        return gvp_single(data)
 
     # Handle DataFrame input
-    data = check_data_columns(data)
+    data = check_data_columns(data) 
+    data.set_index("time", inplace=True, drop=True)
 
-    def gvp_single(subj_data):
-        """Calculate GVP for a single subject"""
-        # Get interpolated data
-        daybyday, _, reading_gap = CGMS2DayByDay(subj_data)
-        daybyday = daybyday.flatten()
-
-        # Calculate differences between consecutive readings
-        diffvec = np.diff(daybyday)
-        # Exclude NA values from diffvec
-        diffvec = diffvec[~np.isnan(diffvec)]
-
-        # Calculate added length (hypotenuse) and base length
-        added_length = np.sqrt(reading_gap**2 + diffvec**2)
-        base_length = len(diffvec) * reading_gap
-
-        # Calculate GVP
-        if base_length == 0:
-            return np.nan
-
-        return (np.sum(added_length) / base_length - 1) * 100
-
-    # Calculate GVP for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].dropna(subset=["gl"])
-        if len(subject_data) == 0:
-            continue
-
-        gvp_value = gvp_single(subject_data)
-        result.append({"id": subject, "GVP": gvp_value})
-
-    df = pd.DataFrame(result)
-    if is_vector:
-        df = df.drop(columns=["id"])
-    return df
+    out = data.groupby('id').agg(
+        GVP = ("gl", lambda x: gvp_single(x))
+    ).reset_index()
+    return out
 
 
 def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
@@ -165,3 +119,23 @@ def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
 
     return gvp
 
+def gvp_single(subj_data):
+    """Calculate GVP for a single subject"""
+    # Get interpolated data
+    daybyday, _, reading_gap = CGMS2DayByDay(subj_data)
+    daybyday = daybyday.flatten()
+
+    # Calculate differences between consecutive readings
+    diffvec = np.diff(daybyday)
+    # Exclude NA values from diffvec
+    diffvec = diffvec[~np.isnan(diffvec)]
+
+    # Calculate added length (hypotenuse) and base length
+    added_length = np.sqrt(reading_gap**2 + diffvec**2)
+    base_length = len(diffvec) * reading_gap
+
+    # Calculate GVP
+    if base_length == 0:
+        return np.nan
+
+    return (np.sum(added_length) / base_length - 1) * 100

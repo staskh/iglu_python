@@ -40,10 +40,10 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | grade_eugly |percentage of GRADE score attributable to target range| ✅ | ✅ returns float 
 | grade_hyper |percentage of GRADE score attributable to hyperglycemia| ✅ |✅ returns float 
 | grade_hypo |percentage of GRADE score attributable to hypoglycemia| ✅ |✅ returns float 
-| grade |mean GRADE score| ✅ | ✅ returns float 
-| gri |Glycemia Risk Index | ✅ | ✅ returns float
-| gvp |Glucose Variability Percentage| ✅ |
-| hbgi |High Blood Glucose Index| ✅ |
+| grade |mean GRADE score| ✅ | ✅ returns float |
+| gri |Glycemia Risk Index | ✅ | ✅ returns float |
+| gvp |Glucose Variability Percentage| ✅ | ✅ only Series(DatetimeIndex) returns float
+| hbgi |High Blood Glucose Index| ✅ | ✅ returns float |
 | hyper_index |Hyperglycemia Index| ✅ |
 | hypo_index |Hypoglycemia Index| ✅ |
 | igc |Index of Glycemic Control| ✅ |

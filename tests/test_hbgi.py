@@ -103,15 +103,33 @@ def test_hbgi_series_input():
     data = pd.Series([150, 200, 130, 190])
     result = iglu.hbgi(data)
 
+    expected = 6.208971
+
     # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "HBGI" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
-    # Check that HBGI is calculated (should be positive due to hyperglycemia)
-    assert result.loc[0, "HBGI"] > 0
+def test_hbgi_list_input():
+    """Test HBGI calculation with list input."""
+    data = [150, 200, 130, 190]
+    result = iglu.hbgi(data)
 
+    expected = 6.208971
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
+
+def test_hbgi_numpy_array_input():
+    """Test HBGI calculation with numpy array input."""
+    data = np.array([150, 200, 130, 190])
+    result = iglu.hbgi(data)
+
+    expected = 6.208971
+
+    # Check output format
+    assert isinstance(result, float)
+    np.testing.assert_allclose(result, expected, rtol=1e-3)
 
 def test_hbgi_empty_data():
     """Test HBGI calculation with empty DataFrame."""

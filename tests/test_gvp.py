@@ -118,48 +118,15 @@ def test_gvp_basic():
     )
 
 
-def test_gvp_series_input():
+
+def test_gvp_series_no_timestamp_input():
     """Test GVP calculation with Series input."""
     data = pd.Series(
         [100, 120, 100, 80],
-        index=pd.to_datetime(
-            [
-                "2020-01-01 00:00:00",
-                "2020-01-01 00:05:00",
-                "2020-01-01 00:10:00",
-                "2020-01-01 00:15:00",
-            ]
-        ),
     )
-    result = gvp(data)
 
-    # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "GVP" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
-
-    # Check that GVP is calculated
-    assert not np.isnan(result.loc[0, "GVP"])
-    assert result.loc[0, "GVP"] > 0
-
-
-def test_gvp_series_input_list():
-    """Test GVP calculation with Series input without datetime index."""
-    data = [100, 120, 100, 80]
-
-    result = gvp(data)
-
-    # Check output format
-    assert isinstance(result, pd.DataFrame)
-    assert "GVP" in result.columns
-    assert len(result) == 1
-    assert len(result.columns) == 1
-
-    # Check that GVP is calculated
-    assert not np.isnan(result.loc[0, "GVP"])
-    assert result.loc[0, "GVP"] > 0
-
+    with pytest.raises(ValueError):
+        gvp(data)
 
 def test_gvp_empty_data():
     """Test GVP calculation with empty DataFrame."""

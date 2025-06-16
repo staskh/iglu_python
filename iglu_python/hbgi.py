@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def hbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
+def hbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
     r"""
     Calculate High Blood Glucose Index (HBGI).
 
@@ -24,15 +24,15 @@ def hbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
 
     Parameters
     ----------
-    data : Union[pd.DataFrame, pd.Series]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
+    data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        or a numpy array or list of glucose values
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame|float
         DataFrame with 1 row for each subject, a column for subject id and a column
-        for HBGI values. If a Series of glucose values is passed, then a DataFrame
-        without the subject id is returned.
+        for HBGI values. If a Series of glucose values is passed, then a float is returned.
 
     References
     ----------
@@ -60,41 +60,32 @@ def hbgi(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     0  4.95
     """
 
-    def calculate_hbgi(glucose_values: pd.Series) -> float:
-        """Helper function to calculate HBGI for a single series of values."""
-        if len(glucose_values) == 0:
-            return np.nan
-
-        # Calculate fbg values
-        fbg = 1.509 * (np.log(glucose_values) ** 1.084 - 5.381)
-        fbg = np.maximum(fbg, 0)  # Take max with 0
-
-        # Calculate HBGI
-        n = len(glucose_values)
-        hbgi_value = 10 * np.sum(fbg[glucose_values >= 112.5] ** 2) / n
-
-        return hbgi_value
-
     # Handle Series input
-    if isinstance(data, pd.Series):
-        data = data.dropna()
-        if len(data) == 0:
-            return pd.DataFrame({"HBGI": [np.nan]})
-
-        hbgi_value = calculate_hbgi(data)
-        return pd.DataFrame({"HBGI": [hbgi_value]})
+    if isinstance(data, (pd.Series, np.ndarray, list)):
+        if isinstance(data, (np.ndarray, list)):
+            data = pd.Series(data)
+        return calculate_hbgi_single(data)
 
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    # Calculate HBGI for each subject
-    result = []
-    for subject in data["id"].unique():
-        subject_data = data[data["id"] == subject].dropna(subset=["gl"])
-        if len(subject_data) == 0:
-            continue
+    out = data.groupby('id').agg(
+        HBGI = ("gl", lambda x: calculate_hbgi_single(x))
+    ).reset_index()
+    return out
 
-        hbgi_value = calculate_hbgi(subject_data["gl"])
-        result.append({"id": subject, "HBGI": hbgi_value})
+def calculate_hbgi_single(glucose_values: pd.Series) -> float:
+    """Helper function to calculate HBGI for a single series of values."""
+    glucose_values = glucose_values.dropna()
+    if len(glucose_values) == 0:
+        return np.nan
 
-    return pd.DataFrame(result)
+    # Calculate fbg values
+    fbg = 1.509 * (np.log(glucose_values) ** 1.084 - 5.381)
+    fbg = np.maximum(fbg, 0)  # Take max with 0
+
+    # Calculate HBGI
+    n = len(glucose_values)
+    hbgi_value = 10 * np.sum(fbg[glucose_values >= 112.5] ** 2) / n
+
+    return hbgi_value
