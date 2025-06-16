@@ -51,7 +51,7 @@ def gmi(data: Union[pd.DataFrame, pd.Series, list]) -> float|pd.DataFrame:
 
     # Check and prepare data
     data = check_data_columns(data)
-    is_vector = getattr(data, "is_vector", False)
+    getattr(data, "is_vector", False)
 
     # Calculate GMI for each subject
     out = data.groupby("id").agg(

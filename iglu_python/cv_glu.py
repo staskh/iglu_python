@@ -20,23 +20,23 @@ from .utils import check_data_columns
 
 def cv_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> Union[pd.DataFrame, float]:
     """Calculate Coefficient of Variation (CV) of glucose levels.
-    
+
     The function cv_glu produces CV values in a pandas DataFrame object.
-    
+
     Args:
         data: DataFrame object with column names "id", "time", and "gl",
               or pandas Series of glucose values.
-    
+
     Returns:
         If a DataFrame object is passed, then a DataFrame with two columns:
         subject id and corresponding CV value is returned. If a Series of glucose
         values is passed, then a DataFrame with just the CV value is returned.
-        
+
     Details:
         A DataFrame with 1 row for each subject, a column for subject id and
         a column for CV values is returned. NA glucose values are
         omitted from the calculation of the CV.
-        
+
         CV (Coefficient of Variation) is calculated by 100 * sd(G) / mean(G)
         Where G is the list of all Glucose measurements for a subject.
     """

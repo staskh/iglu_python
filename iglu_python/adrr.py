@@ -68,7 +68,7 @@ def adrr(data: pd.DataFrame) -> pd.DataFrame:
         data_filtered = data.dropna(subset=["gl"])
 
         if len(data_filtered) == 0:
-            warnings.warn("All glucose values are NaN. Returning empty DataFrame.")
+            warnings.warn("All glucose values are NaN. Returning empty DataFrame.", stacklevel=2)
             return pd.DataFrame(columns=["id", "ADRR"])
 
         # Group by id and date, then calculate BGI and daily risk range
@@ -117,7 +117,7 @@ def adrr(data: pd.DataFrame) -> pd.DataFrame:
         )
 
     if len(data) == 0:
-        warnings.warn("Input DataFrame is empty. Returning empty DataFrame.")
+        warnings.warn("Input DataFrame is empty. Returning empty DataFrame.", stacklevel=2)
         return pd.DataFrame(columns=["id", "ADRR"])
 
     # Calculate ADRR

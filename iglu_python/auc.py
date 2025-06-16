@@ -17,7 +17,7 @@ def auc(data: pd.DataFrame, tz: str = "") -> pd.DataFrame:
     AUC is calculated using the formula: (dt0/60) * ((gl[2:length(gl)] + gl[1:(length(gl)-1)])/2),
     where dt0/60 is the frequency of the cgm measurements in hours and gl are the glucose values.
 
-    This formula is based off the Trapezoidal Rule: 
+    This formula is based off the Trapezoidal Rule:
     (time[2]-time[1] * ((glucose[1]+glucose[2])/2)).
 
 

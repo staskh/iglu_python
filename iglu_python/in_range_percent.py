@@ -8,7 +8,7 @@ from .utils import check_data_columns
 
 def in_range_percent(
     data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
-    target_ranges: List[List[int]] = [[70, 180], [63, 140]],
+    target_ranges: List[List[int]] = None,
 ) -> pd.DataFrame|float:
     """
     Calculate percentage of values within target ranges.
@@ -65,6 +65,8 @@ def in_range_percent(
     0             75.0
     """
     # Handle Series input
+    if target_ranges is None:
+        target_ranges = [[70, 180], [63, 140]]
     if isinstance(data, (pd.Series, list,np.ndarray)):
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
@@ -88,11 +90,13 @@ def in_range_percent(
     df = df[['id'] + [col for col in df.columns if col != 'id']]
     return df
 
-def in_range_percent_single(data: pd.Series, target_ranges: List[List[int]] = [[70, 180], [63, 140]]) -> float:
+def in_range_percent_single(data: pd.Series, target_ranges: List[List[int]] = None) -> float:
     """
     Calculate percentage of values within target ranges for a single series/subject.
     """
     # Calculate total non-NA readings
+    if target_ranges is None:
+        target_ranges = [[70, 180], [63, 140]]
     total_readings = len(data.dropna())
     if total_readings == 0:
         return {f"in_range_{min(range_vals)}_{max(range_vals)}": 0

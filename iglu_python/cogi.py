@@ -11,8 +11,8 @@ from .utils import check_data_columns
 
 def cogi(
     data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
-    targets: List[int] = [70, 180],
-    weights: List[float] = [0.5, 0.35, 0.15],
+    targets: List[int] = None,
+    weights: List[float] = None,
 ) -> pd.DataFrame|float:
     """
     Calculate Coefficient of Glucose Irregularity (COGI).
@@ -68,6 +68,10 @@ def cogi(
     """
 
     # Check and prepare data
+    if weights is None:
+        weights = [0.5, 0.35, 0.15]
+    if targets is None:
+        targets = [70, 180]
     targets = sorted([float(t) for t in targets])
 
     if isinstance(data, (pd.Series, list, np.ndarray)):
@@ -83,9 +87,13 @@ def cogi(
 
     return out
 
-def cogi_single(data: pd.Series, targets: List[int] = [70, 180], weights: List[float] = [0.5, 0.35, 0.15]) -> float:
+def cogi_single(data: pd.Series, targets: List[int] = None, weights: List[float] = None) -> float:
     """Calculate COGI for a single subject"""
     # Calculate components
+    if weights is None:
+        weights = [0.5, 0.35, 0.15]
+    if targets is None:
+        targets = [70, 180]
     ir_dict = in_range_percent(data, [targets])
     ir = ir_dict["in_range_" + "_".join(map(str, targets))]
     br_dict = below_percent(data, targets_below=[targets[0]])

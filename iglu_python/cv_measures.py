@@ -19,30 +19,30 @@ from .utils import CGMS2DayByDay, check_data_columns
 
 def cv_measures(data, dt0=None, inter_gap=45, tz="")->pd.DataFrame|dict[str:float]:
     """Calculate Coefficient of Variation subtypes (CVmean and CVsd).
-    
+
     The function cv_measures produces CV subtype values in a pandas DataFrame object.
-    
+
     Args:
         data: DataFrame object with column names "id", "time", and "gl"
         dt0: The time frequency for interpolation in minutes. If None, will match the CGM meter's frequency
         inter_gap: The maximum allowable gap (in minutes) for interpolation. Default is 45
         tz: String name of timezone. Default is ""
-    
+
     Returns:
         A DataFrame with three columns: subject id and corresponding CV subtype values (CVmean and CVsd)
-        
+
     Details:
         A DataFrame with 1 row for each subject, a column for subject id and
         a column for each CV subtype value is returned.
-        
+
         Missing values will be linearly interpolated when close enough to non-missing values.
-        
+
         1. CVmean:
            Calculated by first taking the coefficient of variation of each day's glucose measurements,
            then taking the mean of all the coefficient of variations. That is, for x
            days we compute cv_1 ... cv_x daily coefficient of variations and calculate
            1/x * sum(cv_i)
-           
+
         2. CVsd:
            Calculated by first taking the coefficient of variation of each day's glucose measurements,
            then taking the standard deviation of all the coefficient of variations. That is, for d

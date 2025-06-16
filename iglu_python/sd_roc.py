@@ -40,7 +40,7 @@ def sd_roc(
     Returns
     -------
     pd.DataFrame
-        DataFrame with two columns: subject id and standard deviation of the rate of change 
+        DataFrame with two columns: subject id and standard deviation of the rate of change
         values for each subject.
 
     Notes

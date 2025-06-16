@@ -7,7 +7,7 @@ from .utils import check_data_columns
 
 
 def quantile_glu(
-    data: Union[pd.DataFrame, pd.Series], quantiles: List[float] = [0, 25, 50, 75, 100]
+    data: Union[pd.DataFrame, pd.Series], quantiles: List[float] = None
 ) -> pd.DataFrame:
     """
     Calculate glucose level quantiles.
@@ -56,6 +56,8 @@ def quantile_glu(
     0  130.0  145.0  182.5  200.0
     """
     # Handle Series input
+    if quantiles is None:
+        quantiles = [0, 25, 50, 75, 100]
     if isinstance(data, pd.Series):
         # Calculate quantiles for Series
         quantile_vals = np.quantile(data.dropna(), np.array(quantiles) / 100)

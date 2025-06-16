@@ -17,41 +17,41 @@ def process_data(
     """
     Data Pre-Processor
 
-    A helper function to assist in pre-processing the user-supplied input data 
-    for use with other functions. This function ensures that the returned data 
-    will be compatible with every function within the iglu package. All NAs 
+    A helper function to assist in pre-processing the user-supplied input data
+    for use with other functions. This function ensures that the returned data
+    will be compatible with every function within the iglu package. All NAs
     will be removed.
 
     Parameters
     ----------
     data : pd.DataFrame, pd.Series, list, or np.ndarray
         User-supplied dataset containing continuous glucose monitor data. Must
-        contain data for time and glucose readings at a minimum. Accepted 
+        contain data for time and glucose readings at a minimum. Accepted
         formats are DataFrame, Series, list, or numpy array.
     id : str, optional
         Column name (string) corresponding to subject id column.
         If no value is passed, an id of 1 will be assigned to the data.
     timestamp : str, optional
-        Column name (string) corresponding to time values in data. The dates 
-        can be in any format parsable by pd.to_datetime, or any format accepted 
+        Column name (string) corresponding to time values in data. The dates
+        can be in any format parsable by pd.to_datetime, or any format accepted
         by the parser passed to time_parser.
     glu : str, optional
         Column name (string) corresponding to glucose values, mg/dL
     time_parser : callable, optional
-        Function used to convert datetime strings to time objects. Defaults to 
-        pd.to_datetime. If your times are in a format not parsable by 
+        Function used to convert datetime strings to time objects. Defaults to
+        pd.to_datetime. If your times are in a format not parsable by
         pd.to_datetime, you can pass a custom parsing function.
 
     Returns
     -------
     pd.DataFrame
-        A processed DataFrame object with columns "id", "time", and "gl" that 
-        cooperates with every other function within the iglu package. All NAs 
+        A processed DataFrame object with columns "id", "time", and "gl" that
+        cooperates with every other function within the iglu package. All NAs
         will be removed.
 
     Details
     -------
-    If "mmol/l" appears in the glucose column name, the glucose values will be 
+    If "mmol/l" appears in the glucose column name, the glucose values will be
     multiplied by 18 to convert to mg/dL.
 
     Raises
@@ -60,10 +60,10 @@ def process_data(
         If data is not in a supported format
     ValueError
         If required columns are not found or cannot be processed
-    
+
     Notes
     -----
-    Based on John Schwenck's data_process for his bp package and 
+    Based on John Schwenck's data_process for his bp package and
     David Buchanan's R implementation.
 
     Examples
@@ -71,7 +71,7 @@ def process_data(
     >>> import pandas as pd
     >>> data = pd.DataFrame({
     ...     'subject_id': ['A', 'A', 'B', 'B'],
-    ...     'datetime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00', 
+    ...     'datetime': ['2020-01-01 10:00:00', '2020-01-01 10:05:00',
     ...                  '2020-01-01 10:00:00', '2020-01-01 10:05:00'],
     ...     'glucose': [120, 130, 110, 125]
     ... })
@@ -127,7 +127,7 @@ def process_data(
         if id_lower not in data.columns:
             warning_msg = (f"Could not find user-defined id argument name '{id}' in dataset. "
                           f"Available columns: {original_columns}")
-            warnings.warn(warning_msg)
+            warnings.warn(warning_msg, stacklevel=2)
 
             # Check if there's a column named 'id'
             if 'id' in data.columns:
@@ -156,7 +156,7 @@ def process_data(
         if timestamp_lower not in data.columns:
             warning_msg = (f"Could not find user-defined timestamp argument name '{timestamp}' in dataset. "
                           f"Available columns: {original_columns}")
-            warnings.warn(warning_msg)
+            warnings.warn(warning_msg, stacklevel=2)
 
             # Check if there's a column named 'time'
             if 'time' in data.columns:
@@ -201,7 +201,7 @@ def process_data(
         if glu_lower not in data.columns:
             warning_msg = (f"Could not find user-defined glucose argument name '{glu}' in dataset. "
                           f"Available columns: {original_columns}")
-            warnings.warn(warning_msg)
+            warnings.warn(warning_msg, stacklevel=2)
 
             # Check if there's a column named 'gl'
             if 'gl' in data.columns:
@@ -240,10 +240,10 @@ def process_data(
 
     # Validation warnings
     if data['gl'].min() < 20:
-        warnings.warn("Minimum glucose reading below 20. Data may not be cleaned.")
+        warnings.warn("Minimum glucose reading below 20. Data may not be cleaned.", stacklevel=2)
 
     if data['gl'].max() > 500:
-        warnings.warn("Maximum glucose reading above 500. Data may not be cleaned.")
+        warnings.warn("Maximum glucose reading above 500. Data may not be cleaned.", stacklevel=2)
 
     # Keep only the three required columns in correct order
     data = data[['id', 'time', 'gl']]

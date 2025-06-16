@@ -10,9 +10,9 @@ from .utils import check_data_columns
 def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame:
     """
     Calculate summary glucose level
-    
+
     The function summary_glu is a wrapper that produces summary statistics
-    for glucose data. Output is a DataFrame object with subject id and the 
+    for glucose data. Output is a DataFrame object with subject id and the
     summary values: Minimum, 1st Quartile, Median, Mean, 3rd Quartile and Max.
 
     Parameters
@@ -25,8 +25,8 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
     -------
     pd.DataFrame
         If a DataFrame object is passed, then a DataFrame object with
-        a column for subject id and then a column for each summary value is returned. 
-        If a vector of glucose values is passed, then a DataFrame object without 
+        a column for subject id and then a column for each summary value is returned.
+        If a vector of glucose values is passed, then a DataFrame object without
         the subject id is returned.
 
     Details
@@ -48,10 +48,8 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
     ['id', 'Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
     """
     # Handle vector input (Series, list, or numpy array)
-    is_vector = False
 
     if isinstance(data, (pd.Series, list, np.ndarray)):
-        is_vector = True
 
         # Convert to numpy array for consistent handling
         if isinstance(data, pd.Series):
@@ -86,7 +84,7 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
             glucose_values = subject_data['gl'].dropna().values
 
             if len(glucose_values) == 0:
-                warnings.warn(f"No valid glucose values found for subject {subject_id}")
+                warnings.warn(f"No valid glucose values found for subject {subject_id}", stacklevel=2)
                 # Still include the subject with NaN values
                 summary_stats = {
                     'Min.': np.nan,
@@ -114,14 +112,14 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
 def _calculate_summary_stats(glucose_values: np.ndarray) -> dict:
     """
     Calculate summary statistics for glucose values.
-    
+
     This mimics R's summary() function output for numeric vectors.
-    
+
     Parameters
     ----------
     glucose_values : np.ndarray
         Array of glucose values (without NaN)
-    
+
     Returns
     -------
     dict

@@ -27,18 +27,18 @@ def mage(
     one peak/nadir to the next nadir/peak from the original glucose values.
 
     If version 'ma' is selected, the function computationally emulates the manual method for calculating
-    the mean amplitude of glycemic excursions (MAGE) first suggested in 
-    "Mean Amplitude of Glycemic Excursions, a Measure of Diabetic Instability", (Service, 1970). 
+    the mean amplitude of glycemic excursions (MAGE) first suggested in
+    "Mean Amplitude of Glycemic Excursions, a Measure of Diabetic Instability", (Service, 1970).
     For this version, glucose values will be interpolated over a uniform time grid prior to calculation.
 
-    'ma' is a more accurate algorithm that uses the crosses of a short and long moving average 
-    to identify intervals where a peak/nadir might exist. Then, the height from one peak/nadir 
-    to the next nadir/peak is calculated from the _original_ (not moving average) glucose values. 
-    (Note: this function internally uses CGMS2DayByDay with dt0 = 5. 
+    'ma' is a more accurate algorithm that uses the crosses of a short and long moving average
+    to identify intervals where a peak/nadir might exist. Then, the height from one peak/nadir
+    to the next nadir/peak is calculated from the _original_ (not moving average) glucose values.
+    (Note: this function internally uses CGMS2DayByDay with dt0 = 5.
     Thus, all CGM data is linearly interpolated to 5 minute intervals. See the MAGE vignette for more details.)
 
-    'naive' algorithm calculates MAGE by taking the mean of absolute glucose differences 
-    (between each value and the mean)  that are greater than the standard deviation. A multiplier can be added 
+    'naive' algorithm calculates MAGE by taking the mean of absolute glucose differences
+    (between each value and the mean)  that are greater than the standard deviation. A multiplier can be added
     to the standard deviation using the `sd_multiplier` argument.
 
 
@@ -178,11 +178,10 @@ def mage_ma_single(data: pd.DataFrame, short_ma: int, long_ma: int,
     # 1.1 Interpolate over uniform grid
     # Note: always interpolate to 5 minute grid
     data_ip = CGMS2DayByDay(data, dt0=5, inter_gap=inter_gap, tz=tz)
-    dt0 = data_ip[2]  # Time between measurements in minutes
+    data_ip[2]  # Time between measurements in minutes
     # replace for 5 min to fix bug in CGMS2DayByDay
-    dt0 = 5
     day_one = data_ip[1][0]
-    ndays = len(data_ip[1])
+    len(data_ip[1])
 
     # 1.2 Generate grid times by starting from day one and cumulatively summing
     # note fix 5 min used in interpretation
@@ -247,7 +246,7 @@ def mage_ma_single(data: pd.DataFrame, short_ma: int, long_ma: int,
         idx = return_val.groupby(['start', 'end'])['MAGE'].idxmax()
         res = return_val.loc[idx].reset_index(drop=True)
     else:  # default: first excursions only
-        res = return_val[return_val['first_excursion'] == True].copy()
+        res = return_val[return_val['first_excursion']].copy()
 
     # Calculate time-weighted MAGE
     if res.empty:
@@ -413,7 +412,7 @@ def mage_atomic(data, short_ma,long_ma):
     # excursion elimination
     differences = np.subtract.outer(minmax, minmax).T
     standardD = data['gl'].std()  # pandas uses sample std dev by default
-    N = len(minmax)
+    len(minmax)
 
 
     # MAGE+ algorithm, which identifies and measures positive glycemic excursions
@@ -460,7 +459,7 @@ def mage_atomic(data, short_ma,long_ma):
     })
 
     # Determine which direction has maximum MAGE value
-    is_plus_max = ((mage_plus['MAGE'].iloc[0] >= mage_minus['MAGE'].iloc[0])
+    ((mage_plus['MAGE'].iloc[0] >= mage_minus['MAGE'].iloc[0])
                     if not pd.isna(mage_plus['MAGE'].iloc[0])
                     and not pd.isna(mage_minus['MAGE'].iloc[0])
                     else False
@@ -474,12 +473,12 @@ def mage_atomic(data, short_ma,long_ma):
 def calculate_mage_plus(differences, minmax, standardD):
     """
     Calculate MAGE+ (positive glycemic excursions)
-    
+
     Args:
         differences: NxN matrix of pairwise differences between extrema
         minmax: Array of extrema values (peaks and nadirs)
         standardD: Standard deviation threshold
-    
+
     Returns:
         tuple: (mage_plus_heights, mage_plus_tp_pairs)
     """
@@ -525,12 +524,12 @@ def calculate_mage_plus(differences, minmax, standardD):
 def calculate_mage_minus(differences, minmax, standardD):
     """
     Calculate MAGE- (negative glycemic excursions)
-    
+
     Args:
         differences: NxN matrix of pairwise differences between extrema
         minmax: Array of extrema values (peaks and nadirs)
         standardD: Standard deviation threshold
-    
+
     Returns:
         tuple: (mage_minus_heights, mage_minus_tp_pairs)
     """
@@ -599,7 +598,7 @@ def segment_time_series(data, max_gap_minutes):
 
     # Group by segment and return list of DataFrames
     segments = []
-    for segment_id, group in data.groupby('segment_id'):
+    for _segment_id, group in data.groupby('segment_id'):
         # Drop the temporary columns we added
         group = group.drop(['time_diff', 'segment_id'], axis=1)
         # Drop rows with NA glucose values at the end of the segment

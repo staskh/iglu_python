@@ -13,11 +13,11 @@ def sd_measures(data: pd.DataFrame,
                 tz: str = "") -> pd.DataFrame:
     """
     Calculate SD subtypes for glucose variability analysis
-    
+
     This function produces SD subtype values in a DataFrame object
     with a row for each subject and columns corresponding to id followed by
     each SD subtype.
-    
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -28,47 +28,47 @@ def sd_measures(data: pd.DataFrame,
         The maximum allowable gap (in minutes) for interpolation
     tz : str, default ""
         Timezone specification
-        
+
     Returns
     -------
     pd.DataFrame
         A DataFrame with columns for id and each of the six SD subtypes:
         - SDw: vertical within days
-        - SDhhmm: between time points  
+        - SDhhmm: between time points
         - SDwsh: within series (1-hour windows)
         - SDdm: horizontal sd (between daily means)
         - SDb: between days, within timepoints
         - SDbdm: between days, within timepoints, corrected for daily means
-        
+
     Details
     -------
     Missing values will be linearly interpolated when close enough to non-missing values.
-    
+
     SD Subtypes:
-    
+
     1. SDw - vertical within days:
        Standard deviation of each day's glucose measurements, then mean of all SDs
-       
+
     2. SDhhmm - between time points:
        Standard deviation of mean glucose values at each time point across days
-       
+
     3. SDwsh - within series:
        Mean of standard deviations computed over hour-long sliding windows
-       
+
     4. SDdm - horizontal sd:
        Standard deviation of daily mean glucose values
-       
+
     5. SDb - between days, within timepoints:
        Mean of standard deviations of glucose values across days for each time point
-       
+
     6. SDbdm - between days, within timepoints, corrected for changes in daily means:
        Like SDb but after subtracting daily mean from each glucose value
-       
+
     References
     ----------
     Rodbard (2009) New and Improved Methods to Characterize Glycemic Variability
     Using Continuous Glucose Monitoring. Diabetes Technology and Therapeutics 11, 551-565.
-    
+
     Examples
     --------
     >>> import pandas as pd
@@ -81,7 +81,7 @@ def sd_measures(data: pd.DataFrame,
     data = check_data_columns(data, time_check=True, tz=tz)
 
     subjects = data['id'].unique()
-    n_subjects = len(subjects)
+    len(subjects)
 
     # Calculate uniform grid for all subjects
     gdall = []
@@ -117,7 +117,7 @@ def sd_measures(data: pd.DataFrame,
 def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[str, Any]:
     """
     Calculate all SD subtypes for a single subject's glucose data matrix
-    
+
     Parameters
     ----------
     gd2d : np.ndarray
@@ -126,7 +126,7 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[
         Time interval in minutes
     subject_id : Any
         Subject identifier
-        
+
     Returns
     -------
     dict
@@ -177,14 +177,14 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int, subject_id: Any) -> Dict[
 def _rolling_std(data: np.ndarray, window: int) -> np.ndarray:
     """
     Calculate rolling standard deviation with non-trimmed ends
-    
+
     Parameters
     ----------
     data : np.ndarray
         Input data array
     window : int
         Window size for rolling calculation
-        
+
     Returns
     -------
     np.ndarray
@@ -209,7 +209,7 @@ def _rolling_std(data: np.ndarray, window: int) -> np.ndarray:
 def _safe_nanstd(data: np.ndarray, axis: Optional[int] = None, ddof: int = 1) -> float:
     """
     Safe version of np.nanstd that handles insufficient data gracefully
-    
+
     Parameters
     ----------
     data : np.ndarray
@@ -218,7 +218,7 @@ def _safe_nanstd(data: np.ndarray, axis: Optional[int] = None, ddof: int = 1) ->
         Axis along which the standard deviation is computed
     ddof : int
         Delta degrees of freedom
-        
+
     Returns
     -------
     float
@@ -243,14 +243,14 @@ def _safe_nanstd(data: np.ndarray, axis: Optional[int] = None, ddof: int = 1) ->
 def _safe_nanmean(data: np.ndarray, axis: Optional[int] = None) -> float:
     """
     Safe version of np.nanmean that handles empty slices gracefully
-    
+
     Parameters
     ----------
     data : np.ndarray
         Input data
     axis : int, optional
         Axis along which the mean is computed
-        
+
     Returns
     -------
     float
