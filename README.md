@@ -65,7 +65,7 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | sd_glu | standard deviation of glucose values| ✅ | ✅ returns float
 | sd_measures |various standard deviation subtypes| ✅ |✅ only Series(DatetimeIndex) returns Dict[str,float]|
 | sd_roc | standard deviation of the rate of change| ✅ |✅ only Series(DatetimeIndex) returns float ||
-| summary_glu | summary glucose level| ✅ |
+| summary_glu | summary glucose level| ✅ |✅ returns Dict[str,float]|
 | process_data | Data Pre-Processor | ✅ |
 | CGMS2DayByDay |Interpolate glucose input| ✅ |
 
