@@ -79,19 +79,19 @@ def test_summary_glu_basic_dataframe():
     # Check output structure
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 2  # Two subjects
-    
+
     # Check columns
     expected_columns = ['id', 'Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
     assert list(result.columns) == expected_columns
-    
+
     # Check data types
     assert pd.api.types.is_string_dtype(result['id'])
     for col in ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']:
         assert pd.api.types.is_numeric_dtype(result[col])
-    
+
     # Check that we have the correct subjects
     assert set(result['id']) == {'subject1', 'subject2'}
-    
+
     # Check that summary values are reasonable
     subject1_data = result[result['id'] == 'subject1'].iloc[0]
     assert subject1_data['Min.'] <= subject1_data['Max.']
@@ -110,7 +110,7 @@ def test_summary_glu_single_subject():
 
     assert len(result) == 1
     assert result.iloc[0]['id'] == 'subject1'
-    
+
     # Check specific values for known data
     row = result.iloc[0]
     assert row['Min.'] == 100
@@ -124,16 +124,16 @@ def test_summary_glu_single_subject():
 def test_summary_glu_vector_input_series():
     """Test summary_glu with Series input."""
     glucose_series = pd.Series([100, 120, 140, 160, 180])
-    
+
     result = iglu.summary_glu(glucose_series)
-    
+
     assert isinstance(result, dict)
     assert len(result) == 6
-    
+
     # Should not have id column for vector input
     expected_columns = ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
     assert list(result.keys()) == expected_columns
-    
+
     # Check values
 
     assert result['Min.'] == 100
@@ -145,12 +145,12 @@ def test_summary_glu_vector_input_series():
 def test_summary_glu_vector_input_list():
     """Test summary_glu with list input."""
     glucose_list = [100, 120, 140, 160, 180]
-    
+
     result = iglu.summary_glu(glucose_list)
-    
+
     assert isinstance(result, dict)
     assert len(result) == 6
-    
+
     # Should not have id column for vector input
     expected_columns = ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
     assert list(result.keys()) == expected_columns
@@ -159,12 +159,12 @@ def test_summary_glu_vector_input_list():
 def test_summary_glu_vector_input_numpy():
     """Test summary_glu with numpy array input."""
     glucose_array = np.array([100, 120, 140, 160, 180])
-    
+
     result = iglu.summary_glu(glucose_array)
-    
+
     assert isinstance(result, dict)
     assert len(result) == 6
-    
+
     # Should not have id column for vector input
     expected_columns = ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
     assert list(result.keys()) == expected_columns
@@ -191,9 +191,9 @@ def test_summary_glu_missing_values():
 def test_summary_glu_missing_values_vector():
     """Test handling of missing values in vector input."""
     glucose_series = pd.Series([100, np.nan, 140, 160, np.nan, 180])
-    
+
     result = iglu.summary_glu(glucose_series)
-    
+
     assert len(result) == 6
     # Should calculate stats only on non-NaN values: [100, 140, 160, 180]
     assert result['Min.'] == 100
@@ -213,12 +213,12 @@ def test_summary_glu_all_missing_values():
         result = iglu.summary_glu(data)
 
     assert len(result) == 2
-    
+
     # subject1 should have all NaN values
     subject1_row = result[result['id'] == 'subject1'].iloc[0]
     for col in ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']:
         assert pd.isna(subject1_row[col])
-    
+
     # subject2 should have valid values
     subject2_row = result[result['id'] == 'subject2'].iloc[0]
     assert not pd.isna(subject2_row['Mean'])
@@ -227,7 +227,7 @@ def test_summary_glu_all_missing_values():
 def test_summary_glu_all_missing_vector():
     """Test error with all missing values in vector input."""
     glucose_series = pd.Series([np.nan, np.nan, np.nan])
-    
+
     with pytest.raises(ValueError, match="No valid glucose values found"):
         iglu.summary_glu(glucose_series)
 
@@ -244,7 +244,7 @@ def test_summary_glu_single_value():
 
     assert len(result) == 1
     row = result.iloc[0]
-    
+
     # All summary stats should be the same for single value
     for col in ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']:
         assert row[col] == 150
@@ -256,7 +256,7 @@ def test_summary_glu_multiple_subjects():
         'id': ['A'] * 3 + ['B'] * 4 + ['C'] * 2,
         'time': pd.date_range(start='2020-01-01', periods=9, freq='5min'),
         'gl': [100, 110, 120,  # Subject A: low glucose
-               200, 210, 220, 230,  # Subject B: high glucose  
+               200, 210, 220, 230,  # Subject B: high glucose
                150, 160]  # Subject C: medium glucose
     })
 
@@ -264,12 +264,12 @@ def test_summary_glu_multiple_subjects():
 
     assert len(result) == 3
     assert set(result['id']) == {'A', 'B', 'C'}
-    
+
     # Check that B has higher values than A
     a_mean = result[result['id'] == 'A']['Mean'].iloc[0]
     b_mean = result[result['id'] == 'B']['Mean'].iloc[0]
     c_mean = result[result['id'] == 'C']['Mean'].iloc[0]
-    
+
     assert a_mean < c_mean < b_mean
 
 
@@ -285,7 +285,7 @@ def test_summary_glu_identical_values():
 
     assert len(result) == 1
     row = result.iloc[0]
-    
+
     # All summary stats should be the same for identical values
     for col in ['Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']:
         assert row[col] == 120
@@ -294,7 +294,7 @@ def test_summary_glu_identical_values():
 def test_summary_glu_empty_dataframe():
     """Test error handling for empty DataFrame."""
     data = pd.DataFrame(columns=['id', 'time', 'gl'])
-    
+
     with pytest.raises(ValueError):
         iglu.summary_glu(data)
 
@@ -308,7 +308,7 @@ def test_summary_glu_column_order():
     })
 
     result = iglu.summary_glu(data)
-    
+
     expected_columns = ['id', 'Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
     assert list(result.columns) == expected_columns
 
@@ -325,11 +325,11 @@ def test_summary_glu_percentile_accuracy():
 
     result = iglu.summary_glu(data)
     row = result.iloc[0]
-    
+
     # Verify against numpy percentile calculations
     assert row['Min.'] == np.min(glucose_values)
     assert row['1st Qu.'] == np.percentile(glucose_values, 25)
     assert row['Median'] == np.median(glucose_values)
     assert row['Mean'] == np.mean(glucose_values)
     assert row['3rd Qu.'] == np.percentile(glucose_values, 75)
-    assert row['Max.'] == np.max(glucose_values) 
+    assert row['Max.'] == np.max(glucose_values)

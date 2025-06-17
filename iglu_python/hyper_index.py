@@ -20,7 +20,8 @@ def hyper_index(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
+        or a numpy array or list of glucose values
     ULTR : int, default=140
         Upper Limit of Target Range, in mg/dL
     a : float, default=1.1
@@ -90,4 +91,4 @@ def hyper_index_single(
     hyper_values = gl[gl > ULTR] - ULTR
     hyper_index = np.sum(hyper_values**a) / (len(gl) * c)
 
-    return hyper_index   
+    return hyper_index

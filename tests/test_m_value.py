@@ -106,7 +106,7 @@ def test_m_value_series_input():
     """Test M-value calculation with Series input."""
     data = pd.Series([90, 180, 90, 90])
     result = iglu.m_value(data)
-    expected = 6.819764  
+    expected = 6.819764
 
     # Check output format
     assert isinstance(result, float)

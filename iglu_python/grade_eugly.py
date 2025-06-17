@@ -9,7 +9,7 @@ from .utils import check_data_columns
 
 def grade_eugly(
     data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: int = 70, upper: int = 140
-) -> pd.DataFrame|float:  
+) -> pd.DataFrame|float:
     """
     Calculate percentage of GRADE score attributable to target range.
 
@@ -20,7 +20,8 @@ def grade_eugly(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
+        or a numpy array or list of glucose values
     lower : int, default=70
         Lower bound used for hypoglycemia cutoff, in mg/dL
     upper : int, default=140
@@ -63,7 +64,7 @@ def grade_eugly(
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return grade_eugly_single(data, lower, upper)
-    
+
     # Handle DataFrame input
     data = check_data_columns(data)
 

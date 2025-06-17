@@ -17,7 +17,8 @@ def grade_hyper(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], upper: i
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
+        or a numpy array or list of glucose values
     upper : int, default=140
         Upper bound used for hyperglycemia cutoff, in mg/dL
 
@@ -75,7 +76,7 @@ def grade_hyper_single(data: pd.Series, upper: int = 140) -> float:
 
     # Calculate GRADE scores
     grade_scores = _grade_formula(data)
-    
+
     # Calculate percentage above upper bound
     above_upper = data > upper
     total_grade = np.sum(grade_scores)

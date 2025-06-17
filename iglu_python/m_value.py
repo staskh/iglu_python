@@ -23,7 +23,8 @@ def m_value(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], r: float = 9
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
+        or a numpy array or list of glucose values
     r : float, default=90
         A reference value corresponding to basal glycemia in normal subjects
 

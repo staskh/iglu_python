@@ -77,18 +77,18 @@ def test_sd_measures_basic():
         'time': dates,
         'gl': np.random.normal(120, 20, samples)
     })
-    
+
     result = iglu.sd_measures(data)
-    
+
     # Check output structure
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 1
     assert result.iloc[0]['id'] == 'subject1'
-    
+
     # Check that all SD measures are present
     expected_columns = ['id', 'SDw', 'SDhhmm', 'SDwsh', 'SDdm', 'SDb', 'SDbdm']
     assert list(result.columns) == expected_columns
-    
+
     # Check that all values are numeric and non-negative
     for col in ['SDw', 'SDhhmm', 'SDwsh', 'SDdm', 'SDb', 'SDbdm']:
         assert pd.notna(result.iloc[0][col])
@@ -104,21 +104,21 @@ def test_sd_measures_multiple_days():
     dates = pd.date_range('2020-01-01', periods=samples, freq=f"{dt0}min")
     glucose_values = np.concatenate([
         np.random.normal(100, 15, int(samples/3)),  # Day 1
-        np.random.normal(130, 25, int(samples/3)),  # Day 2  
+        np.random.normal(130, 25, int(samples/3)),  # Day 2
         np.random.normal(110, 20, int(samples/3)),  # Day 3
     ])
-    
+
     data = pd.DataFrame({
         'id': ['subject1'] * samples,
         'time': dates,
         'gl': glucose_values
     })
-    
+
     result = iglu.sd_measures(data)
-    
+
     # All measures should be calculated
     assert not result.isnull().any().any()
-    
+
     # SDdm should capture between-day variation
     assert result.iloc[0]['SDdm'] > 0
 
@@ -131,9 +131,9 @@ def test_sd_measures_constant_values():
         'time': dates,
         'gl': [120] * 48
     })
-    
+
     result = iglu.sd_measures(data)
-    
+
     # Most SD measures should be 0 or very small for constant values
     assert result.iloc[0]['SDw'] < 1e-10  # Should be essentially 0
     assert result.iloc[0]['SDhhmm'] < 1e-10
@@ -150,9 +150,9 @@ def test_sd_measures_single_day():
         'time': dates,
         'gl': np.random.normal(120, 20, 24)
     })
-    
+
     result = iglu.sd_measures(data)
-    
+
     # SDdm and SDb should be NaN or 0 with only one day
     assert pd.isna(result.iloc[0]['SDdm']) or result.iloc[0]['SDdm'] == 0
     assert pd.isna(result.iloc[0]['SDb']) or result.iloc[0]['SDb'] == 0
@@ -170,27 +170,27 @@ def test_sd_measures_multiple_subjects_error():
         'time': dates,
         'gl': np.random.normal(120, 20, samples)
     })
-    
+
     result = iglu.sd_measures(data)
     # Test that multiple subjects are handled correctly
     assert len(result) == 2  # Should have results for both subjects
     assert set(result['id']) == {'subject1', 'subject2'}  # Should have both subject IDs
-    
+
     # Test that results are calculated for each subject independently
     subject1_data = data[data['id'] == 'subject1']
     subject2_data = data[data['id'] == 'subject2']
-    
+
     result1 = iglu.sd_measures(subject1_data)
     result2 = iglu.sd_measures(subject2_data)
-    
+
     # Results from individual calculations should match combined results
     for col in ['SDw', 'SDhhmm', 'SDwsh']:
         assert abs(result.iloc[0][col] - result1.iloc[0][col]) < 1e-10  # subject1
         assert abs(result.iloc[1][col] - result2.iloc[0][col]) < 1e-10  # subject2
 
     for col in ['SDdm', 'SDb', 'SDbdm']:
-        assert np.isnan(result.iloc[0][col]) 
-        assert np.isnan(result.iloc[1][col]) 
+        assert np.isnan(result.iloc[0][col])
+        assert np.isnan(result.iloc[1][col])
 
 
 def test_sd_measures_dt0_parameter():
@@ -204,11 +204,11 @@ def test_sd_measures_dt0_parameter():
         'time': dates,
         'gl': np.random.normal(120, 20, samples)
     })
-    
+
     # Test with explicit dt0
     result_30min = iglu.sd_measures(data, dt0=30)
     result_auto = iglu.sd_measures(data)  # Should auto-detect 30min
-    
+
     # Results should be similar (allowing for small numerical differences)
     for col in ['SDw', 'SDhhmm', 'SDwsh', 'SDdm', 'SDb', 'SDbdm']:
         assert abs(result_30min.iloc[0][col] - result_auto.iloc[0][col]) < 1e-10
@@ -225,16 +225,16 @@ def test_sd_measures_inter_gap_parameter():
         'time': dates,
         'gl': np.random.normal(120, 20, samples)
     })
-    
+
     #make 5h gap from 12:00
-    gap_start = 12*(60/dt0) 
+    gap_start = 12*(60/dt0)
     gap_hour = int(60/dt0)
     data.loc[gap_start:gap_start + 5*gap_hour - 1, 'gl'] = np.nan
 
     # Test with different inter_gap values
     result_small_gap = iglu.sd_measures(data, inter_gap=gap_hour)  # Small gap - won't interpolate
     result_large_gap = iglu.sd_measures(data, inter_gap=6*gap_hour)  # Large gap - will interpolate
-    
+
     # Both should work but may give different results
     assert not result_small_gap.isnull().any().any()
     assert not result_large_gap.isnull().any().any()
@@ -251,11 +251,11 @@ def test_sd_measures_timezone_parameter():
         'time': dates,
         'gl': np.random.normal(120, 20, samples)
     })
-    
+
     # Test with different timezone
     result_utc = iglu.sd_measures(data, tz="UTC")
     result_no_tz = iglu.sd_measures(data)
-    
+
     # Results should be the same regardless of timezone for this data
     for col in [ 'SDhhmm']:
         assert abs(result_utc.iloc[0][col] - result_no_tz.iloc[0][col]) < 1
@@ -264,7 +264,7 @@ def test_sd_measures_timezone_parameter():
 def test_sd_measures_empty_dataframe():
     """Test that empty DataFrame raises appropriate error."""
     data = pd.DataFrame(columns=['id', 'time', 'gl'])
-    
+
     with pytest.raises(ValueError):
         iglu.sd_measures(data)
 
@@ -277,9 +277,9 @@ def test_sd_measures_output_dtypes():
         'time': dates,
         'gl': np.random.normal(120, 20, 48)
     })
-    
+
     result = iglu.sd_measures(data)
-    
+
     # Check data types
     assert result['id'].dtype == object  # string
     for col in ['SDw', 'SDhhmm', 'SDwsh', 'SDdm', 'SDb', 'SDbdm']:
@@ -295,10 +295,10 @@ def test_sd_measures_reproducibility():
         'time': dates,
         'gl': np.random.normal(120, 20, 48)
     })
-    
+
     result1 = iglu.sd_measures(data)
     result2 = iglu.sd_measures(data)
-    
+
     # Results should be identical
     pd.testing.assert_frame_equal(result1, result2)
 
@@ -313,10 +313,10 @@ def test_sd_measures_series_with_datetime_index():
          90, 130, 95],   # Day 2: mean=105, std=21.21
         index=time
     )
-    
+
     # Calculate SD measures
     result = iglu.sd_measures(data)
-    
+
     # Expected results:
     # SDmean = mean([10, 21.21]) = 15.605
     # SDsd = std([10, 21.21], ddof=1) = 7.931
@@ -325,10 +325,10 @@ def test_sd_measures_series_with_datetime_index():
         'SDhhmm':15.612495,
         'SDwsh': 16.341298,
         'SDdm': 3.535534,
-        'SDb': 8.249579,   
+        'SDb': 8.249579,
         'SDbdm': 7.071068
     }
-    
+
     # Compare results
     assert isinstance(result, dict)
     assert len(result) == 6
@@ -347,7 +347,7 @@ def test_sd_measures_series_without_datetime_index():
         [100, 120, 110, 90, 130, 95],
         index=range(6)  # Regular integer index instead of DatetimeIndex
     )
-    
+
     # Attempt to calculate SD measures - should raise ValueError
     with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
         iglu.sd_measures(data)

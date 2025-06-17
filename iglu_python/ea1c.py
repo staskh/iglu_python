@@ -72,7 +72,7 @@ def ea1c_single(data: pd.Series) -> float:
     """Calculate eA1C for a single subject"""
     if not isinstance(data, pd.Series):
         raise ValueError("Data must be a pandas Series")
-    
+
     data = data.dropna()
     if len(data) == 0:
         return np.nan

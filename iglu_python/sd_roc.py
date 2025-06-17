@@ -41,7 +41,7 @@ def sd_roc(
     -------
     pd.DataFrame|float
         DataFrame with two columns: subject id and standard deviation of the rate of change
-        values for each subject. 
+        values for each subject.
         If a Series of glucose values is passed, then a float is returned.
 
     Notes
@@ -108,7 +108,7 @@ def sd_roc_single(data: pd.Series,
                   dt0: int = 5,
                   inter_gap: int = 45,
                   tz: str = "") -> float:
-    
+
     roc_data = roc(data, timelag=timelag, dt0=dt0, inter_gap=inter_gap, tz=tz)
     sd_roc = np.nanstd(roc_data.dropna()['roc'], ddof=1)
     return sd_roc

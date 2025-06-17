@@ -108,7 +108,7 @@ def test_hyper_index_list_input():
 
     # Calculate hyper_index
     result = iglu.hyper_index(data)
-    expected = 1.453976 
+    expected = 1.453976
     # Check output format
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=1e-3)
@@ -120,7 +120,7 @@ def test_hyper_index_numpy_array_input():
 
     # Calculate hyper_index
     result = iglu.hyper_index(data)
-    expected = 1.453976 
+    expected = 1.453976
     # Check output format
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=1e-3)
@@ -132,7 +132,7 @@ def test_hyper_index_series_input():
 
     # Calculate hyper_index
     result = iglu.hyper_index(data)
-    expected = 1.453976 
+    expected = 1.453976
     # Check output format
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=1e-3)

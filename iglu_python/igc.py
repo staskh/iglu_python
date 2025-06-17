@@ -26,7 +26,8 @@ def igc(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
+        or a numpy array or list of glucose values
     LLTR : int, default=80
         Lower Limit of Target Range, in mg/dL
     ULTR : int, default=140
@@ -86,12 +87,12 @@ def igc(
     return out
 
 def igc_single(
-    gl: pd.Series, 
-    LLTR: int = 80, 
-    ULTR: int = 140, 
-    a: float = 1.1, 
-    b: float = 2, 
-    c: int = 30, 
+    gl: pd.Series,
+    LLTR: int = 80,
+    ULTR: int = 140,
+    a: float = 1.1,
+    b: float = 2,
+    c: int = 30,
     d: int = 30
 ) -> float:
     """

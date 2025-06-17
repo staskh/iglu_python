@@ -1,7 +1,7 @@
 import json
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 
 import iglu_python as iglu
@@ -72,10 +72,10 @@ def test_adrr_series_with_datetime_index():
          90, 130, 95],   # Day 2: LBGI=0.7, HBGI=1.2
         index=time
     )
-    
+
     # Calculate ADRR
     result = iglu.adrr(data)
-    
+
     # Expected results:
     # Day 1: LBGI=0.5, HBGI=0.8, Risk=1.3
     # Day 2: LBGI=0.7, HBGI=1.2, Risk=1.9
@@ -92,7 +92,7 @@ def test_adrr_series_without_datetime_index():
         [100, 120, 110, 90, 130, 95],
         index=range(6)  # Regular integer index instead of DatetimeIndex
     )
-    
+
     # Attempt to calculate ADRR - should raise ValueError
     with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
         iglu.adrr(data)
@@ -107,16 +107,16 @@ def test_adrr_series_with_missing_values():
          90, 130, np.nan],  # Day 2: LBGI=0.7, HBGI=1.2 (after interpolation)
         index=time
     )
-    
+
     # Calculate ADRR with interpolation
     result = iglu.adrr(data)
-    
+
     # Expected results:
     # Day 1: LBGI=0.5, HBGI=0.8, Risk=0.48
     # Day 2: LBGI=0.7, HBGI=1.2, Risk=2.45
     # ADRR = mean([0.48, 2.45]) = 1.466489
     expected = 1.466489
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)

@@ -63,7 +63,7 @@ def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame|float:
         return gvp_single(data)
 
     # Handle DataFrame input
-    data = check_data_columns(data) 
+    data = check_data_columns(data)
     data.set_index("time", inplace=True, drop=True)
 
     out = data.groupby('id').agg(

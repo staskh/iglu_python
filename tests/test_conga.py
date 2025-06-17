@@ -124,7 +124,7 @@ def test_conga_series_without_datetime_index():
         [100, 120, 110, 90, 130, 95],
         index=range(6)  # Regular integer index instead of DatetimeIndex
     )
-    
+
     # Attempt to calculate CONGA - should raise ValueError
     with pytest.raises(ValueError, match="Series must have a DatetimeIndex"):
         iglu.conga(data)

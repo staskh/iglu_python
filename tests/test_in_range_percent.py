@@ -147,7 +147,7 @@ def test_in_range_percent_numpy_array_input():
     # Check that percentages are between 0 and 100
     np.testing.assert_allclose(result["in_range_70_180"], 83.33, rtol=1e-3)
     np.testing.assert_allclose(result["in_range_63_140"], 66.66, rtol=1e-3)
-    
+
 def test_in_range_percent_custom_targets():
     """Test in_range_percent calculation with custom targets."""
     data = pd.DataFrame(

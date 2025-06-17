@@ -32,7 +32,7 @@ def sd_measures(data: pd.DataFrame|pd.Series,
     Returns
     -------
     pd.DataFrame
-        A DataFrame with columns for id and each of the six SD subtypes. 
+        A DataFrame with columns for id and each of the six SD subtypes.
         If a Series of glucose values is passed, then a dictionary is returned.
         - SDw: vertical within days
         - SDhhmm: between time points
@@ -102,7 +102,7 @@ def sd_measures_single(data: pd.DataFrame,
                 dt0: Optional[int] = None,
                 inter_gap: int = 45,
                 tz: str = "") -> dict[str, float]:
-    
+
     gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(data, tz=tz, dt0=dt0, inter_gap=inter_gap)
 
     return _calculate_sd_subtypes(gd2d, gd2d_dt0)

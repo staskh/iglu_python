@@ -19,7 +19,7 @@ def modd(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
         or a numpy array or list of glucose values
     lag : int, default=1
         Integer indicating which lag (# days) to use. Default is 1.
@@ -31,7 +31,7 @@ def modd(
     pd.DataFrame|float
         DataFrame with columns:
         - id: subject identifier (if DataFrame input)
-        - MODD: Mean of Daily Differences value. 
+        - MODD: Mean of Daily Differences value.
         If a Series of glucose values is passed, then a float is returned.
 
     References

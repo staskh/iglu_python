@@ -247,16 +247,16 @@ def test_grade_eugly_list_input():
     """Test GRADE euglycemia calculation with list input."""
     # Create test data as a list
     data = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160]  # 4 values in euglycemic range (70-140)
-    
+
     # Calculate GRADE euglycemia
     result = iglu.grade_eugly(data)
-    
+
     # Expected results:
     # Euglycemic values: 80, 90, 100, 110, 120, 130, 140 (7 values)
     # Total values: 10
     # GRADE euglycemia = (7 / 10) * 100 = 70.0
     expected = 51.496907
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -266,16 +266,16 @@ def test_grade_eugly_numpy_array_input():
     """Test GRADE euglycemia calculation with numpy array input."""
     # Create test data as a numpy array
     data = np.array([70, 80, 90, 100, 110, 120, 130, 140, 150, 160])  # 4 values in euglycemic range (70-140)
-    
+
     # Calculate GRADE euglycemia
     result = iglu.grade_eugly(data)
-    
+
     # Expected results:
     # Euglycemic values: 80, 90, 100, 110, 120, 130, 140 (7 values)
     # Total values: 10
     # GRADE euglycemia = (7 / 10) * 100 = 70.0
     expected = 51.496907
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -285,16 +285,16 @@ def test_grade_eugly_list_with_missing_values():
     """Test GRADE euglycemia calculation with list input containing missing values."""
     # Create test data as a list with None values
     data = [70, None, 90, 100, None, 120, 130, 140, None, 160]  # 5 values in euglycemic range (70-140)
-    
+
     # Calculate GRADE euglycemia
     result = iglu.grade_eugly(data)
-    
+
     # Expected results:
     # Euglycemic values: 90, 100, 120, 130, 140 (5 values)
     # Total non-None values: 7
     # GRADE euglycemia = (5 / 7) * 100 = 71.429
     expected = 63.297202
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -304,16 +304,16 @@ def test_grade_eugly_numpy_array_with_nan():
     """Test GRADE euglycemia calculation with numpy array input containing NaN values."""
     # Create test data as a numpy array with NaN values
     data = np.array([70, np.nan, 90, 100, np.nan, 120, 130, 140, np.nan, 160])  # 5 values in euglycemic range (70-140)
-    
+
     # Calculate GRADE euglycemia
     result = iglu.grade_eugly(data)
-    
+
     # Expected results:
     # Euglycemic values: 90, 100, 120, 130, 140 (5 values)
     # Total non-NaN values: 7
     # GRADE euglycemia = (5 / 7) * 100 = 71.429
     expected = 63.297202
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)
@@ -325,7 +325,7 @@ def test_grade_eugly_empty_input():
     result = iglu.grade_eugly([])
     assert isinstance(result, float)
     assert np.isnan(result)
-    
+
     # Test with empty numpy array
     result = iglu.grade_eugly(np.array([]))
     assert isinstance(result, float)
@@ -336,16 +336,16 @@ def test_grade_eugly_boundary_values():
     """Test GRADE euglycemia calculation with boundary values."""
     # Create test data with boundary values (70 and 140)
     data = [60, 70, 80, 140, 150]  # 70 and 140 are included in euglycemic range
-    
+
     # Calculate GRADE euglycemia
     result = iglu.grade_eugly(data)
-    
+
     # Expected results:
     # Euglycemic values: 70, 80, 140 (3 values)
     # Total values: 5
     # GRADE euglycemia = (3 / 5) * 100 = 60.0
     expected = 36.910589
-    
+
     # Compare results
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=0.001)

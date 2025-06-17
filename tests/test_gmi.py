@@ -194,4 +194,4 @@ def test_gmi_extreme_values():
     # Mean glucose = (40 + 400 + 600 + 800) / 4 = 460
     # GMI = 3.31 + (0.02392 * 460) = 14.3132
     expected_gmi = 3.31 + (0.02392 * 460)
-    assert abs(result["GMI"].iloc[0] - expected_gmi) < 0.001 
+    assert abs(result["GMI"].iloc[0] - expected_gmi) < 0.001

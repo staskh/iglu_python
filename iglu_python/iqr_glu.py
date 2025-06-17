@@ -16,7 +16,8 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFr
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, or a numpy array or list of glucose values
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
+        or a numpy array or list of glucose values
 
     Returns
     -------
@@ -51,7 +52,7 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFr
             return np.nan
         # Calculate IQR for Series
         iqr_val = iqr_glu_single(data)
-        return iqr_val   
+        return iqr_val
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -85,4 +86,4 @@ def iqr_glu_single(
         return np.nan
     # Calculate IQR for Series
     iqr_val = np.percentile(gl, 75) - np.percentile(gl, 25)
-    return iqr_val 
+    return iqr_val

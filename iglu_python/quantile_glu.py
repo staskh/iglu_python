@@ -19,7 +19,7 @@ def quantile_glu(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
         or a numpy array or list of glucose values
     quantiles : List[float], default=[0, 25, 50, 75, 100]
         List of quantile values between 0 and 100

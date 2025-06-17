@@ -20,7 +20,7 @@ def hypo_index(
     Parameters
     ----------
     data : Union[pd.DataFrame, pd.Series, np.ndarray, list]
-        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values, 
+        DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values,
         or a numpy array or list of glucose values
     LLTR : int, default=80
         Lower Limit of Target Range, in mg/dL
@@ -67,7 +67,7 @@ def hypo_index(
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return hypo_index_single(data, LLTR, b, d)
-    
+
     data = check_data_columns(data)
     out = data.groupby('id').agg(
         hypo_index = ("gl", lambda x: hypo_index_single(x, LLTR, b, d))
