@@ -3,7 +3,7 @@
 #
 pytest
 pytest-cov
-black
+black>=25.1.0
 isort
 mypy
 hatch
