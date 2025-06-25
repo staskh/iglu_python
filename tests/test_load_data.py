@@ -4,15 +4,17 @@ Unit tests for iglu_python.extension.load_data module.
 Tests the functionality of loading CGM data from device-specific files.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # Import the module to test
-from iglu_python import load_libre, load_dexcom
+from iglu_python import load_dexcom, load_libre
+
 
 @pytest.fixture(scope="module")
 def test_data_paths():
@@ -136,7 +138,7 @@ def test_load_dexcom_glucose_statistics(test_data_paths):
     ts_01 = load_dexcom(str(test_data_paths['dexcom_eur_01']))
     ts_02 = load_dexcom(str(test_data_paths['dexcom_eur_02']))
     ts_03 = load_dexcom(str(test_data_paths['dexcom_eur_03']))
-    
+
     for ts in [ts_01, ts_02, ts_03]:
         # Convert to numeric for statistics
         numeric_values = pd.to_numeric(ts, errors='coerce').dropna()
@@ -186,7 +188,7 @@ def test_load_libre_time_interval(test_data_paths):
     expected_interval = pd.Timedelta(minutes=15)
     tolerance = pd.Timedelta(minutes=5)
     close_intervals = time_diffs[abs(time_diffs - expected_interval) <= tolerance]
-    assert len(close_intervals) / len(time_diffs) > 0.8  # At least 80% should be close 
+    assert len(close_intervals) / len(time_diffs) > 0.8  # At least 80% should be close
 
 def test_load_dexcom_time_interval(test_data_paths):
     timeseries = load_dexcom(str(test_data_paths['dexcom_eur_01']))
