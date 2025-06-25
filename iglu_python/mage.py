@@ -171,6 +171,65 @@ def mage_naive(data: pd.DataFrame,sd_multiplier:float = 1.0) -> float:
 
     return float(mage_val) if not pd.isna(mage_val) else np.nan
 
+def _preprocess_data(data: pd.DataFrame, short_ma: int, long_ma: int,
+                    inter_gap: int, tz: str) -> pd.DataFrame:
+    """Preprocess data for MAGE calculation"""
+    # Interpolate over uniform grid
+    data_ip = CGMS2DayByDay(data, dt0=5, inter_gap=inter_gap, tz=tz)
+    day_one = data_ip[1][0]
+    gl = data_ip[0].flatten().tolist()
+    time_ip = [pd.Timedelta(i * 5, unit="m") + day_one for i in range(1, len(gl)+1)]
+
+    # Ensure short_ma and long_ma are appropriate
+    if short_ma >= long_ma:
+        short_ma, long_ma = long_ma, short_ma
+
+    # Create interpolated data
+    interpolated_data = pd.DataFrame({
+        "id": data['id'].iloc[0],
+        "time": pd.Series(time_ip, dtype='datetime64[ns]'),
+        "gl": pd.Series(gl, dtype='float64')
+    })
+
+    # Drop NA rows before first glucose reading
+    first_valid_idx = interpolated_data['gl'].first_valid_index()
+    if first_valid_idx is not None:
+        interpolated_data = interpolated_data.iloc[first_valid_idx:]
+
+    # Drop NA rows after last glucose reading
+    last_valid_idx = interpolated_data['gl'].last_valid_index()
+    if last_valid_idx is not None:
+        interpolated_data = interpolated_data.iloc[:last_valid_idx+1]
+
+    # Add gap column to mark NA values as 1
+    interpolated_data['gap'] = interpolated_data['gl'].isna().astype(int)
+
+    return interpolated_data
+
+def _filter_mage_results(return_val: pd.DataFrame, direction: str) -> pd.DataFrame:
+    """Filter MAGE results based on direction"""
+    if direction == 'plus':
+        return return_val[return_val['plus_or_minus'] == 'PLUS'].copy()
+    elif direction == 'minus':
+        return return_val[return_val['plus_or_minus'] == 'MINUS'].copy()
+    elif direction == 'avg':
+        return return_val[return_val['MAGE'].notna()].copy()
+    elif direction == 'max':
+        # Group by start,end and keep max mage in each group
+        idx = return_val.groupby(['start', 'end'])['MAGE'].idxmax()
+        return return_val.loc[idx].reset_index(drop=True)
+    else:  # default: first excursions only
+        return return_val[return_val['first_excursion']].copy()
+
+def _calculate_weighted_mage(res: pd.DataFrame) -> float:
+    """Calculate time-weighted MAGE"""
+    if res.empty:
+        return np.nan
+
+    res['hours'] = res['end'] - res['start']
+    res['weight'] = res['hours'] / res['hours'].sum()
+    return (res['MAGE'] * res['weight']).sum()
+
 def mage_ma_single(data: pd.DataFrame, short_ma: int, long_ma: int,
         direction:str ='avg',
         return_type:str = "num",
@@ -178,57 +237,17 @@ def mage_ma_single(data: pd.DataFrame, short_ma: int, long_ma: int,
         max_gap:int = 180,
         tz:str = "" ) -> pd.DataFrame|float:
     """Calculate MAGE using moving average algorithm for a single subject"""
-    ## 1. Preprocessing
-    # 1.1 Interpolate over uniform grid
-    # Note: always interpolate to 5 minute grid
-    data_ip = CGMS2DayByDay(data, dt0=5, inter_gap=inter_gap, tz=tz)
-    data_ip[2]  # Time between measurements in minutes
-    # replace for 5 min to fix bug in CGMS2DayByDay
-    day_one = data_ip[1][0]
-    len(data_ip[1])
 
-    # 1.2 Generate grid times by starting from day one and cumulatively summing
-    # note fix 5 min used in interpretation
-    gl = data_ip[0].flatten().tolist()
-    time_ip = [pd.Timedelta(i * 5, unit="m") + day_one for i in range(1,len(gl)+1)]
+    # Preprocess data
+    interpolated_data = _preprocess_data(data, short_ma, long_ma, inter_gap, tz)
 
-    # 1.3 Recalculate short_ma and long_ma because short and long are based on 5 minutes originally
-    # > Multiply by 5 to get length in min
-    # > Divide by dt0 to get rounded number of measurements that are roughly equal to original short/long ma definition
-    # short_ma = round(short_ma*5/dt0)
-    # long_ma = round(long_ma*5/dt0)
-    # Ensure short_ma and long_ma are appropriate
-    if short_ma >= long_ma:
-        short_ma, long_ma = long_ma, short_ma
+    # Time Series Segmentation: split gaps > max_gap into separate segments
+    dfs = segment_time_series(interpolated_data, max_gap)
 
-    ## 2. Change to interpolated data (times and glucose)
-    # > change data into id, interpolated times, interpolated glucose (t to get rowwise)
-    # > drop NA rows before first glucose reading
-    # > then drop NA rows after last glucose reading
-    # > Label NA glucose as gap (gap = 1)
-    interpolated_data = pd.DataFrame({
-        "id" : data['id'].iloc[0],
-        "time": pd.Series(time_ip, dtype='datetime64[ns]'),
-        "gl": pd.Series(gl, dtype='float64')
-    })
-    # Drop NA rows before first glucose reading
-    first_valid_idx = interpolated_data['gl'].first_valid_index()
-    if first_valid_idx is not None:
-        interpolated_data = interpolated_data.iloc[first_valid_idx:]
-    # Drop NA rows after last glucose reading
-    last_valid_idx = interpolated_data['gl'].last_valid_index()
-    if last_valid_idx is not None:
-        interpolated_data = interpolated_data.iloc[:last_valid_idx+1]
-    # Add gap column to mark NA values as 1
-    interpolated_data['gap'] = interpolated_data['gl'].isna().astype(int)
-
-    # 4. Time Series Segmentation: split gaps > max_gap into separate segments
-    dfs = segment_time_series(interpolated_data,max_gap)  # note: max_gap is in minutes
-
-    # 5. Calculate MAGE on each identified segment
+    # Calculate MAGE on each identified segment
     return_val = pd.DataFrame(columns=["start", "end", "mage", "plus_or_minus", "first_excursion"])
     for segment in dfs:
-        ret = mage_atomic(segment,short_ma,long_ma)
+        ret = mage_atomic(segment, short_ma, long_ma)
         if return_val.empty:
             return_val = ret
         else:
@@ -237,76 +256,50 @@ def mage_ma_single(data: pd.DataFrame, short_ma: int, long_ma: int,
     if return_type == 'df':
         return return_val
 
-    """Process MAGE results with filtering and weighting."""
-    # Filter by direction (equivalent to the previous R filtering code)
-    if direction == 'plus':
-        res = return_val[return_val['plus_or_minus'] == 'PLUS'].copy()
-    elif direction == 'minus':
-        res = return_val[return_val['plus_or_minus'] == 'MINUS'].copy()
-    elif direction == 'avg':
-        res = return_val[return_val['MAGE'].notna()].copy()
-    elif direction == 'max':
-        # Group by start,end and keep max mage in each group
-        idx = return_val.groupby(['start', 'end'])['MAGE'].idxmax()
-        res = return_val.loc[idx].reset_index(drop=True)
-    else:  # default: first excursions only
-        res = return_val[return_val['first_excursion']].copy()
+    # Filter results based on direction
+    res = _filter_mage_results(return_val, direction)
 
-    # Calculate time-weighted MAGE
-    if res.empty:
-        return np.nan
+    # Calculate weighted MAGE
+    return _calculate_weighted_mage(res)
 
-    res['hours'] = res['end'] - res['start']
-    res['weight'] = res['hours'] / res['hours'].sum()
-    weighted_mage = (res['MAGE'] * res['weight']).sum()
-
-    return weighted_mage
-
-def mage_atomic(data, short_ma,long_ma):
-    """ 0. Calculates MAGE on 1 segment of CGM trace """
-
-    # 2c. Calculate the moving average values
+def _calculate_moving_averages(data: pd.DataFrame, short_ma: int, long_ma: int) -> pd.DataFrame:
+    """Calculate short and long moving averages"""
     data = data.copy()
     data["MA_Short"] = data["gl"].rolling(window=short_ma, min_periods=1).mean()
     data["MA_Long"] = data["gl"].rolling(window=long_ma, min_periods=1).mean()
+
     # Fill leading NAs (forward fill first valid value)
     if short_ma > len(data):
         data.loc[data.index[:short_ma], 'MA_Short'] = data['MA_Short'].iloc[-1]
     else:
         data.loc[data.index[:short_ma], 'MA_Short'] = data['MA_Short'].iloc[short_ma-1]
+
     if long_ma > len(data):
         data.loc[data.index[:long_ma], 'MA_Long'] = data['MA_Long'].iloc[-1]
     else:
         data.loc[data.index[:long_ma], 'MA_Long'] = data['MA_Long'].iloc[long_ma-1]
+
     # Calculate difference
     data['DELTA_SHORT_LONG'] = data['MA_Short'] - data['MA_Long']
-    data = data.reset_index(drop=True)
-    nmeasurements = len(data)
+    return data.reset_index(drop=True)
 
-    # Sanity check
-    if (
+def _check_data_validity(data: pd.DataFrame, short_ma: int) -> bool:
+    """Check if data is valid for MAGE calculation"""
+    nmeasurements = len(data)
+    return not (
         data['gl'].isnull().all() or
         nmeasurements < 7 or
         nmeasurements < short_ma or
         np.std(data['gl'], ddof=1) < 1
-    ):
-        return pd.DataFrame({
-            'start': [data['time'].iloc[0]],
-            'end': [data['time'].iloc[-1]],
-            'MAGE': [np.nan],
-            'plus_or_minus': [np.nan],
-            'first_excursion': [np.nan]
-        })
+    )
 
-    # 2d. Create a preallocated list of crossing point ids & type
-    # Find crossing points
-    # Detect trend reversal points in glucose data using DELTA signal.
-    # Initialize variables
-    idx = list(data.index)  # R: idx = as.numeric(rownames(.data))
-    types = {'REL_MIN': 0, 'REL_MAX': 1}  # R: types = list2env(list(REL_MIN=0, REL_MAX=1))
+def _find_crossing_points(data: pd.DataFrame) -> tuple[list, list]:
+    """Find crossing points in the data"""
+    idx = list(data.index)
+    types = {'REL_MIN': 0, 'REL_MAX': 1}
+    nmeasurements = len(data)
 
-    # Create storage lists - R: list_cross <- list("id" = rep.int(NA, nmeasurements),
-    # "type" = rep.int(NA, nmeasurements))
+    # Create storage lists
     list_cross = {
         'id': [np.nan] * nmeasurements,
         'type': [np.nan] * nmeasurements
@@ -315,12 +308,12 @@ def mage_atomic(data, short_ma,long_ma):
     # Always add 1st point
     list_cross['id'][0] = idx[0]
     list_cross['type'][0] = types['REL_MAX'] if data['DELTA_SHORT_LONG'].iloc[0] > 0 else types['REL_MIN']
-    count = 1  # Python uses 0-based indexing, so count starts at 1
+    count = 1
 
-    # treat DELTA_SHORT_LONG==0 as NaN ( so we can skip its multiplication)
+    # treat DELTA_SHORT_LONG==0 as NaN
     data.loc[data['DELTA_SHORT_LONG'] == 0, 'DELTA_SHORT_LONG'] = np.nan
 
-    # Main loop - R: for(i in 2:length(.data$DELTA_SHORT_LONG))
+    # Main loop
     for i in range(1, len(data['DELTA_SHORT_LONG'])):
         # Check data validity
         if (not pd.isna(data['gl'].iloc[i]) and
@@ -328,7 +321,7 @@ def mage_atomic(data, short_ma,long_ma):
             not pd.isna(data['DELTA_SHORT_LONG'].iloc[i]) and
             not pd.isna(data['DELTA_SHORT_LONG'].iloc[i-1])):
 
-            # Primary crossover detection: crossing point if DELTA changes sign
+            # Primary crossover detection
             if (data['DELTA_SHORT_LONG'].iloc[i] * data['DELTA_SHORT_LONG'].iloc[i-1] < 0):
                 list_cross['id'][count] = idx[i]
                 if data['DELTA_SHORT_LONG'].iloc[i] < data['DELTA_SHORT_LONG'].iloc[i-1]:
@@ -337,11 +330,8 @@ def mage_atomic(data, short_ma,long_ma):
                     list_cross['type'][count] = types['REL_MAX']
                 count += 1
 
-        # Gap handling: needed for gaps, where DELTA_SHORT_LONG(i-1 | i-2) = NaN
-        elif (not pd.isna(data['DELTA_SHORT_LONG'].iloc[i]) and
-            count >= 1):  # Make sure we have a previous crossover
-
-            # R: match(list_cross$id[count-1], idx) - find index of previous crossover
+        # Gap handling
+        elif (not pd.isna(data['DELTA_SHORT_LONG'].iloc[i]) and count >= 1):
             try:
                 prev_cross_idx = idx.index(list_cross['id'][count-1])
                 prev_delta = data['DELTA_SHORT_LONG'].iloc[prev_cross_idx]
@@ -354,78 +344,77 @@ def mage_atomic(data, short_ma,long_ma):
                         list_cross['type'][count] = types['REL_MAX']
                     count += 1
             except ValueError:
-                # Handle case where previous crossover id not found in idx
                 pass
 
-    # Add last point to capture excursion at end
-    # R: utils::tail(idx, 1)
+    # Add last point
     last_idx = idx[-1]
     list_cross['id'][count] = last_idx
+    list_cross['type'][count] = types['REL_MAX'] if data['DELTA_SHORT_LONG'].iloc[-1] > 0 else types['REL_MIN']
 
-    if data['DELTA_SHORT_LONG'].iloc[-1] > 0:
-        list_cross['type'][count] = types['REL_MAX']
-    else:
-        list_cross['type'][count] = types['REL_MIN']
-
-    # Filter out NaN values - R: list_cross$id[!is.na(list_cross$id)]
+    # Filter out NaN values
     clean_ids = [x for x in list_cross['id'] if not pd.isna(x)]
     clean_types = [x for x in list_cross['type'] if not pd.isna(x)]
 
-    # Create DataFrame - R: do.call(cbind.data.frame, list_cross)
-    crosses = pd.DataFrame({
-            "id":clean_ids,
-            "type":clean_types
-        })
+    return clean_ids, clean_types
 
-    # 2e. Calculate min and max glucose values from ids and types in crosses + store indexes for plotting later
-    # R: num_extrema = nrow(crosses)-1
+def _calculate_extrema(data: pd.DataFrame, crosses: pd.DataFrame) -> tuple[list, list]:
+    """Calculate min and max glucose values from crossing points"""
     num_extrema = len(crosses) - 1
-
-    # R: minmax <- rep(NA_real_, num_extrema), indexes <- rep(NA_real_, num_extrema)
     minmax = [np.nan] * num_extrema
     indexes = [np.nan] * num_extrema
+    types = {'REL_MIN': 0, 'REL_MAX': 1}
 
-    # R: for(i in 1:num_extrema)
     for i in range(num_extrema):
         # Define search boundaries
-        # R: s1 <- ifelse(i == 1, crosses[i, 1], indexes[i-1])
-        if i == 0:  # First extrema
-            s1 = int(crosses.iloc[i]['id'])  # crosses[i, 1] in R (1-indexed)
+        if i == 0:
+            s1 = int(crosses.iloc[i]['id'])
         else:
-            s1 = int(indexes[i-1])  # last minmax index
+            s1 = int(indexes[i-1])
 
-        # R: s2 <- crosses[i+1,1]
-        s2 = int(crosses.iloc[i+1]['id'])  # crosses[i+1, 1] in R
+        s2 = int(crosses.iloc[i+1]['id'])
 
-        # Extract glucose segment - R: .data[as.character(s1:s2), ]$gl
-        segment_start = s1
-        segment_end = s2
-        glucose_segment = data['gl'].iloc[segment_start:segment_end+1] # including next cross point
+        # Extract glucose segment
+        glucose_segment = data['gl'].iloc[s1:s2+1]
 
         # Find min or max based on crossover type
-        if crosses.iloc[i]['type'] == types['REL_MIN']:  # crosses[i, "type"] in R
-            # R: min(.data[as.character(s1:s2), ]$gl, na.rm = TRUE)
+        if crosses.iloc[i]['type'] == types['REL_MIN']:
             minmax[i] = glucose_segment.min()
-            # R: which.min(.data[as.character(s1:s2), ]$gl)+s1-1
             indexes[i] = glucose_segment.idxmin()
         else:
-            # R: max(.data[as.character(s1:s2), ]$gl, na.rm = TRUE)
             minmax[i] = glucose_segment.max()
-            # R: which.max(.data[as.character(s1:s2), ]$gl)+s1-1
             indexes[i] = glucose_segment.idxmax()
 
-    # excursion elimination
+    return minmax, indexes
+
+def mage_atomic(data, short_ma, long_ma):
+    """Calculate MAGE on 1 segment of CGM trace"""
+
+    # Calculate moving averages
+    data = _calculate_moving_averages(data, short_ma, long_ma)
+
+    # Sanity check
+    if not _check_data_validity(data, short_ma):
+        return pd.DataFrame({
+            'start': [data['time'].iloc[0]],
+            'end': [data['time'].iloc[-1]],
+            'MAGE': [np.nan],
+            'plus_or_minus': [np.nan],
+            'first_excursion': [np.nan]
+        })
+
+    # Find crossing points
+    clean_ids, clean_types = _find_crossing_points(data)
+    crosses = pd.DataFrame({"id": clean_ids, "type": clean_types})
+
+    # Calculate extrema
+    minmax, indexes = _calculate_extrema(data, crosses)
+
+    # Calculate differences and standard deviation
     differences = np.subtract.outer(minmax, minmax).T
-    standardD = data['gl'].std()  # pandas uses sample std dev by default
-    len(minmax)
+    standardD = data['gl'].std()
 
-
-    # MAGE+ algorithm, which identifies and measures positive glycemic excursions
-    # (nadir-to-peak movements that exceed the standard deviation threshold).
+    # Calculate MAGE+ and MAGE-
     mage_plus_heights, mage_plus_tp_pairs = calculate_mage_plus(differences, minmax, standardD)
-
-    # MAGE- algorithm, which identifies and measures negative glycemic excursions
-    # (peak-to-nadir movements that exceed the standard deviation threshold).
     mage_minus_heights, mage_minus_tp_pairs = calculate_mage_minus(differences, minmax, standardD)
 
     if len(mage_minus_heights) == 0 and len(mage_plus_heights) == 0:
@@ -438,14 +427,13 @@ def mage_atomic(data, short_ma,long_ma):
         }, index=[0])
 
     # Determine which excursion type occurs first
-    if (len(mage_plus_heights) > 0 and
+    is_plus_first = (
+        len(mage_plus_heights) > 0 and
         (len(mage_minus_heights) == 0 or
-        mage_plus_tp_pairs[0][1] <= mage_minus_tp_pairs[0][0])):
-        is_plus_first = True
-    else:
-        is_plus_first = False
+         mage_plus_tp_pairs[0][1] <= mage_minus_tp_pairs[0][0])
+    )
 
-    # Create MAGE+ result dataframe
+    # Create result dataframes
     mage_plus = pd.DataFrame({
         'start': [data['time'].iloc[0]],
         'end': [data['time'].iloc[-1]],
@@ -454,7 +442,6 @@ def mage_atomic(data, short_ma,long_ma):
         'first_excursion': [is_plus_first]
     })
 
-    # Create MAGE- result dataframe
     mage_minus = pd.DataFrame({
         'start': [data['time'].iloc[0]],
         'end': [data['time'].iloc[-1]],
@@ -463,17 +450,7 @@ def mage_atomic(data, short_ma,long_ma):
         'first_excursion': [not is_plus_first]
     })
 
-    # Determine which direction has maximum MAGE value
-    ((mage_plus['MAGE'].iloc[0] >= mage_minus['MAGE'].iloc[0])
-                    if not pd.isna(mage_plus['MAGE'].iloc[0])
-                    and not pd.isna(mage_minus['MAGE'].iloc[0])
-                    else False
-    )
-
     return pd.concat([mage_plus, mage_minus], ignore_index=True)
-
-
-
 
 def calculate_mage_plus(differences, minmax, standardD):
     """
