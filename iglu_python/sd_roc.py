@@ -103,7 +103,7 @@ def sd_roc(
     for subject_id, group in data.groupby("id"):
         sd_roc_value = sd_roc_single(group["gl"], timelag, dt0, inter_gap, tz)
         results.append({"id": subject_id, "sd_roc": sd_roc_value})
-    
+
     out = pd.DataFrame(results)
     return out
 
