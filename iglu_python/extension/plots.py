@@ -64,4 +64,5 @@ def plot_daily(cgm_timeseries: pd.Series, lower: int = 70, upper: int = 140) -> 
         axes[i].grid(True, alpha=0.3, linestyle="--")
         axes[i].legend()
 
+    fig.tight_layout()
     return fig
