@@ -41,6 +41,7 @@ from .sd_measures import sd_measures
 from .sd_roc import sd_roc
 from .summary_glu import summary_glu
 from .utils import CGMS2DayByDay, check_data_columns, gd2d_to_df, is_iglu_r_compatible, set_iglu_r_compatible
+from .extension.load_data import load_libre, load_dexcom
 
 __all__ = [
     "above_percent",
@@ -74,6 +75,8 @@ __all__ = [
     "iqr_glu",
     "j_index",
     "lbgi",
+    "load_dexcom",
+    "load_libre",
     "mad_glu",
     "mag",
     "mage",
