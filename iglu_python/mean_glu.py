@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def mean_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataFrame|float:
+def mean_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataFrame | float:
     """
     Calculate mean glucose value for each subject.
 
@@ -46,7 +46,7 @@ def mean_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataF
     """
     # Handle Series input
     if isinstance(data, (list, np.ndarray, pd.Series)):
-        if isinstance(data, (list,np.ndarray)):
+        if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return data.mean()
 

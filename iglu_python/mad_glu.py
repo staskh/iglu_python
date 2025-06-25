@@ -6,9 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def mad_glu(
-    data: Union[pd.DataFrame, pd.Series, np.ndarray, list], constant: float = 1.4826
-) -> pd.DataFrame|float:
+def mad_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], constant: float = 1.4826) -> pd.DataFrame | float:
     """
     Calculate Median Absolute Deviation (MAD) of glucose values.
 
@@ -53,7 +51,7 @@ def mad_glu(
     0  27.5
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return mad_glu_single(data, constant)
@@ -61,10 +59,9 @@ def mad_glu(
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    out = data.groupby('id').agg(
-        MAD = ("gl", lambda x: mad_glu_single(x, constant))
-    ).reset_index()
+    out = data.groupby("id").agg(MAD=("gl", lambda x: mad_glu_single(x, constant))).reset_index()
     return out
+
 
 def mad_glu_single(gl: pd.Series, constant: float = 1.4826) -> float:
     """

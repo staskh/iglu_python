@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
+def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame | float:
     """
     Calculate glucose level interquartile range (IQR).
 
@@ -44,7 +44,7 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFr
     0   70.0
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         data = data.dropna()
@@ -60,13 +60,10 @@ def iqr_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFr
     # Calculate IQR for each subject
     # drop all rows with missing values
     data = data.dropna()
-    result = (
-        data.groupby("id")
-        .agg(IQR=("gl", lambda x: iqr_glu_single(x)))
-        .reset_index()
-    )
+    result = data.groupby("id").agg(IQR=("gl", lambda x: iqr_glu_single(x))).reset_index()
 
     return result
+
 
 def iqr_glu_single(
     gl: pd.Series,

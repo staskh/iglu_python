@@ -7,12 +7,144 @@ import pandas as pd
 from .utils import localize_naive_timestamp
 
 
+def _validate_input_data(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> None:
+    """Validate input data type"""
+    if not isinstance(data, (pd.DataFrame, pd.Series, list, np.ndarray)):
+        raise TypeError("Invalid data type, please use DataFrame, Series, list, or numpy array.")
+
+
+def _convert_to_dataframe(
+    data: Union[pd.DataFrame, pd.Series, list, np.ndarray],
+    glu: Optional[str],
+    timestamp: Optional[str],
+    id: Optional[str],
+) -> pd.DataFrame:
+    """Convert input data to DataFrame"""
+    if isinstance(data, (list, np.ndarray)):
+        if all(param is None for param in [glu, timestamp, id]):
+            return pd.DataFrame({"gl": data})
+        raise ValueError("Cannot process list/array data with column specifications. Please provide a DataFrame.")
+
+    if isinstance(data, pd.Series):
+        if data.index.dtype.kind == "M":  # datetime index
+            return pd.DataFrame({"time": data.index, "gl": data.values})
+        return pd.DataFrame({"gl": data.values})
+
+    if not isinstance(data, pd.DataFrame):
+        raise TypeError("Could not convert data to DataFrame")
+    return data
+
+
+def _find_column(
+    data: pd.DataFrame, column_name: Optional[str], default_name: str, original_columns: list, param_name: str
+) -> str:
+    """Find and validate column name"""
+    if column_name is None:
+        if default_name not in data.columns:
+            raise ValueError(f"No {param_name} column specified and no '{default_name}' column found")
+        return default_name
+
+    if not isinstance(column_name, str):
+        raise ValueError(f"User-defined {param_name} name must be string.")
+
+    column_lower = column_name.lower()
+    if column_lower not in data.columns:
+        warnings.warn(
+            f"Could not find user-defined {param_name} argument name '{column_name}' in dataset. "
+            f"Available columns: {original_columns}",
+            stacklevel=2,
+        )
+
+        if default_name in data.columns:
+            raise ValueError(
+                f"Fix user-defined argument name for {param_name}. "
+                f"Note: A column in the dataset DOES match the name '{default_name}': "
+                f"If this is the correct column, indicate as such in function argument. "
+                f"i.e. {param_name} = '{default_name}'"
+            )
+        else:
+            raise ValueError(f"Column '{column_name}' not found in data")
+
+    return column_lower
+
+
+def _process_id_column(data: pd.DataFrame, id: Optional[str], original_columns: list) -> pd.DataFrame:
+    """Process and validate ID column"""
+    if id is None:
+        print("No 'id' parameter passed, defaulting id to 1")
+        data.insert(0, "id", pd.Series(["1"] * len(data), dtype="string"))
+        return data
+
+    id_col = _find_column(data, id, "id", original_columns, "id")
+    id_data = data[id_col]
+    data = data.drop(columns=[id_col])
+    data.insert(0, "id", id_data.astype("string"))
+    return data
+
+
+def _process_timestamp_column(
+    data: pd.DataFrame, timestamp: Optional[str], original_columns: list, time_parser: Callable
+) -> pd.DataFrame:
+    """Process and validate timestamp column"""
+    timestamp_col = _find_column(data, timestamp, "time", original_columns, "timestamp")
+
+    if "time" not in data.columns or timestamp_col != "time":
+        time_data = data[timestamp_col]
+        if timestamp_col != "time":
+            data = data.drop(columns=[timestamp_col])
+
+        try:
+            time_data = time_parser(time_data)
+        except Exception as e:
+            raise ValueError(
+                f"Failed to parse times, ensure times are in parsable format. Original error: {str(e)}"
+            ) from e
+
+        data.insert(1, "time", time_data)
+
+    data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
+    return data
+
+
+def _process_glucose_column(data: pd.DataFrame, glu: Optional[str], original_columns: list) -> pd.DataFrame:
+    """Process and validate glucose column"""
+    glu_col = _find_column(data, glu, "gl", original_columns, "glucose")
+
+    # Check if glucose values are in mmol/L
+    mmol_conversion = glu and "mmol/l" in glu.lower()
+
+    if "gl" not in data.columns or glu_col != "gl":
+        gl_data = data[glu_col]
+        if glu_col != "gl":
+            data = data.drop(columns=[glu_col])
+
+        try:
+            gl_data = pd.to_numeric(gl_data, errors="coerce")
+        except Exception as e:
+            raise ValueError(f"Failed to convert glucose values to numeric: {str(e)}") from e
+
+        if mmol_conversion:
+            gl_data = gl_data * 18
+
+        data.insert(2, "gl", gl_data)
+
+    return data
+
+
+def _validate_glucose_values(data: pd.DataFrame) -> None:
+    """Validate glucose values and issue warnings if needed"""
+    if data["gl"].min() < 20:
+        warnings.warn("Minimum glucose reading below 20. Data may not be cleaned.", stacklevel=2)
+    if data["gl"].max() > 500:
+        warnings.warn("Maximum glucose reading above 500. Data may not be cleaned.", stacklevel=2)
+
+
 def process_data(
     data: Union[pd.DataFrame, pd.Series, list, np.ndarray],
     id: Optional[str] = None,
     timestamp: Optional[str] = None,
     glu: Optional[str] = None,
-    time_parser: Optional[Callable] = None
+    time_parser: Optional[Callable] = None,
 ) -> pd.DataFrame:
     """
     Data Pre-Processor
@@ -79,178 +211,27 @@ def process_data(
     >>> print(processed.columns.tolist())
     ['id', 'time', 'gl']
     """
-    # Default time parser
-    if time_parser is None:
-        time_parser = pd.to_datetime
+    time_parser = time_parser or pd.to_datetime
 
-    # Validate input data type
-    if not isinstance(data, (pd.DataFrame, pd.Series, list, np.ndarray)):
-        raise TypeError("Invalid data type, please use DataFrame, Series, list, or numpy array.")
-
-    # Convert to DataFrame if necessary
-    if isinstance(data, (list, np.ndarray)):
-        if glu is None and timestamp is None and id is None:
-            # Assume it's just glucose values
-            data = pd.DataFrame({'gl': data})
-        else:
-            raise ValueError("Cannot process list/array data with column specifications. Please provide a DataFrame.")
-
-    if isinstance(data, pd.Series):
-        if data.index.dtype.kind == 'M':  # datetime index
-            data = pd.DataFrame({'time': data.index, 'gl': data.values})
-        else:
-            data = pd.DataFrame({'gl': data.values})
-
-    # Ensure we have a DataFrame
-    if not isinstance(data, pd.DataFrame):
-        raise TypeError("Could not convert data to DataFrame")
-
-    # Drop NAs
+    # Validate and convert input data
+    _validate_input_data(data)
+    data = _convert_to_dataframe(data, glu, timestamp, id)
     data = data.dropna()
 
     if data.empty:
         raise ValueError("No data remaining after removing NAs")
 
-    # Make column names lowercase for matching
+    # Normalize columns and process
     original_columns = data.columns.tolist()
     data.columns = [col.lower() if isinstance(col, str) else str(col).lower() for col in data.columns]
 
-    # Process id column
-    if id is None:
-        print("No 'id' parameter passed, defaulting id to 1")
-        data.insert(0, 'id', pd.Series(['1'] * len(data), dtype='string'))
-    else:
-        if not isinstance(id, str):
-            raise ValueError("User-defined id name must be string.")
+    data = _process_id_column(data, id, original_columns)
+    data = _process_timestamp_column(data, timestamp, original_columns, time_parser)
+    data = _process_glucose_column(data, glu, original_columns)
+    _validate_glucose_values(data)
 
-        id_lower = id.lower()
-        if id_lower not in data.columns:
-            warning_msg = (f"Could not find user-defined id argument name '{id}' in dataset. "
-                          f"Available columns: {original_columns}")
-            warnings.warn(warning_msg, stacklevel=2)
-
-            # Check if there's a column named 'id'
-            if 'id' in data.columns:
-                raise ValueError("Fix user-defined argument name for id. "
-                               "Note: A column in the dataset DOES match the name 'id': "
-                               "If this is the correct column, indicate as such in function argument. "
-                               "i.e. id = 'id'")
-            else:
-                raise ValueError(f"Column '{id}' not found in data")
-
-        # Move id column to first position and rename
-        id_col = data[id_lower]
-        data = data.drop(columns=[id_lower])
-        data.insert(0, 'id', id_col.astype('string'))
-
-    # Process timestamp column
-    if timestamp is None:
-        if 'time' not in data.columns:
-            raise ValueError("No timestamp column specified and no 'time' column found")
-        timestamp_col = 'time'
-    else:
-        if not isinstance(timestamp, str):
-            raise ValueError("User-defined timestamp name must be string.")
-
-        timestamp_lower = timestamp.lower()
-        if timestamp_lower not in data.columns:
-            warning_msg = (f"Could not find user-defined timestamp argument name '{timestamp}' in dataset. "
-                          f"Available columns: {original_columns}")
-            warnings.warn(warning_msg, stacklevel=2)
-
-            # Check if there's a column named 'time'
-            if 'time' in data.columns:
-                raise ValueError("Fix user-defined argument name for timestamp. "
-                               "Note: A column in the dataset DOES match the name 'time': "
-                               "If this is the correct column, indicate as such in function argument. "
-                               "i.e. timestamp = 'time'")
-            else:
-                raise ValueError(f"Column '{timestamp}' not found in data")
-
-        timestamp_col = timestamp_lower
-
-    # Move timestamp column to second position and rename
-    if 'time' not in data.columns or timestamp_col != 'time':
-        time_data = data[timestamp_col]
-        if timestamp_col != 'time':
-            data = data.drop(columns=[timestamp_col])
-
-        # Parse time
-        try:
-            time_data = time_parser(time_data)
-        except Exception as e:
-            raise ValueError(f"Failed to parse times, ensure times are in parsable format. "
-                           f"Original error: {str(e)}") from e
-
-        # Insert at position 1 (after id)
-        data.insert(1, 'time', time_data)
-
-    # localize time if in naive format
-    data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
-
-    # Process glucose column
-    if glu is None:
-        if 'gl' not in data.columns:
-            raise ValueError("No glucose column specified and no 'gl' column found")
-        glu_col = 'gl'
-    else:
-        if not isinstance(glu, str):
-            raise ValueError("User-defined glucose name must be string.")
-
-        glu_lower = glu.lower()
-        if glu_lower not in data.columns:
-            warning_msg = (f"Could not find user-defined glucose argument name '{glu}' in dataset. "
-                          f"Available columns: {original_columns}")
-            warnings.warn(warning_msg, stacklevel=2)
-
-            # Check if there's a column named 'gl'
-            if 'gl' in data.columns:
-                raise ValueError("Fix user-defined argument name for glucose. "
-                               "Note: A column in the dataset DOES match the name 'gl': "
-                               "If this is the correct column, indicate as such in function argument. "
-                               "i.e. glu = 'gl'")
-            else:
-                raise ValueError(f"Column '{glu}' not found in data")
-
-        glu_col = glu_lower
-
-    # Check if glucose values are in mmol/L
-    mmol_conversion = False
-    if glu and 'mmol/l' in glu.lower():
-        mmol_conversion = True
-
-    # Move glucose column to third position and rename
-    if 'gl' not in data.columns or glu_col != 'gl':
-        gl_data = data[glu_col]
-        if glu_col != 'gl':
-            data = data.drop(columns=[glu_col])
-
-        # Convert to numeric
-        try:
-            gl_data = pd.to_numeric(gl_data, errors='coerce')
-        except Exception as e:
-            raise ValueError(f"Failed to convert glucose values to numeric: {str(e)}") from e
-
-        # Convert mmol/L to mg/dL if needed
-        if mmol_conversion:
-            gl_data = gl_data * 18
-
-        # Insert at position 2 (after id and time)
-        data.insert(2, 'gl', gl_data)
-
-    # Validation warnings
-    if data['gl'].min() < 20:
-        warnings.warn("Minimum glucose reading below 20. Data may not be cleaned.", stacklevel=2)
-
-    if data['gl'].max() > 500:
-        warnings.warn("Maximum glucose reading above 500. Data may not be cleaned.", stacklevel=2)
-
-    # Keep only the three required columns in correct order
-    data = data[['id', 'time', 'gl']]
-
-    # Drop rows with NaN glucose values
-    data = data.dropna(subset=['gl'])
-
+    # Final cleanup
+    data = data[["id", "time", "gl"]].dropna(subset=["gl"])
     if data.empty:
         raise ValueError("No valid data remaining after processing")
 

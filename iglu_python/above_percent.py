@@ -7,9 +7,9 @@ from .utils import check_data_columns
 
 
 def above_percent(
-    data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
+    data: Union[pd.DataFrame, pd.Series, list, np.ndarray],
     targets_above: List[int] = None,
-) -> pd.DataFrame|dict[str:float]:
+) -> pd.DataFrame | dict[str:float]:
     """
     Calculate percentage of values above target thresholds.
 
@@ -61,11 +61,10 @@ def above_percent(
     # Handle Series input
     if targets_above is None:
         targets_above = [140, 180, 250]
-    if isinstance(data, (pd.Series, list,np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return above_percent_single(data, targets_above)
-
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -83,8 +82,9 @@ def above_percent(
 
     # Convert to DataFrame
     df = pd.DataFrame(result)
-    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    df = df[["id"] + [col for col in df.columns if col != "id"]]
     return df
+
 
 def above_percent_single(data: pd.Series, targets_above: List[int] = None) -> dict[str:float]:
     """

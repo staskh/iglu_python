@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def ea1c(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame|float:
+def ea1c(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame | float:
     """
     Calculate estimated A1C (eA1C) values.
 
@@ -56,14 +56,11 @@ def ea1c(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame
             data = pd.Series(data)
         return ea1c_single(data)
 
-
     # Handle DataFrame input
     data = check_data_columns(data)
 
     # Calculate eA1C for each subject
-    out = data.groupby('id').agg(
-        eA1C = ("gl", lambda x: ea1c_single(x))
-    ).reset_index()
+    out = data.groupby("id").agg(eA1C=("gl", lambda x: ea1c_single(x))).reset_index()
 
     return out
 

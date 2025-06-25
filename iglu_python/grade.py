@@ -87,4 +87,3 @@ def _grade_formula(x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarr
     """
     grade = 425 * (np.log10(np.log10(x / 18)) + 0.16) ** 2
     return np.minimum(grade, 50)  # Cap at 50
-

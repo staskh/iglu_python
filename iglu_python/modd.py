@@ -6,9 +6,7 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns
 
 
-def modd(
-    data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lag: int = 1, tz: str = ""
-) -> pd.DataFrame|float:
+def modd(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lag: int = 1, tz: str = "") -> pd.DataFrame | float:
     """
     Calculate Mean of Daily Differences (MODD).
 
@@ -67,11 +65,10 @@ def modd(
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    data.set_index('time', drop=True, inplace=True)
-    out = data.groupby('id').agg(
-        MODD = ("gl", lambda x: modd_single(x, lag, tz))
-    ).reset_index()
+    data.set_index("time", drop=True, inplace=True)
+    out = data.groupby("id").agg(MODD=("gl", lambda x: modd_single(x, lag, tz))).reset_index()
     return out
+
 
 def modd_single(data: pd.Series, lag: int = 1, tz: str = "") -> float:
     """Calculate MODD for a single subject"""

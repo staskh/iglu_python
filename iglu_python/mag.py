@@ -12,7 +12,7 @@ def mag(
     dt0: Optional[int] = None,
     inter_gap: int = 45,
     tz: str = "",
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate Mean Absolute Glucose (MAG).
 
@@ -79,12 +79,11 @@ def mag(
 
     # Handle DataFrame input
     data = check_data_columns(data)
-    data.set_index('time', drop=True, inplace=True)
+    data.set_index("time", drop=True, inplace=True)
 
-    out = data.groupby('id').agg(
-        MAG = ("gl", lambda x: mag_single(x, n, dt0, inter_gap, tz))
-    ).reset_index()
+    out = data.groupby("id").agg(MAG=("gl", lambda x: mag_single(x, n, dt0, inter_gap, tz))).reset_index()
     return out
+
 
 def mag_single(gl: pd.Series, n: int = 60, dt0: Optional[int] = None, inter_gap: int = 45, tz: str = "") -> float:
     """Calculate MAG for a single subject"""
@@ -110,7 +109,7 @@ def mag_single(gl: pd.Series, n: int = 60, dt0: Optional[int] = None, inter_gap:
     lag = readings_per_interval
 
     if is_iglu_r_compatible():
-        idx = np.arange(0,len(gl_values),lag)
+        idx = np.arange(0, len(gl_values), lag)
         gl_values_idx = gl_values[idx]
         diffs = gl_values_idx[1:] - gl_values_idx[:-1]
         diffs = np.abs(diffs)

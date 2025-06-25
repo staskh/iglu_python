@@ -19,7 +19,7 @@ import pandas as pd
 from iglu_python.utils import check_data_columns
 
 
-def gmi(data: Union[pd.DataFrame, pd.Series, list]) -> float|pd.DataFrame:
+def gmi(data: Union[pd.DataFrame, pd.Series, list]) -> float | pd.DataFrame:
     """Calculate GMI (Glucose Management Indicator).
 
     The function gmi produces GMI values in a pandas DataFrame object.
@@ -54,8 +54,6 @@ def gmi(data: Union[pd.DataFrame, pd.Series, list]) -> float|pd.DataFrame:
     getattr(data, "is_vector", False)
 
     # Calculate GMI for each subject
-    out = data.groupby("id").agg(
-        GMI=("gl", lambda x: 3.31 + (0.02392 * x.mean()))
-    ).reset_index()
+    out = data.groupby("id").agg(GMI=("gl", lambda x: 3.31 + (0.02392 * x.mean()))).reset_index()
 
     return out

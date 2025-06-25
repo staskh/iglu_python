@@ -8,7 +8,7 @@ from .utils import check_data_columns
 
 def hyper_index(
     data: Union[pd.DataFrame, pd.Series, np.ndarray, list], ULTR: int = 140, a: float = 1.1, c: int = 30
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate Hyperglycemia Index.
 
@@ -63,7 +63,7 @@ def hyper_index(
     0  0.106
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return hyper_index_single(data, ULTR, a, c)
@@ -72,15 +72,12 @@ def hyper_index(
     data = check_data_columns(data)
 
     # Calculate hyper_index for each subject
-    out = data.groupby('id').agg(
-        hyper_index = ("gl", lambda x: hyper_index_single(x, ULTR, a, c))
-    ).reset_index()
+    out = data.groupby("id").agg(hyper_index=("gl", lambda x: hyper_index_single(x, ULTR, a, c))).reset_index()
 
     return out
 
-def hyper_index_single(
-    gl: pd.Series, ULTR: int = 140, a: float = 1.1, c: int = 30
-) -> float:
+
+def hyper_index_single(gl: pd.Series, ULTR: int = 140, a: float = 1.1, c: int = 30) -> float:
     """
     Calculate Hyperglycemia Index for a single subject.
     """

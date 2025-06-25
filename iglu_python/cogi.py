@@ -10,10 +10,10 @@ from .utils import check_data_columns
 
 
 def cogi(
-    data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
+    data: Union[pd.DataFrame, pd.Series, list, np.ndarray],
     targets: List[int] = None,
     weights: List[float] = None,
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate Coefficient of Glucose Irregularity (COGI).
 
@@ -81,11 +81,10 @@ def cogi(
 
     data = check_data_columns(data)
 
-    out = data.groupby("id").agg(
-        COGI=('gl', lambda x: cogi_single(x, targets, weights))
-    ).reset_index()
+    out = data.groupby("id").agg(COGI=("gl", lambda x: cogi_single(x, targets, weights))).reset_index()
 
     return out
+
 
 def cogi_single(data: pd.Series, targets: List[int] = None, weights: List[float] = None) -> float:
     """Calculate COGI for a single subject"""
@@ -110,7 +109,6 @@ def cogi_single(data: pd.Series, targets: List[int] = None, weights: List[float]
     return weighted_features * 100  # Convert to percentage
 
 
-
 def weight_features(
     feature: Union[float, pd.Series, list],
     scale_range: List[float],
@@ -122,26 +120,19 @@ def weight_features(
     with the same number of rows (or length) as the input, with values clipped
     (or "inverse" clipped) so that they are between 0 and 1."""
     if isinstance(feature, pd.Series):
-        scaled = (feature - min(scale_range)) / (
-            max(scale_range) - min(scale_range)
-        )
+        scaled = (feature - min(scale_range)) / (max(scale_range) - min(scale_range))
         if increasing:
             out = scaled.clip(lower=0, upper=1)
         else:
             out = (1 - scaled).clip(lower=0, upper=1)
     elif isinstance(feature, list):
-        scaled = [
-            (x - min(scale_range)) / (max(scale_range) - min(scale_range))
-            for x in feature
-        ]
+        scaled = [(x - min(scale_range)) / (max(scale_range) - min(scale_range)) for x in feature]
         if increasing:
             out = [min(1, max(0, x)) for x in scaled]
         else:
             out = [min(1, max(0, 1 - x)) for x in scaled]
     else:
-        scaled = (feature - min(scale_range)) / (
-            max(scale_range) - min(scale_range)
-        )
+        scaled = (feature - min(scale_range)) / (max(scale_range) - min(scale_range))
         if increasing:
             out = min(1, max(0, scaled))
         else:

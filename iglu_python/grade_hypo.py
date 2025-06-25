@@ -7,7 +7,7 @@ from .grade import _grade_formula
 from .utils import check_data_columns
 
 
-def grade_hypo(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: int = 80) -> pd.DataFrame|float:
+def grade_hypo(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: int = 80) -> pd.DataFrame | float:
     """
     Calculate percentage of GRADE score attributable to hypoglycemia.
 
@@ -64,11 +64,10 @@ def grade_hypo(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: in
     data = check_data_columns(data)
 
     # Calculate GRADE hypoglycemia for each subject
-    out = data.groupby('id').agg(
-        GRADE_hypo = ("gl", lambda x: grade_hypo_single(x, lower))
-    ).reset_index()
+    out = data.groupby("id").agg(GRADE_hypo=("gl", lambda x: grade_hypo_single(x, lower))).reset_index()
 
     return out
+
 
 def grade_hypo_single(data: pd.Series, lower: int = 80) -> float:
     """Calculate GRADE hypoglycemia for a single timeseries"""

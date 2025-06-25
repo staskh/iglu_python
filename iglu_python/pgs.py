@@ -10,9 +10,7 @@ from .mean_glu import mean_glu
 from .utils import check_data_columns
 
 
-def pgs(
-    data: Union[pd.DataFrame, pd.Series], dur_length: int = 20, end_length: int = 30
-) -> pd.DataFrame|float:
+def pgs(data: Union[pd.DataFrame, pd.Series], dur_length: int = 20, end_length: int = 30) -> pd.DataFrame | float:
     """
     Calculate Personal Glycemic State (PGS).
 
@@ -87,19 +85,18 @@ def pgs(
 
     # Handle DataFrame input
     data = check_data_columns(data)
-    data.set_index('time', drop=True, inplace=True)
+    data.set_index("time", drop=True, inplace=True)
 
-    out = data.groupby('id').agg(
-        PGS = ("gl", lambda x: pgs_single(x, dur_length, end_length))
-    ).reset_index()
+    out = data.groupby("id").agg(PGS=("gl", lambda x: pgs_single(x, dur_length, end_length))).reset_index()
     return out
+
 
 def pgs_single(gl: pd.Series, dur_length: int = 20, end_length: int = 30) -> float:
     """Calculate PGS for a single subject"""
     # Calculate components
     gvp_val = gvp(gl)
     mean_val = mean_glu(gl)
-    ptir_val = in_range_percent(gl, target_ranges=[[70, 180]])['in_range_70_180']
+    ptir_val = in_range_percent(gl, target_ranges=[[70, 180]])["in_range_70_180"]
 
     # Calculate episode components
     eps = episode_calculation(
@@ -116,8 +113,7 @@ def pgs_single(gl: pd.Series, dur_length: int = 20, end_length: int = 30) -> flo
     f_gvp = 1 + (9 / (1 + np.exp(-0.049 * (gvp_val - 65.47))))
     f_ptir = 1 + (9 / (1 + np.exp(0.0833 * (ptir_val - 55.04))))
     f_mg = 1 + 9 * (
-        (1 / (1 + np.exp(0.1139 * (mean_val - 72.08))))
-        + (1 / (1 + np.exp(-0.09195 * (mean_val - 157.57))))
+        (1 / (1 + np.exp(0.1139 * (mean_val - 72.08)))) + (1 / (1 + np.exp(-0.09195 * (mean_val - 157.57))))
     )
 
     f_h54 = 0.5 + 4.5 * (1 - np.exp(-0.91093 * n54))
@@ -127,4 +123,3 @@ def pgs_single(gl: pd.Series, dur_length: int = 20, end_length: int = 30) -> flo
     pgs_score = f_gvp + f_ptir + f_mg + f_h54 + f_h70
 
     return pgs_score
-

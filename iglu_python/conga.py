@@ -6,9 +6,7 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns
 
 
-def conga(
-    data: Union[pd.DataFrame, pd.Series], n: int = 24, tz: str = ""
-) -> pd.DataFrame|float:
+def conga(data: Union[pd.DataFrame, pd.Series], n: int = 24, tz: str = "") -> pd.DataFrame | float:
     """
     Calculate Continuous Overall Net Glycemic Action (CONGA).
 
@@ -69,14 +67,13 @@ def conga(
     data = check_data_columns(data)
 
     # Calculate CONGA for each subject
-    data.set_index("time", inplace=True,drop=True)
-    out = data.groupby('id').agg(
-        CONGA = ("gl", lambda x: conga_single(x, hours=n, tz=tz))
-    ).reset_index()
+    data.set_index("time", inplace=True, drop=True)
+    out = data.groupby("id").agg(CONGA=("gl", lambda x: conga_single(x, hours=n, tz=tz))).reset_index()
 
     return out
 
-def conga_single(data: pd.DataFrame|pd.Series, hours: int = 1, tz: str = "") -> float:
+
+def conga_single(data: pd.DataFrame | pd.Series, hours: int = 1, tz: str = "") -> float:
     """Calculate CONGA for a single subject"""
     # Convert data to day-by-day format
     # Missing values will be linearly interpolated when close enough to non-missing values.

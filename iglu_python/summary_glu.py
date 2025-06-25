@@ -7,7 +7,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame|dict[str,float]:
+def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.DataFrame | dict[str, float]:
     """
     Calculate summary glucose level
 
@@ -50,7 +50,6 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
     # Handle vector input (Series, list, or numpy array)
 
     if isinstance(data, (pd.Series, list, np.ndarray)):
-
         # Convert to numpy array for consistent handling
         if isinstance(data, pd.Series):
             glucose_values = data.values
@@ -79,33 +78,33 @@ def summary_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> pd.Da
         # Filter out missing glucose values and group by id
         result_rows = []
 
-        for subject_id in data['id'].unique():
-            subject_data = data[data['id'] == subject_id]
-            glucose_values = subject_data['gl'].dropna().values
+        for subject_id in data["id"].unique():
+            subject_data = data[data["id"] == subject_id]
+            glucose_values = subject_data["gl"].dropna().values
 
             if len(glucose_values) == 0:
                 warnings.warn(f"No valid glucose values found for subject {subject_id}", stacklevel=2)
                 # Still include the subject with NaN values
                 summary_stats = {
-                    'Min.': np.nan,
-                    '1st Qu.': np.nan,
-                    'Median': np.nan,
-                    'Mean': np.nan,
-                    '3rd Qu.': np.nan,
-                    'Max.': np.nan
+                    "Min.": np.nan,
+                    "1st Qu.": np.nan,
+                    "Median": np.nan,
+                    "Mean": np.nan,
+                    "3rd Qu.": np.nan,
+                    "Max.": np.nan,
                 }
             else:
                 summary_stats = _calculate_summary_stats(glucose_values)
 
             # Add subject id to the summary
-            summary_stats['id'] = subject_id
+            summary_stats["id"] = subject_id
             result_rows.append(summary_stats)
 
         # Create result DataFrame with id column first
         result_df = pd.DataFrame(result_rows)
 
         # Reorder columns to match R output (id first, then summary stats)
-        column_order = ['id', 'Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.']
+        column_order = ["id", "Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max."]
         return result_df[column_order]
 
 
@@ -126,10 +125,10 @@ def _calculate_summary_stats(glucose_values: np.ndarray) -> dict:
         Dictionary with summary statistics matching R's summary() output
     """
     return {
-        'Min.': np.min(glucose_values),
-        '1st Qu.': np.percentile(glucose_values, 25),
-        'Median': np.median(glucose_values),
-        'Mean': np.mean(glucose_values),
-        '3rd Qu.': np.percentile(glucose_values, 75),
-        'Max.': np.max(glucose_values)
+        "Min.": np.min(glucose_values),
+        "1st Qu.": np.percentile(glucose_values, 25),
+        "Median": np.median(glucose_values),
+        "Mean": np.mean(glucose_values),
+        "3rd Qu.": np.percentile(glucose_values, 75),
+        "Max.": np.max(glucose_values),
     }

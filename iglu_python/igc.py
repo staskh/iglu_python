@@ -16,7 +16,7 @@ def igc(
     b: float = 2,
     c: int = 30,
     d: int = 30,
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate Index of Glycemic Control (IGC).
 
@@ -73,7 +73,7 @@ def igc(
     0  0.106
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return igc_single(data, LLTR, ULTR, a, b, c, d)
@@ -81,24 +81,17 @@ def igc(
     # Check and prepare data
     data = check_data_columns(data)
 
-    out = data.groupby('id').agg(
-        IGC = ("gl", lambda x: igc_single(x, LLTR, ULTR, a, b, c, d))
-    ).reset_index()
+    out = data.groupby("id").agg(IGC=("gl", lambda x: igc_single(x, LLTR, ULTR, a, b, c, d))).reset_index()
     return out
 
+
 def igc_single(
-    gl: pd.Series,
-    LLTR: int = 80,
-    ULTR: int = 140,
-    a: float = 1.1,
-    b: float = 2,
-    c: int = 30,
-    d: int = 30
+    gl: pd.Series, LLTR: int = 80, ULTR: int = 140, a: float = 1.1, b: float = 2, c: int = 30, d: int = 30
 ) -> float:
     """
     Calculate Index of Glycemic Control for a single subject.
     """
-        # Calculate hyper_index and hypo_index
+    # Calculate hyper_index and hypo_index
     out_hyper = hyper_index(gl, ULTR=ULTR, a=a, c=c)
     out_hypo = hypo_index(gl, LLTR=LLTR, b=b, d=d)
 

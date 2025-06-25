@@ -17,7 +17,7 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns
 
 
-def cv_measures(data, dt0=None, inter_gap=45, tz="")->pd.DataFrame|dict[str:float]:
+def cv_measures(data, dt0=None, inter_gap=45, tz="") -> pd.DataFrame | dict[str:float]:
     """Calculate Coefficient of Variation subtypes (CVmean and CVsd).
 
     The function cv_measures produces CV subtype values in a pandas DataFrame object.
@@ -60,43 +60,36 @@ def cv_measures(data, dt0=None, inter_gap=45, tz="")->pd.DataFrame|dict[str:floa
     # Check and prepare data
     data = check_data_columns(data)
 
-
     # Process each subject
     results = []
-    for subject_id in data['id'].unique():
-        subject_data = data[data['id'] == subject_id]
+    for subject_id in data["id"].unique():
+        subject_data = data[data["id"] == subject_id]
 
         results_dict = _calculate_series_cv(subject_data, dt0=dt0, inter_gap=inter_gap, tz=tz)
 
-        results.append({
-            'id': subject_id,
-            'CVmean': results_dict['CVmean'],
-            'CVsd': results_dict['CVsd']
-        })
+        results.append({"id": subject_id, "CVmean": results_dict["CVmean"], "CVsd": results_dict["CVsd"]})
 
     return pd.DataFrame(results)
 
-def _calculate_series_cv(subject_data: pd.DataFrame|pd.Series, dt0=None, inter_gap=45, tz="") -> dict[str:float]:
+
+def _calculate_series_cv(subject_data: pd.DataFrame | pd.Series, dt0=None, inter_gap=45, tz="") -> dict[str:float]:
     """Calculate CV for series/single subject input"""
 
     # Convert to day-by-day format
-    gd2d,active_days,dt0 = CGMS2DayByDay(subject_data, dt0=dt0, inter_gap=inter_gap, tz=tz)
+    gd2d, active_days, dt0 = CGMS2DayByDay(subject_data, dt0=dt0, inter_gap=inter_gap, tz=tz)
 
     # gd2d is two dimensional array - 1st dimension is day, 2nd dimension is time point
     # active_days is a list of days that have at least 2 non-missing values
     # dt0 is the time frequency for interpolation in minutes
 
     # calculate devioation and median for each day
-    daily_deviations = np.apply_along_axis(np.nanstd, 1, gd2d,ddof=1)
+    daily_deviations = np.apply_along_axis(np.nanstd, 1, gd2d, ddof=1)
     daily_mean = np.apply_along_axis(np.nanmean, 1, gd2d)
 
-    cv = daily_deviations *100 / daily_mean
+    cv = daily_deviations * 100 / daily_mean
 
     # calculate mean of daily deviations
     cv_mean = np.nanmean(cv)
-    cv_sd = np.nanstd(cv,ddof=1)
+    cv_sd = np.nanstd(cv, ddof=1)
 
-    return {
-        'CVmean': cv_mean,
-        'CVsd': cv_sd
-    }
+    return {"CVmean": cv_mean, "CVsd": cv_sd}

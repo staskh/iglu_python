@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def hbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
+def hbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame | float:
     r"""
     Calculate High Blood Glucose Index (HBGI).
 
@@ -69,10 +69,9 @@ def hbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    out = data.groupby('id').agg(
-        HBGI = ("gl", lambda x: calculate_hbgi_single(x))
-    ).reset_index()
+    out = data.groupby("id").agg(HBGI=("gl", lambda x: calculate_hbgi_single(x))).reset_index()
     return out
+
 
 def calculate_hbgi_single(glucose_values: pd.Series) -> float:
     """Helper function to calculate HBGI for a single series of values."""

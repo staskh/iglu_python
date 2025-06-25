@@ -18,7 +18,27 @@ A significant focus of this project has been ensuring compatibility with the ori
 
 This approach ensures that the Python implementation produces results consistent with the original R package.
 
-## Unit Test Status
+### Input & Output 
+The implementation maintains compatibility with the R version while following Python best practices. The metrics can be used as:
+
+```Python
+import iglu_python ias iglu
+
+# With DataFrame input
+result_df = iglu.cv_glu(data)  # data should have 'id', 'time', and 'gl' columns
+# Return DataFrame with "id' and column(s) with value(s)
+
+# With Series input (some metrics require Series with DateTimeIndex)
+result_float = iglu.cv_glu(glucose_series)  # just glucose values
+# returns a single float value
+
+# Same with function that support list or ndarray
+result_float = iglu.cv_glu(glucose_list)  # list of glucose values
+# returns a single float value
+
+```
+
+## IGLU-R Compatibility Test Status
 The current version of IGLU-PYTHON is test-compatible with IGLU-R v4.2.2
 
 Unless noted, IGLU-R test compatability is considered successful if it achieves precision of 0.001
@@ -69,25 +89,15 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | process_data | Data Pre-Processor | ✅ |
 | CGMS2DayByDay |Interpolate glucose input| ✅ |
 
-### Input & Output 
-The implementation maintains compatibility with the R version while following Python best practices. The metrics can be used as:
+## Extended functionality
+IGLU_PYTHON extends beyond the capabilities of the original IGLU-R package by offering enhanced functionality and improved user experience. We believe that combining these extended features with the proven reliability of IGLU-R creates a powerful synergy that benefits both the research community and wide software developers community.
 
-```Python
-import iglu_python ias iglu
 
-# With DataFrame input
-result_df = iglu.cv_glu(data)  # data should have 'id', 'time', and 'gl' columns
-# Return DataFrame with "id' and column(s) with value(s)
 
-# With Series input (some metrics require Series with DateTimeIndex)
-result_float = iglu.cv_glu(glucose_series)  # just glucose values
-# returns a single float value
-
-# Same with function that support list or ndarray
-result_float = iglu.cv_glu(glucose_list)  # list of glucose values
-# returns a single float value
-
-```
+| Function          | Description                              | 
+|-------------------|------------------------------------------|
+| load_libre()      | Load Timeseries from Libre device file (CGM reading converted into mg/dL)
+| load_dexcom()     | Load Timeseries from Dexcom device file (CGM reading converted into mg/dL)
 
 # Installation
 

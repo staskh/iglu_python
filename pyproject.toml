@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "iglu_python"
-version = "0.2.1"
+version = "0.2.4"
 description = "Python implementation of the iglu package for continuous glucose monitoring data analysis"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,7 +26,8 @@ classifiers = [
 dependencies = [
     "numpy>=2.2.6",
     "pandas>=2.2.3",
-    "tzlocal>=5.3.1"
+    "tzlocal>=5.3.1",
+    "openpyxl >= 3.1.5"
 ]
 
 [project.urls]
@@ -90,7 +91,21 @@ disallow_incomplete_defs = false
 [tool.ruff]
 line-length = 120
 target-version = "py311"
-select = [
+exclude = [
+    ".git/",
+    ".venv/",
+    "venv/",
+    "__pycache__/",
+    "*.egg-info/",
+    "build/",
+    "dist/",
+    ".pytest_cache/",
+    ".mypy_cache/",
+    ".ruff_cache/",
+    "tests/",
+    "notebooks/"
+]
+lint.select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
     "F",   # pyflakes
@@ -98,10 +113,10 @@ select = [
     "C",   # flake8-comprehensions
     "B",   # flake8-bugbear
 ]
-ignore = []
+lint.ignore = []
 
-[tool.ruff.isort]
+[tool.lint.isort]
 known-first-party = ["iglu_python"]
 
-[tool.ruff.per-file-ignores]
+[tool.lint.per-file-ignores]
 "tests/*" = ["E501"]  # Allow long lines in tests 

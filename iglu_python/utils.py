@@ -10,13 +10,16 @@ local_tz = get_localzone()  # get the local timezone
 
 _IGLU_R_COMPATIBLE = True
 
+
 def set_iglu_r_compatible(value: bool) -> None:
     global _IGLU_R_COMPATIBLE
     _IGLU_R_COMPATIBLE = value
 
+
 def is_iglu_r_compatible() -> bool:
     global _IGLU_R_COMPATIBLE
     return _IGLU_R_COMPATIBLE
+
 
 def localize_naive_timestamp(timestamp: datetime) -> datetime:
     """
@@ -36,7 +39,8 @@ def set_local_tz(tz: str) -> None:
     global local_tz
     local_tz = ZoneInfo(tz)
 
-def get_local_tz() :
+
+def get_local_tz():
     global local_tz
     return local_tz
 
@@ -120,7 +124,7 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
 
 
 def CGMS2DayByDay(
-    data: pd.DataFrame|pd.Series,
+    data: pd.DataFrame | pd.Series,
     dt0: Optional[pd.Timestamp] = None,
     inter_gap: int = 45,
     tz: str = "",
@@ -195,9 +199,7 @@ def CGMS2DayByDay(
     # Create time grid
     start_time = data["time"].min().floor("D")
     end_time = data["time"].max().ceil("D")
-    time_grid = pd.date_range(
-        start=start_time, end=end_time, freq=f"{dt0}min"
-    )
+    time_grid = pd.date_range(start=start_time, end=end_time, freq=f"{dt0}min")
     if is_iglu_r_compatible():
         # remove the first time point
         time_grid = time_grid[1:]
@@ -208,9 +210,7 @@ def CGMS2DayByDay(
     # find gaps in the data (using original data indexes, not time grid)
     gaps = []
     for i in range(len(data) - 1):
-        if (
-            data["time"].iloc[i + 1] - data["time"].iloc[i]
-        ).total_seconds() > inter_gap * 60:
+        if (data["time"].iloc[i + 1] - data["time"].iloc[i]).total_seconds() > inter_gap * 60:
             gaps.append((i, i + 1))
 
     # Interpolate glucose values
@@ -227,15 +227,14 @@ def CGMS2DayByDay(
         gap_start_idx = gap[0]
         gap_start_time = data["time"].iloc[gap_start_idx]
         # find the index of the gap start in the time grid
-        gap_start_idx_in_time_grid = int(
-            np.floor((gap_start_time - start_time).total_seconds() / (60 * dt0))
-        )
+        gap_start_idx_in_time_grid = int(np.floor((gap_start_time - start_time).total_seconds() / (60 * dt0)))
         gap_end_idx = gap[1]
         gap_end_time = data["time"].iloc[gap_end_idx]
         # find the index of the gap end in the time grid
         gap_end_idx_in_time_grid = int(
             # -1sec to indicate time before measurement
-            np.floor(((gap_end_time - start_time).total_seconds() -1 ) / (60 * dt0)))
+            np.floor(((gap_end_time - start_time).total_seconds() - 1) / (60 * dt0))
+        )
         # put nan in the gap
         interp_data[gap_start_idx_in_time_grid:gap_end_idx_in_time_grid] = np.nan
 
@@ -260,6 +259,7 @@ def CGMS2DayByDay(
 
     return interp_data, actual_dates, dt0
 
+
 def gd2d_to_df(gd2d, actual_dates, dt0):
     """Convert gd2d (CGMS2DayByDay output) to a pandas DataFrame"""
     df = pd.DataFrame({"time": [], "gl": []})
@@ -271,9 +271,6 @@ def gd2d_to_df(gd2d, actual_dates, dt0):
         day_time = [pd.Timedelta(i * dt0, unit="m") + actual_dates[day] for i in range(n)]
         time.extend(day_time)
 
-    df = pd.DataFrame({
-            "time": pd.Series(time),
-            "gl": pd.Series(gl, dtype='float64')
-        })
+    df = pd.DataFrame({"time": pd.Series(time), "gl": pd.Series(gl, dtype="float64")})
 
     return df

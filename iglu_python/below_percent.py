@@ -7,8 +7,8 @@ from .utils import check_data_columns
 
 
 def below_percent(
-    data: Union[pd.DataFrame, pd.Series, list,np.ndarray], targets_below: List[int] = None
-) -> pd.DataFrame|dict[str:float]:
+    data: Union[pd.DataFrame, pd.Series, list, np.ndarray], targets_below: List[int] = None
+) -> pd.DataFrame | dict[str:float]:
     """
     Calculate percentage of values below target thresholds.
 
@@ -60,11 +60,10 @@ def below_percent(
     # Handle Series input
     if targets_below is None:
         targets_below = [54, 70]
-    if isinstance(data, (pd.Series, list,np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return below_percent_single(data, targets_below)
-
 
     # Handle DataFrame input
     data = check_data_columns(data)
@@ -82,8 +81,9 @@ def below_percent(
 
     # Convert to DataFrame
     df = pd.DataFrame(result)
-    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    df = df[["id"] + [col for col in df.columns if col != "id"]]
     return df
+
 
 def below_percent_single(data: pd.Series, targets_below: List[int] = None) -> dict[str:float]:
     """
@@ -106,4 +106,3 @@ def below_percent_single(data: pd.Series, targets_below: List[int] = None) -> di
         percentages[f"below_{target}"] = (below_count / total_readings) * 100
 
     return percentages
-

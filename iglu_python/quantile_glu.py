@@ -8,7 +8,7 @@ from .utils import check_data_columns
 
 def quantile_glu(
     data: Union[pd.DataFrame, pd.Series, np.ndarray, list], quantiles: List[float] = None
-) -> pd.DataFrame|list[float]:
+) -> pd.DataFrame | list[float]:
     """
     Calculate glucose level quantiles.
 
@@ -71,11 +71,7 @@ def quantile_glu(
     # Calculate quantiles for each subject and unstack to columns
     result = (
         data.groupby("id")["gl"]
-        .apply(
-            lambda x: pd.Series(
-                np.quantile(x.dropna(), np.array(quantiles) / 100), index=quantiles
-            )
-        )
+        .apply(lambda x: pd.Series(np.quantile(x.dropna(), np.array(quantiles) / 100), index=quantiles))
         .unstack()
         .reset_index()
     )
