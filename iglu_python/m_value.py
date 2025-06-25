@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def m_value(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], r: float = 90) -> pd.DataFrame|float:
+def m_value(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], r: float = 90) -> pd.DataFrame | float:
     r"""
     Calculate the M-value of Schlichtkrull et al. (1965) for each subject.
 
@@ -60,7 +60,7 @@ def m_value(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], r: float = 9
     0   111.11
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return m_value_single(data, r)
@@ -68,12 +68,11 @@ def m_value(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], r: float = 9
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    out = data.groupby('id').agg(
-        M_value = ("gl", lambda x: m_value_single(x, r))
-    ).reset_index()
+    out = data.groupby("id").agg(M_value=("gl", lambda x: m_value_single(x, r))).reset_index()
     return out
 
-def m_value_single(gl:  pd.Series, r: float = 90) -> float:
+
+def m_value_single(gl: pd.Series, r: float = 90) -> float:
     """
     Calculate the M-value of Schlichtkrull et al. (1965) for a single subject.
     """
@@ -82,4 +81,3 @@ def m_value_single(gl:  pd.Series, r: float = 90) -> float:
         return np.nan
     m_value = 1000 * np.mean(np.abs(np.log10(gl / r)) ** 3)
     return m_value
-

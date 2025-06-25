@@ -14,7 +14,7 @@ def active_percent(
     range_type: str = "automatic",
     ndays: int = 14,
     consistent_end_date: Optional[Union[str, datetime]] = None,
-) -> pd.DataFrame|dict[str:float]:
+) -> pd.DataFrame | dict[str:float]:
     """
     Calculate percentage of time CGM was active.
 
@@ -86,21 +86,16 @@ def active_percent(
     # Process each subject
     for subject in data["id"].unique():
         # Filter data for current subject and remove NA values
-        sub_data = (
-            data[data["id"] == subject]
-            .dropna(subset=["gl", "time"])
-            .sort_values("time")
-        )
+        sub_data = data[data["id"] == subject].dropna(subset=["gl", "time"]).sort_values("time")
 
         timeseries = sub_data.set_index("time")["gl"]
         active_percent_dict = active_percent_single(timeseries, dt0, tz, range_type, ndays, consistent_end_date)
         active_percent_dict["id"] = subject
         active_perc_data.append(active_percent_dict)
 
-
     # Convert to DataFrame
     df = pd.DataFrame(active_perc_data)
-    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    df = df[["id"] + [col for col in df.columns if col != "id"]]
     return df
 
 
@@ -127,9 +122,7 @@ def active_percent_single(
         return {"active_percent": 0, "ndays": 0, "start_date": None, "end_date": None}
 
     # Calculate time differences between consecutive measurements
-    time_diffs = np.array(
-        data.index.diff().total_seconds() / 60
-    )  # Convert to minutes
+    time_diffs = np.array(data.index.diff().total_seconds() / 60)  # Convert to minutes
 
     # Automatically determine dt0 if not provided
     if dt0 is None:
@@ -154,9 +147,7 @@ def active_percent_single(
         ndays = (max_time - min_time).total_seconds() / (24 * 3600)
 
         # Calculate active percentage
-        active_percent = (
-            (theoretical_gl_vals - missing_gl_vals) / theoretical_gl_vals
-        ) * 100
+        active_percent = ((theoretical_gl_vals - missing_gl_vals) / theoretical_gl_vals) * 100
     elif range_type == "manual":
         # Handle consistent end date if provided
         if consistent_end_date is not None:
@@ -178,6 +169,3 @@ def active_percent_single(
         raise ValueError(f"Invalid range_type: {range_type}")
 
     return {"active_percent": active_percent, "ndays": round(ndays, 1), "start_date": min_time, "end_date": max_time}
-
-
-

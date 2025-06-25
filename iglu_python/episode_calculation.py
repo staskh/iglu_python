@@ -127,28 +127,32 @@ def episode_calculation(
     # Check duration parameters
     if dur_length > inter_gap:
         print(
-            "Warning: Interpolation gap parameter less than episode duration, "
-            "data gaps may cause incorrect computation"
+            "Warning: Interpolation gap parameter less than episode duration, data gaps may cause incorrect computation"
         )
 
     episode_data_df = pd.DataFrame(
         columns=[
-            'id', 'time', 'gl', 'segment',
-            'lv1_hypo', 'lv2_hypo', 'lv1_hyper', 'lv2_hyper',
-            'ext_hypo', 'lv1_hypo_excl', 'lv1_hyper_excl'
+            "id",
+            "time",
+            "gl",
+            "segment",
+            "lv1_hypo",
+            "lv2_hypo",
+            "lv1_hyper",
+            "lv2_hyper",
+            "ext_hypo",
+            "lv1_hypo_excl",
+            "lv1_hyper_excl",
         ]
     )
     episode_summary_df = pd.DataFrame(
-        columns=[
-            'id', 'type', 'level', 'avg_ep_per_day',
-            'avg_ep_duration', 'avg_ep_gl', 'total_episodes'
-        ]
+        columns=["id", "type", "level", "avg_ep_per_day", "avg_ep_duration", "avg_ep_gl", "total_episodes"]
     )
 
     # Process each subject ID separately
-    for subject_id in data['id'].unique():
+    for subject_id in data["id"].unique():
         # Get data for this subject
-        subject_data = data[data['id'] == subject_id].copy()
+        subject_data = data[data["id"] == subject_id].copy()
 
         # Calculate episodes for this subject
         subject_summary, subject_episode_data = episode_single(
@@ -164,8 +168,8 @@ def episode_calculation(
             tz=tz,
         )
 
-        subject_summary['id'] = subject_id
-        subject_episode_data['id'] = subject_id
+        subject_summary["id"] = subject_id
+        subject_episode_data["id"] = subject_id
 
         # Append to main dataframes
         if episode_data_df.empty:
@@ -178,12 +182,11 @@ def episode_calculation(
         else:
             episode_summary_df = pd.concat([episode_summary_df, subject_summary], ignore_index=True)
 
-
-
     if return_data:
         return episode_summary_df, episode_data_df
     else:
         return episode_summary_df
+
 
 def episode_single(
     data: pd.DataFrame,
@@ -236,25 +239,22 @@ def episode_single(
         dt0 = gd2d_tuple[2]
 
     if is_iglu_r_compatible():
-        day_one = pd.to_datetime(gd2d_tuple[1][0]).tz_localize(None) # make in naive-timezone
-        day_one = day_one.tz_localize('UTC') # this is how IGLU_R works
-        if tz and tz!="":
+        day_one = pd.to_datetime(gd2d_tuple[1][0]).tz_localize(None)  # make in naive-timezone
+        day_one = day_one.tz_localize("UTC")  # this is how IGLU_R works
+        if tz and tz != "":
             day_one = day_one.tz_convert(tz)
         else:
             local_tz = get_local_tz()
             day_one = day_one.tz_convert(local_tz)
         ndays = len(gd2d_tuple[1])
         # generate grid times by starting from day one and cumulatively summing
-        time_ip =  pd.date_range(start=day_one + pd.Timedelta(minutes=dt0), periods=int(ndays * 24 * 60 /dt0),
-                                 freq=f"{dt0}min")
+        time_ip = pd.date_range(
+            start=day_one + pd.Timedelta(minutes=dt0), periods=int(ndays * 24 * 60 / dt0), freq=f"{dt0}min"
+        )
         data_ip = gd2d_tuple[0].flatten().tolist()
-        new_data = pd.DataFrame({
-            "time": time_ip,
-            "gl": data_ip
-            })
+        new_data = pd.DataFrame({"time": time_ip, "gl": data_ip})
     else:
-        new_data = gd2d_to_df(gd2d_tuple[0],gd2d_tuple[1],gd2d_tuple[2])
-
+        new_data = gd2d_to_df(gd2d_tuple[0], gd2d_tuple[1], gd2d_tuple[2])
 
     # Check duration parameters
     if dur_length % dt0 != 0:
@@ -268,7 +268,7 @@ def episode_single(
 
     # Step 1: Create boolean mask for NA values
     # R: na_idx = is.na(new_data$gl)
-    na_idx = new_data['gl'].isna()
+    na_idx = new_data["gl"].isna()
 
     # Step 2: Run-length encoding to find consecutive runs
     # R: segment_rle = rle(na_idx)$lengths
@@ -282,14 +282,13 @@ def episode_single(
     # R: segment_data$segment = rep(1:length(segment_rle), segment_rle)
     segment_ids = np.repeat(
         range(1, len(segment_rle) + 1),  # 1:length(segment_rle)
-        segment_rle                      # repeat counts
+        segment_rle,  # repeat counts
     )
-    segment_data['segment'] = segment_ids
+    segment_data["segment"] = segment_ids
 
     # Step 5: Remove rows with NA glucose values
     # R: segment_data = segment_data[!is.na(segment_data$gl), ]
-    segment_data = segment_data[~segment_data['gl'].isna()].reset_index(drop=True)
-
+    segment_data = segment_data[~segment_data["gl"].isna()].reset_index(drop=True)
 
     # Classify events for each segment
     ep_per_seg = (
@@ -301,35 +300,33 @@ def episode_single(
                     "lv2_hypo": event_class(x, "hypo", lv2_hypo, dur_idx, end_idx),
                     "lv1_hyper": event_class(x, "hyper", lv1_hyper, dur_idx, end_idx),
                     "lv2_hyper": event_class(x, "hyper", lv2_hyper, dur_idx, end_idx),
-                    "ext_hypo": event_class(
-                        x, "hypo", lv1_hypo, int(120 / dt0) + 1, end_idx
-                    ),
+                    "ext_hypo": event_class(x, "hypo", lv1_hypo, int(120 / dt0) + 1, end_idx),
                 }
             ),
-            include_groups=False
+            include_groups=False,
         )
         .reset_index()
-        .drop(columns=['level_1'])
+        .drop(columns=["level_1"])
     )
-
 
     # Add exclusive labels using the correct original logic without DeprecationWarning
     # For hypo exclusion: group by both segment and lv1_hypo, set to 0 if any lv2_hypo > 0 in that group
     def calculate_exclusion(df, lv1_col, lv2_col):
         """Calculate exclusion labels for lv1 episodes based on lv2 episodes in same group"""
         df = df.copy()
-        df['group_id'] = df.groupby(['segment', lv1_col]).ngroup()
-        group_has_lv2 = df.groupby('group_id')[lv2_col].transform(lambda x: (x > 0).any())
+        df["group_id"] = df.groupby(["segment", lv1_col]).ngroup()
+        group_has_lv2 = df.groupby("group_id")[lv2_col].transform(lambda x: (x > 0).any())
         return df[lv1_col].where(~group_has_lv2, 0)
 
-    ep_per_seg['lv1_hypo_excl'] = calculate_exclusion(ep_per_seg, 'lv1_hypo', 'lv2_hypo')
-    ep_per_seg['lv1_hyper_excl'] = calculate_exclusion(ep_per_seg, 'lv1_hyper', 'lv2_hyper')
+    ep_per_seg["lv1_hypo_excl"] = calculate_exclusion(ep_per_seg, "lv1_hypo", "lv2_hypo")
+    ep_per_seg["lv1_hyper_excl"] = calculate_exclusion(ep_per_seg, "lv1_hyper", "lv2_hyper")
 
     full_segment_df = pd.concat([segment_data, ep_per_seg.drop(["segment"], axis=1)], axis=1)
 
     # Calculate summary statistics
     summary_df = episode_summary(full_segment_df, dt0)
     return summary_df, full_segment_df
+
 
 def event_class(
     data: pd.DataFrame,
@@ -391,29 +388,25 @@ def event_class(
             lambda x: pd.DataFrame(
                 {
                     # possibly event; where duration is met
-                    "pos_start": [x["level"].iloc[0] and (len(x) >= event_duration)]*len(x),
+                    "pos_start": [x["level"].iloc[0] and (len(x) >= event_duration)] * len(x),
                     # if possible event, add start on first index of event
                     "start": (
-                        ["start"
-                        if (x["level"].iloc[0] and len(x) >= event_duration)
-                        else None] + [None]*(len(x)-1)
+                        ["start" if (x["level"].iloc[0] and len(x) >= event_duration) else None] + [None] * (len(x) - 1)
                     ),
                     # add possible ends (always need to check for end duration)
-                    "pos_end": [not x["level"].iloc[0] and (len(x) >= end_duration)]*len(x),
+                    "pos_end": [not x["level"].iloc[0] and (len(x) >= end_duration)] * len(x),
                     "end": (
-                        ["end"
-                        if (not x["level"].iloc[0] and len(x) >= end_duration)
-                        else None] + [None]*(len(x)-1)
+                        ["end" if (not x["level"].iloc[0] and len(x) >= end_duration) else None] + [None] * (len(x) - 1)
                     ),
                 }
             ),
-            include_groups=False
+            include_groups=False,
         )
         .reset_index()
-        .drop(columns=['level_1'])
+        .drop(columns=["level_1"])
     )
 
-    annotated = pd.concat([annotated,annotated_grouped.drop(["event"], axis=1)], axis=1)
+    annotated = pd.concat([annotated, annotated_grouped.drop(["event"], axis=1)], axis=1)
 
     ### for each possible end find the matching start
     # Get start and end positions
@@ -473,16 +466,13 @@ def lv1_excl(data: pd.DataFrame) -> np.ndarray:
 
     # Calculate exclusive labels
     excl = grouped.apply(
-        lambda x: pd.DataFrame(
-                {
-                    "excl":[0 if (x[lv2_first].values > 0).any() else x[lv1_first].iloc[0]]*len(x)
-                }),
-        include_groups=False
+        lambda x: pd.DataFrame({"excl": [0 if (x[lv2_first].values > 0).any() else x[lv1_first].iloc[0]] * len(x)}),
+        include_groups=False,
     )
 
     excl = excl.reset_index()
 
-    return excl[['segment','excl']]
+    return excl[["segment", "excl"]]
 
 
 def episode_summary(data: pd.DataFrame, dt0: float) -> pd.DataFrame:
@@ -502,12 +492,10 @@ def episode_summary(data: pd.DataFrame, dt0: float) -> pd.DataFrame:
         Summary statistics for each episode type
     """
 
-    def episode_summary_helper(
-        data: pd.DataFrame, level_label: str, dt0: float
-    ) -> List[float]:
+    def episode_summary_helper(data: pd.DataFrame, level_label: str, dt0: float) -> List[float]:
         """Helper function to calculate summary for one episode type"""
         # Select relevant columns
-        data = data[[ "time", "gl", "segment", level_label]].copy()
+        data = data[["time", "gl", "segment", level_label]].copy()
         data.columns = ["time", "gl", "segment", "event"]
 
         # If no events, return zeros/NA
@@ -516,11 +504,7 @@ def episode_summary(data: pd.DataFrame, dt0: float) -> pd.DataFrame:
 
         # Calculate summary metrics
         events = data[data["event"] != 0][["gl", "segment", "event"]]
-        data_sum = (
-            events.groupby(["segment", "event"])
-            .agg({"gl": ["count", "mean"]})
-            .reset_index()
-        )
+        data_sum = events.groupby(["segment", "event"]).agg({"gl": ["count", "mean"]}).reset_index()
 
         # Calculate metrics
         avg_ep_per_day = len(data_sum) / (len(data) * dt0 / 60 / 24)
@@ -555,6 +539,7 @@ def episode_summary(data: pd.DataFrame, dt0: float) -> pd.DataFrame:
     )
 
     return output
+
 
 def _rle_lengths(boolean_series):
     """Python equivalent of R's rle()$lengths"""

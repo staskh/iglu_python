@@ -13,7 +13,7 @@ def sd_roc(
     dt0: int = 5,
     inter_gap: int = 45,
     tz: str = "",
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate the standard deviation of the rate of change.
 
@@ -96,19 +96,19 @@ def sd_roc(
 
     # Validate input data
     data = check_data_columns(data, tz=tz)
-    data.set_index('time', drop=True, inplace=True)
+    data.set_index("time", drop=True, inplace=True)
 
     # Calculate ROC values for all subjects
-    out = data.groupby('id').apply(lambda x: sd_roc_single(x['gl'], timelag, dt0, inter_gap, tz)).reset_index()
-    out.columns = ['id', 'sd_roc']
+    results = []
+    for subject_id, group in data.groupby("id"):
+        sd_roc_value = sd_roc_single(group["gl"], timelag, dt0, inter_gap, tz)
+        results.append({"id": subject_id, "sd_roc": sd_roc_value})
+    
+    out = pd.DataFrame(results)
     return out
 
-def sd_roc_single(data: pd.Series,
-                  timelag: int = 15,
-                  dt0: int = 5,
-                  inter_gap: int = 45,
-                  tz: str = "") -> float:
 
+def sd_roc_single(data: pd.Series, timelag: int = 15, dt0: int = 5, inter_gap: int = 45, tz: str = "") -> float:
     roc_data = roc(data, timelag=timelag, dt0=dt0, inter_gap=inter_gap, tz=tz)
-    sd_roc = np.nanstd(roc_data.dropna()['roc'], ddof=1)
+    sd_roc = np.nanstd(roc_data.dropna()["roc"], ddof=1)
     return sd_roc

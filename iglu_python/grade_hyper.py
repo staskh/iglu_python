@@ -7,7 +7,7 @@ from .grade import _grade_formula
 from .utils import check_data_columns
 
 
-def grade_hyper(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], upper: int = 140) -> pd.DataFrame|float:
+def grade_hyper(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], upper: int = 140) -> pd.DataFrame | float:
     """
     Calculate percentage of GRADE score attributable to hyperglycemia.
 
@@ -63,10 +63,9 @@ def grade_hyper(data: Union[pd.DataFrame, pd.Series, np.ndarray, list], upper: i
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    out = data.groupby('id').agg(
-        GRADE_hyper = ("gl", lambda x: grade_hyper_single(x, upper))
-    ).reset_index()
+    out = data.groupby("id").agg(GRADE_hyper=("gl", lambda x: grade_hyper_single(x, upper))).reset_index()
     return out
+
 
 def grade_hyper_single(data: pd.Series, upper: int = 140) -> float:
     """Calculate GRADE hyperglycemia for a single timeseries"""

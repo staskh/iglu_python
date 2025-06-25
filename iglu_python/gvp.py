@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns
 
 
-def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame|float:
+def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame | float:
     r"""
     Calculate Glucose Variability Percentage (GVP).
 
@@ -66,9 +66,7 @@ def gvp(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame|float:
     data = check_data_columns(data)
     data.set_index("time", inplace=True, drop=True)
 
-    out = data.groupby('id').agg(
-        GVP = ("gl", lambda x: gvp_single(x))
-    ).reset_index()
+    out = data.groupby("id").agg(GVP=("gl", lambda x: gvp_single(x))).reset_index()
     return out
 
 
@@ -118,6 +116,7 @@ def calculate_gvp(glucose_values: pd.Series, timestamps: pd.Series) -> float:
     gvp = (total_length / base_length - 1) * 100
 
     return gvp
+
 
 def gvp_single(subj_data):
     """Calculate GVP for a single subject"""

@@ -7,9 +7,9 @@ from .utils import check_data_columns
 
 
 def in_range_percent(
-    data: Union[pd.DataFrame, pd.Series, list,np.ndarray],
+    data: Union[pd.DataFrame, pd.Series, list, np.ndarray],
     target_ranges: List[List[int]] = None,
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate percentage of values within target ranges.
 
@@ -67,7 +67,7 @@ def in_range_percent(
     # Handle Series input
     if target_ranges is None:
         target_ranges = [[70, 180], [63, 140]]
-    if isinstance(data, (pd.Series, list,np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return in_range_percent_single(data, target_ranges)
@@ -87,8 +87,9 @@ def in_range_percent(
 
     # Convert to DataFrame
     df = pd.DataFrame(result)
-    df = df[['id'] + [col for col in df.columns if col != 'id']]
+    df = df[["id"] + [col for col in df.columns if col != "id"]]
     return df
+
 
 def in_range_percent_single(data: pd.Series, target_ranges: List[List[int]] = None) -> float:
     """
@@ -99,16 +100,13 @@ def in_range_percent_single(data: pd.Series, target_ranges: List[List[int]] = No
         target_ranges = [[70, 180], [63, 140]]
     total_readings = len(data.dropna())
     if total_readings == 0:
-        return {f"in_range_{min(range_vals)}_{max(range_vals)}": 0
-                for range_vals in target_ranges}
+        return {f"in_range_{min(range_vals)}_{max(range_vals)}": 0 for range_vals in target_ranges}
 
     # Calculate percentages for each range
     percentages = {}
     for range_vals in target_ranges:
         min_val, max_val = sorted(range_vals)
         in_range_count = len(data[(data >= min_val) & (data <= max_val)])
-        percentages[f"in_range_{min_val}_{max_val}"] = (
-            in_range_count / total_readings
-        ) * 100
+        percentages[f"in_range_{min_val}_{max_val}"] = (in_range_count / total_readings) * 100
 
     return percentages

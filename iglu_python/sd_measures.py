@@ -7,10 +7,9 @@ import pandas as pd
 from .utils import CGMS2DayByDay, check_data_columns
 
 
-def sd_measures(data: pd.DataFrame|pd.Series,
-                dt0: Optional[int] = None,
-                inter_gap: int = 45,
-                tz: str = "") -> pd.DataFrame|dict[str, float]:
+def sd_measures(
+    data: pd.DataFrame | pd.Series, dt0: Optional[int] = None, inter_gap: int = 45, tz: str = ""
+) -> pd.DataFrame | dict[str, float]:
     """
     Calculate SD subtypes for glucose variability analysis
 
@@ -87,22 +86,21 @@ def sd_measures(data: pd.DataFrame|pd.Series,
 
     # Convert the dictionary results into a DataFrame with proper columns
     results = []
-    for subject_id in data['id'].unique():
-        subject_data = data[data['id'] == subject_id]
+    for subject_id in data["id"].unique():
+        subject_data = data[data["id"] == subject_id]
         result_dict = sd_measures_single(subject_data, dt0, inter_gap, tz)
-        result_dict['id'] = subject_id
+        result_dict["id"] = subject_id
         results.append(result_dict)
 
     # convert result into dataframe with 'id' on the first place
     out = pd.DataFrame(results)
-    out = out[['id'] + list(out.columns[:-1])]
+    out = out[["id"] + list(out.columns[:-1])]
     return out
 
-def sd_measures_single(data: pd.DataFrame,
-                dt0: Optional[int] = None,
-                inter_gap: int = 45,
-                tz: str = "") -> dict[str, float]:
 
+def sd_measures_single(
+    data: pd.DataFrame, dt0: Optional[int] = None, inter_gap: int = 45, tz: str = ""
+) -> dict[str, float]:
     gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(data, tz=tz, dt0=dt0, inter_gap=inter_gap)
 
     return _calculate_sd_subtypes(gd2d, gd2d_dt0)
@@ -131,12 +129,12 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int) -> Dict[str, Any]:
     # 1. SDw - vertical within days
     # Standard deviation within each day, then mean across days
     daily_sds = _safe_nanstd(gd2d, axis=1, ddof=1)  # ddof=1 for sample std
-    result['SDw'] = _safe_nanmean(daily_sds)
+    result["SDw"] = _safe_nanmean(daily_sds)
 
     # 2. SDhhmm - between time points
     # Mean at each time point across days, then SD of those means
     timepoint_means = _safe_nanmean(gd2d, axis=0)
-    result['SDhhmm'] = _safe_nanstd(timepoint_means, ddof=1)
+    result["SDhhmm"] = _safe_nanstd(timepoint_means, ddof=1)
 
     # 3. SDwsh - within series (1-hour windows)
     # Rolling standard deviation over 1-hour windows
@@ -145,24 +143,24 @@ def _calculate_sd_subtypes(gd2d: np.ndarray, dt0: int) -> Dict[str, Any]:
 
     # Calculate rolling standard deviation
     rolling_sds = _rolling_std(gs, window=win)
-    result['SDwsh'] = _safe_nanmean(rolling_sds)
+    result["SDwsh"] = _safe_nanmean(rolling_sds)
 
     # 4. SDdm - horizontal sd (between daily means)
     # Standard deviation of daily mean glucose values
     daily_means = _safe_nanmean(gd2d, axis=1)
-    result['SDdm'] = _safe_nanstd(daily_means, ddof=1)
+    result["SDdm"] = _safe_nanstd(daily_means, ddof=1)
 
     # 5. SDb - between days, within timepoints
     # SD across days for each time point, then mean of those SDs
     timepoint_sds = _safe_nanstd(gd2d, axis=0, ddof=1)
-    result['SDb'] = _safe_nanmean(timepoint_sds)
+    result["SDb"] = _safe_nanmean(timepoint_sds)
 
     # 6. SDbdm - between days, within timepoints, corrected for daily means
     # Subtract daily mean from each value, then calculate SDb on corrected values
     daily_means_matrix = daily_means[:, np.newaxis]  # Convert to column vector
     corrected_gd2d = gd2d - daily_means_matrix
     corrected_timepoint_sds = _safe_nanstd(corrected_gd2d, axis=0, ddof=1)
-    result['SDbdm'] = _safe_nanmean(corrected_timepoint_sds)
+    result["SDbdm"] = _safe_nanmean(corrected_timepoint_sds)
 
     return result
 
@@ -183,7 +181,7 @@ def _rolling_std(data: np.ndarray, window: int) -> np.ndarray:
     np.ndarray
         Rolling standard deviations (trimmed to valid windows only)
     """
-    #valid_data = data[~np.isnan(data)]
+    # valid_data = data[~np.isnan(data)]
     valid_data = np.concatenate([data, np.full(window, np.nan)])  # add nan tail to match R
     n = len(valid_data)
 
@@ -193,11 +191,12 @@ def _rolling_std(data: np.ndarray, window: int) -> np.ndarray:
     rolling_stds = []
 
     for i in range(n - window + 1):
-        window_data = valid_data[i:i + window]
+        window_data = valid_data[i : i + window]
         if len(window_data) == window:  # Full window
             rolling_stds.append(_safe_nanstd(window_data, ddof=1))
 
     return np.array(rolling_stds) if rolling_stds else np.array([np.nan])
+
 
 def _safe_nanstd(data: np.ndarray, axis: Optional[int] = None, ddof: int = 1) -> float:
     """
@@ -264,10 +263,9 @@ def _safe_nanmean(data: np.ndarray, axis: Optional[int] = None) -> float:
 
 
 # Alternative vectorized implementation for better performance
-def sd_measures_vectorized(data: pd.DataFrame,
-                          dt0: Optional[int] = None,
-                          inter_gap: int = 45,
-                          tz: str = "") -> pd.DataFrame:
+def sd_measures_vectorized(
+    data: pd.DataFrame, dt0: Optional[int] = None, inter_gap: int = 45, tz: str = ""
+) -> pd.DataFrame:
     """
     Vectorized version of sd_measures for better performance with large datasets
     """
@@ -276,8 +274,8 @@ def sd_measures_vectorized(data: pd.DataFrame,
     results = []
 
     current_dt0 = dt0
-    for i, subject_id in enumerate(data['id'].unique()):
-        subject_data = data[data['id'] == subject_id].copy()
+    for i, subject_id in enumerate(data["id"].unique()):
+        subject_data = data[data["id"] == subject_id].copy()
         gd2d, actual_dates, gd2d_dt0 = CGMS2DayByDay(subject_data, tz=tz, dt0=current_dt0, inter_gap=inter_gap)
         if i == 0:
             current_dt0 = gd2d_dt0
@@ -296,12 +294,11 @@ def _calculate_sd_subtypes_vectorized(gd2d: np.ndarray, dt0: int, subject_id: An
         warnings.simplefilter("ignore", category=RuntimeWarning)
 
         return {
-            'id': subject_id,
-            'SDw': _safe_nanmean(np.nanstd(gd2d, axis=1, ddof=1)),
-            'SDhhmm': np.nanstd(_safe_nanmean(gd2d, axis=0), ddof=1),
-            'SDwsh': _safe_nanmean(_rolling_std(gd2d.T.flatten(), round(60/dt0))),
-            'SDdm': np.nanstd(_safe_nanmean(gd2d, axis=1), ddof=1),
-            'SDb': _safe_nanmean(np.nanstd(gd2d, axis=0, ddof=1)),
-            'SDbdm': _safe_nanmean(np.nanstd(gd2d - _safe_nanmean(gd2d, axis=1, keepdims=True),
-                                        axis=0, ddof=1))
+            "id": subject_id,
+            "SDw": _safe_nanmean(np.nanstd(gd2d, axis=1, ddof=1)),
+            "SDhhmm": np.nanstd(_safe_nanmean(gd2d, axis=0), ddof=1),
+            "SDwsh": _safe_nanmean(_rolling_std(gd2d.T.flatten(), round(60 / dt0))),
+            "SDdm": np.nanstd(_safe_nanmean(gd2d, axis=1), ddof=1),
+            "SDb": _safe_nanmean(np.nanstd(gd2d, axis=0, ddof=1)),
+            "SDbdm": _safe_nanmean(np.nanstd(gd2d - _safe_nanmean(gd2d, axis=1, keepdims=True), axis=0, ddof=1)),
         }

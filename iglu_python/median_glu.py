@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def median_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
+def median_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame | float:
     """
     Calculate median glucose value for each subject.
 
@@ -45,7 +45,7 @@ def median_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.Dat
     0   160.0
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return data.median()

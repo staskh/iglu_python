@@ -91,6 +91,20 @@ disallow_incomplete_defs = false
 [tool.ruff]
 line-length = 120
 target-version = "py311"
+exclude = [
+    ".git/",
+    ".venv/",
+    "venv/",
+    "__pycache__/",
+    "*.egg-info/",
+    "build/",
+    "dist/",
+    ".pytest_cache/",
+    ".mypy_cache/",
+    ".ruff_cache/",
+    "tests/",
+    "notebooks/"
+]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings

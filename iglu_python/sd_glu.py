@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def sd_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataFrame|float:
+def sd_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataFrame | float:
     """
     Calculate standard deviation of glucose values.
 
@@ -46,7 +46,7 @@ def sd_glu(data: Union[pd.DataFrame, list, np.ndarray, pd.Series]) -> pd.DataFra
     """
     # Handle Series input
     if isinstance(data, (list, np.ndarray, pd.Series)):
-        if isinstance(data, (list,np.ndarray)):
+        if isinstance(data, (list, np.ndarray)):
             data = pd.Series(data)
         return data.std(ddof=1)
 

@@ -9,7 +9,7 @@ from .utils import check_data_columns
 
 def grade_eugly(
     data: Union[pd.DataFrame, pd.Series, np.ndarray, list], lower: int = 70, upper: int = 140
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate percentage of GRADE score attributable to target range.
 
@@ -69,9 +69,7 @@ def grade_eugly(
     data = check_data_columns(data)
 
     # Calculate GRADE euglycemia for each subject
-    out = data.groupby('id').agg(
-        GRADE_eugly = ("gl", lambda x: grade_eugly_single(x, lower, upper))
-    ).reset_index()
+    out = data.groupby("id").agg(GRADE_eugly=("gl", lambda x: grade_eugly_single(x, lower, upper))).reset_index()
 
     return out
 

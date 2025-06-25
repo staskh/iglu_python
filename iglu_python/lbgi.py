@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def lbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
+def lbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame | float:
     r"""
     Calculate the Low Blood Glucose Index (LBGI) for each subject.
 
@@ -64,7 +64,7 @@ def lbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame
            LBGI
     0  0.123456
     """
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return calculate_lbgi(data)
@@ -72,10 +72,9 @@ def lbgi(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame
     # Check DataFrame format
     check_data_columns(data)
 
-    out = data.groupby('id').agg(
-        LBGI = ("gl", lambda x: calculate_lbgi(x))
-    ).reset_index()
+    out = data.groupby("id").agg(LBGI=("gl", lambda x: calculate_lbgi(x))).reset_index()
     return out
+
 
 def calculate_lbgi(glucose_values: pd.Series) -> float:
     """
@@ -110,4 +109,3 @@ def calculate_lbgi(glucose_values: pd.Series) -> float:
     lbgi = 10 * np.sum(fbg[glucose_values < 112.5] ** 2) / n
 
     return lbgi
-

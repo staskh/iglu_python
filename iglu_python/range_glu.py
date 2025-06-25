@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def range_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
+def range_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame | float:
     """
     Calculate glucose level range.
 
@@ -56,8 +56,6 @@ def range_glu(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.Data
     data = check_data_columns(data)
 
     # Calculate range for each subject
-    result = (
-        data.groupby("id").agg(range=("gl", lambda x: x.max() - x.min())).reset_index()
-    )
+    result = data.groupby("id").agg(range=("gl", lambda x: x.max() - x.min())).reset_index()
 
     return result

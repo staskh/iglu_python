@@ -1,11 +1,10 @@
-
 import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns
 
 
-def adrr(data: pd.DataFrame|pd.Series) -> pd.DataFrame|float:
+def adrr(data: pd.DataFrame | pd.Series) -> pd.DataFrame | float:
     """
     Calculate average daily risk range (ADRR)
 
@@ -52,7 +51,6 @@ def adrr(data: pd.DataFrame|pd.Series) -> pd.DataFrame|float:
     >>> iglu.adrr(data)
     """
 
-
     # Validate input
     if isinstance(data, pd.Series):
         if not isinstance(data.index, pd.DatetimeIndex):
@@ -61,15 +59,13 @@ def adrr(data: pd.DataFrame|pd.Series) -> pd.DataFrame|float:
 
     data = check_data_columns(data)
 
-    data.set_index("time", inplace=True,drop=True)
-    out = data.groupby("id").agg(
-        ADRR = ("gl", lambda x: adrr_single(x))
-    ).reset_index()
+    data.set_index("time", inplace=True, drop=True)
+    out = data.groupby("id").agg(ADRR=("gl", lambda x: adrr_single(x))).reset_index()
 
     return out
 
 
-def adrr_single(data: pd.DataFrame|pd.Series) -> float:
+def adrr_single(data: pd.DataFrame | pd.Series) -> float:
     """Internal function to calculate ADRR for a single subject or timeseries of glucose values"""
 
     if isinstance(data, pd.Series):
@@ -85,10 +81,9 @@ def adrr_single(data: pd.DataFrame|pd.Series) -> float:
         return np.nan
 
     # Group by date and calculate daily risk for each day
-    daily_risks = data_filtered.groupby(data_filtered.index.date).apply(
-        lambda x: _calculate_daily_risk(x)
-    )
+    daily_risks = data_filtered.groupby(data_filtered.index.date).apply(lambda x: _calculate_daily_risk(x))
     return daily_risks.mean()
+
 
 def _calculate_daily_risk(gl: pd.Series) -> float:
     """Calculate daily risk range for a single day and subject"""

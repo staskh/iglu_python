@@ -6,7 +6,7 @@ import pandas as pd
 from .utils import check_data_columns
 
 
-def j_index(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame|float:
+def j_index(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFrame | float:
     """
     Calculate J-Index score for glucose measurements.
 
@@ -52,7 +52,7 @@ def j_index(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFr
     0  1.5000
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return j_index_single(data)
@@ -60,12 +60,11 @@ def j_index(data: Union[pd.DataFrame, pd.Series, np.ndarray, list]) -> pd.DataFr
     # Handle DataFrame input
     data = check_data_columns(data)
 
-    out = data.groupby('id').agg(
-        J_index = ("gl", lambda x: j_index_single(x))
-    ).reset_index()
+    out = data.groupby("id").agg(J_index=("gl", lambda x: j_index_single(x))).reset_index()
     return out
 
-def j_index_single(gl:  pd.Series) -> float:
+
+def j_index_single(gl: pd.Series) -> float:
     """
     Calculate J-Index score for a single subject.
     """

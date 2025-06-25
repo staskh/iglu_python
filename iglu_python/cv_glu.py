@@ -56,8 +56,6 @@ def cv_glu(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> Union[pd.D
 
     data = data.dropna()
     # Calculate CV for each subject
-    out = data.groupby('id').agg(
-        CV=('gl', lambda x: 100 * x.std() / x.mean())
-    ).reset_index()
+    out = data.groupby("id").agg(CV=("gl", lambda x: 100 * x.std() / x.mean())).reset_index()
 
     return out

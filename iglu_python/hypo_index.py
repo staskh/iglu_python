@@ -8,7 +8,7 @@ from .utils import check_data_columns
 
 def hypo_index(
     data: Union[pd.DataFrame, pd.Series, np.ndarray, list], LLTR: int = 80, b: float = 2, d: int = 30
-) -> pd.DataFrame|float:
+) -> pd.DataFrame | float:
     """
     Calculate Hypoglycemia Index.
 
@@ -63,20 +63,17 @@ def hypo_index(
     0  0.106
     """
     # Handle Series input
-    if isinstance(data, (pd.Series,list, np.ndarray)):
+    if isinstance(data, (pd.Series, list, np.ndarray)):
         if isinstance(data, (np.ndarray, list)):
             data = pd.Series(data)
         return hypo_index_single(data, LLTR, b, d)
 
     data = check_data_columns(data)
-    out = data.groupby('id').agg(
-        hypo_index = ("gl", lambda x: hypo_index_single(x, LLTR, b, d))
-    ).reset_index()
+    out = data.groupby("id").agg(hypo_index=("gl", lambda x: hypo_index_single(x, LLTR, b, d))).reset_index()
     return out
 
-def hypo_index_single(
-    gl: pd.Series, LLTR: int = 80, b: float = 2, d: int = 30
-) -> float:
+
+def hypo_index_single(gl: pd.Series, LLTR: int = 80, b: float = 2, d: int = 30) -> float:
     """
     Calculate Hypoglycemia Index for a single subject.
     """
