@@ -54,6 +54,9 @@ def load_libre(file_path: str) -> pd.Series:
     # Convert 'time' column to datetime
     df['time'] = pd.to_datetime(df['time'], format=format)
 
+    # Convert glucose values to numeric
+    df['glc'] = pd.to_numeric(df['glc'], errors='coerce')
+    
     # convert to mg/dL if needed
     if convert:
         df['glc'] = df['glc'] * 18.01559    

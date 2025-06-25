@@ -197,4 +197,18 @@ def test_load_dexcom_time_interval(test_data_paths):
     tolerance = pd.Timedelta(minutes=2)  # Allow some variation
     # Check that most intervals are close to expected
     close_intervals = time_diffs[abs(time_diffs - expected_interval) <= tolerance]
-    assert len(close_intervals) / len(time_diffs) > 0.8  # At least 80% should be close 
+    assert len(close_intervals) / len(time_diffs) > 0.8  # At least 80% should be close
+
+def test_load_libre_numeric_values(test_data_paths):
+    timeseries = load_libre(str(test_data_paths['libre_amer_01']))
+    # Check that all values are numeric
+    assert pd.api.types.is_numeric_dtype(timeseries)
+    # Check that there are no NaN values (all should be valid numbers)
+    assert not timeseries.isna().any()
+
+def test_load_dexcom_numeric_values(test_data_paths):
+    timeseries = load_dexcom(str(test_data_paths['dexcom_eur_01']))
+    # Check that all values are numeric
+    assert pd.api.types.is_numeric_dtype(timeseries)
+    # Check that there are no NaN values (all should be valid numbers)
+    assert not timeseries.isna().any()
