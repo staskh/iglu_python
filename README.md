@@ -96,8 +96,12 @@ IGLU_PYTHON extends beyond the capabilities of the original IGLU-R package by of
 
 | Function          | Description                              | 
 |-------------------|------------------------------------------|
+| **LOAD DATA FROM DEVICE SPECIFIC FILE**
 | load_libre()      | Load Timeseries from Libre device file (CGM reading converted into mg/dL)
 | load_dexcom()     | Load Timeseries from Dexcom device file (CGM reading converted into mg/dL)
+| **PLOT/VISUALISE CGM **
+| plot_daily()      | Plot daily Glucose values for each day |
+| plot_statistics() | Plot median + quantile daily statistics |
 
 # Installation
 

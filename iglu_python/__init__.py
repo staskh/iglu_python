@@ -10,6 +10,7 @@ from .cv_measures import cv_measures
 from .ea1c import ea1c
 from .episode_calculation import episode_calculation
 from .extension.load_data import load_dexcom, load_libre
+from .extension.plots import plot_daily, plot_statistics
 from .gmi import gmi
 from .grade import grade
 from .grade_eugly import grade_eugly
@@ -85,6 +86,8 @@ __all__ = [
     "median_glu",
     "modd",
     "pgs",
+    "plot_daily",
+    "plot_statistics",
     "process_data",
     "quantile_glu",
     "range_glu",
