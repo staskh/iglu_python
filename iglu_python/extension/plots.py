@@ -68,6 +68,7 @@ def plot_daily(cgm_timeseries: pd.Series, lower: int = 70, upper: int = 140) -> 
     fig.tight_layout()
     return fig
 
+
 def plot_statistics(cgm_timeseries: pd.Series, lower: int = 70, upper: int = 140) -> plt.Figure:
     """
     Plot statistical representation of daily trends
@@ -88,7 +89,6 @@ def plot_statistics(cgm_timeseries: pd.Series, lower: int = 70, upper: int = 140
     # get sampling frequency
     time_diffs = cgm_timeseries.index.to_series().diff()
     dt0 = int(time_diffs.mode().iloc[0].total_seconds() / 60)
-
 
     # Create time grid
     start_time = cgm_timeseries.index.min().floor("D")
@@ -124,13 +124,13 @@ def plot_statistics(cgm_timeseries: pd.Series, lower: int = 70, upper: int = 140
     fig, ax = plt.subplots(figsize=(12, 6))
 
     # plot mean sample trends
-    ax.plot(time_grid_one_day,mean_sample_trends, color="orange", alpha=1, linewidth=3, label='Mean sample trends')
+    ax.plot(time_grid_one_day, mean_sample_trends, color="orange", alpha=1, linewidth=3, label="Mean sample trends")
 
     # plot quantiles
-    ax.fill_between(time_grid_one_day, quantiles[0], quantiles[1], alpha=0.25, color="blue",label='10% quantile')
-    ax.fill_between(time_grid_one_day, quantiles[1], mean_sample_trends, alpha=0.50, color="blue",label='25% quantile')
-    ax.fill_between(time_grid_one_day, mean_sample_trends, quantiles[2], alpha=0.50, color="blue",label='75% quantile')
-    ax.fill_between(time_grid_one_day, quantiles[2], quantiles[3], alpha=0.25, color="blue",label='90% quantile')
+    ax.fill_between(time_grid_one_day, quantiles[0], quantiles[1], alpha=0.25, color="blue", label="10% quantile")
+    ax.fill_between(time_grid_one_day, quantiles[1], mean_sample_trends, alpha=0.50, color="blue", label="25% quantile")
+    ax.fill_between(time_grid_one_day, mean_sample_trends, quantiles[2], alpha=0.50, color="blue", label="75% quantile")
+    ax.fill_between(time_grid_one_day, quantiles[2], quantiles[3], alpha=0.25, color="blue", label="90% quantile")
 
     ax.axhline(y=upper, color="orange", linestyle="--", alpha=0.7, label=f"Hyper threshold ({upper} mg/dL)")
     ax.axhline(y=lower, color="green", linestyle="--", alpha=0.7, label=f"Hypo threshold ({lower} mg/dL)")
