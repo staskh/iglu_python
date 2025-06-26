@@ -304,11 +304,12 @@ def test_plot_daily_save_figure(sample_cgm_data):
     fig = plot_daily(sample_cgm_data)
     
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-        fig.savefig(tmp_file.name, dpi=72)
-        plt.close(fig) 
-        assert os.path.exists(tmp_file.name)
-        assert os.path.getsize(tmp_file.name) > 0
-        os.unlink(tmp_file.name)
+        tmp_filename = tmp_file.name
+    fig.savefig(tmp_filename, dpi=72)
+    plt.close(fig)
+    assert os.path.exists(tmp_filename)
+    assert os.path.getsize(tmp_filename) > 0
+    os.unlink(tmp_filename)
     
     plt.close(fig)
 
@@ -420,11 +421,12 @@ def test_plot_statistics_save_figure(multi_day_statistics_data):
     fig = plot_statistics(multi_day_statistics_data)
     
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-        fig.savefig(tmp_file.name, dpi=72)
-        plt.close(fig)
-        assert os.path.exists(tmp_file.name)
-        assert os.path.getsize(tmp_file.name) > 0
-        os.unlink(tmp_file.name)
+        tmp_filename = tmp_file.name
+    fig.savefig(tmp_filename, dpi=72)
+    plt.close(fig)
+    assert os.path.exists(tmp_filename)
+    assert os.path.getsize(tmp_filename) > 0
+    os.unlink(tmp_filename)
     
     plt.close(fig)
 
@@ -622,11 +624,12 @@ def test_plot_statistics_with_libre_data_save_figure(libre_data):
     fig = plot_statistics(libre_data)
     
     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-        fig.savefig(tmp_file.name, dpi=72)
-        plt.close(fig)
-        assert os.path.exists(tmp_file.name)
-        assert os.path.getsize(tmp_file.name) > 0
-        os.unlink(tmp_file.name)
+        tmp_filename = tmp_file.name
+    fig.savefig(tmp_filename, dpi=72)
+    plt.close(fig)
+    assert os.path.exists(tmp_filename)
+    assert os.path.getsize(tmp_filename) > 0
+    os.unlink(tmp_filename)
     
     plt.close(fig)
 
