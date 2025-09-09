@@ -8,7 +8,7 @@ from .utils import CGMS2DayByDay, check_data_columns
 
 def mag(
     data: Union[pd.DataFrame, pd.Series],
-    n: int|None = None, # to match a new IGLU-R behavior
+    n: int | None = None,  # to match a new IGLU-R behavior
     dt0: Optional[int] = None,
     inter_gap: int = 45,
     tz: str = "",
@@ -88,10 +88,11 @@ def mag(
 
 def mag_single(
     gl: pd.Series,
-    n: int|None = None, # to match a new IGLU-R behavior
+    n: int | None = None,  # to match a new IGLU-R behavior
     dt0: Optional[int] = None,
     inter_gap: int = 45,
-    tz: str = "") -> float:
+    tz: str = "",
+) -> float:
     """Calculate MAG for a single subject"""
     # Convert data to day-by-day format
     data_ip = CGMS2DayByDay(gl, dt0=dt0, inter_gap=inter_gap, tz=tz)
