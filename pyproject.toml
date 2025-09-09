@@ -24,11 +24,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
 dependencies = [
-    "numpy>=2.2.6",
-    "pandas>=2.2.3",
-    "tzlocal>=5.3.1",
-    "openpyxl >= 3.1.5",
-    "matplotlib >= 3.10.0"
+    "numpy",
+    "pandas",
+    "tzlocal",
+    "openpyxl",
+    "matplotlib"
 ]
 
 [project.urls]
