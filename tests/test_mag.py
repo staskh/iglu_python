@@ -108,7 +108,7 @@ def test_mag_series_input():
     series_data = pd.Series([150, 160, 170, 180, 190, 200, 210, 220],
         index=pd.date_range(start="2020-01-01 10:00:00", periods=8, freq="5min"))
     result = iglu.mag(series_data,n=20)
-    expected = 60
+    expected = 120  # to match fix in IGLU-R v4.3.0
     assert isinstance(result, float)
     np.testing.assert_allclose(result, expected, rtol=1e-3)
 
