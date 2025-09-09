@@ -39,7 +39,7 @@ result_float = iglu.cv_glu(glucose_list)  # list of glucose values
 ```
 
 ## IGLU-R Compatibility Test Status
-The current version of IGLU-PYTHON is test-compatible with IGLU-R v4.2.2
+The current version of IGLU-PYTHON is test-compatible with IGLU-R v4.3.0 (2025-07-12)
 
 Unless noted, IGLU-R test compatability is considered successful if it achieves precision of 0.001
 
@@ -73,7 +73,7 @@ Unless noted, IGLU-R test compatability is considered successful if it achieves 
 | lbgi | Low Blood Glucose Index| ✅ |✅ returns float |
 | m_value | M-value of Schlichtkrull et al | ✅ |✅ returns float |
 | mad_glu | Median Absolute Deviation | ✅ |✅ returns float |
-| mag | Mean Absolute Glucose| ✅ | ✅ only Series(DatetimeIndex) returns float ||| IMHO, Original R implementation has an error |
+| mag | Mean Absolute Glucose| ✅ | ✅ only Series(DatetimeIndex) returns float ||| IMHO, Original R bug fixed in v4.3.0 |
 | mage | Mean Amplitude of Glycemic Excursions|  ✅ |✅ only Series(DatetimeIndex) returns float || See algorithm at [MAGE](https://irinagain.github.io/iglu/articles/MAGE.html) |
 | mean_glu | Mean glucose value | ✅ | ✅ returns float|
 | median_glu |Median glucose value| ✅ |✅ returns float |

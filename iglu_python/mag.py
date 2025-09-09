@@ -3,12 +3,12 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns, is_iglu_r_compatible
+from .utils import CGMS2DayByDay, check_data_columns
 
 
 def mag(
     data: Union[pd.DataFrame, pd.Series],
-    n: int = 60,
+    n: int | None = None,  # to match a new IGLU-R behavior
     dt0: Optional[int] = None,
     inter_gap: int = 45,
     tz: str = "",
@@ -26,9 +26,10 @@ def mag(
     ----------
     data : Union[pd.DataFrame, pd.Series]
         DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
-    n : int, default=60
+    n : int|None, default=None
         Integer giving the desired interval in minutes over which to calculate
-        the change in glucose. Default is 60 for hourly intervals.
+        the change in glucose. Default is None - will be automatically set to dt0
+        (from data collection frequency).
     dt0 : Optional[int], default=None
         Time interval between measurements in minutes. If None, it will be automatically
         determined from the data.
@@ -85,14 +86,20 @@ def mag(
     return out
 
 
-def mag_single(gl: pd.Series, n: int = 60, dt0: Optional[int] = None, inter_gap: int = 45, tz: str = "") -> float:
+def mag_single(
+    gl: pd.Series,
+    n: int | None = None,  # to match a new IGLU-R behavior
+    dt0: Optional[int] = None,
+    inter_gap: int = 45,
+    tz: str = "",
+) -> float:
     """Calculate MAG for a single subject"""
     # Convert data to day-by-day format
     data_ip = CGMS2DayByDay(gl, dt0=dt0, inter_gap=inter_gap, tz=tz)
     dt0_actual = data_ip[2]  # Time between measurements in minutes
 
     # Ensure n is not less than data collection frequency
-    if n < dt0_actual:
+    if n is None or n < dt0_actual:
         n = dt0_actual
 
     # Calculate number of readings per interval
@@ -108,27 +115,14 @@ def mag_single(gl: pd.Series, n: int = 60, dt0: Optional[int] = None, inter_gap:
     # Calculate absolute differences between readings n minutes apart
     lag = readings_per_interval
 
-    if is_iglu_r_compatible():
-        idx = np.arange(0, len(gl_values), lag)
-        gl_values_idx = gl_values[idx]
-        diffs = gl_values_idx[1:] - gl_values_idx[:-1]
-        diffs = np.abs(diffs)
-        diffs = diffs[~np.isnan(diffs)]
-        # to be IGLU-R test compatible, imho they made error.
-        # has to be total_time_hours = ((len(diffs)) * n) / 60
-        total_time_hours = ((len(gl_values_idx[~np.isnan(gl_values_idx)])) * n) / 60
-        if total_time_hours == 0:
-            return 0.0
-        mag = float(np.sum(diffs) / total_time_hours)
-    else:
-        diffs = gl_values[lag:] - gl_values[:-lag]
-        diffs = np.abs(diffs)
-        diffs = diffs[~np.isnan(diffs)]
+    diffs = gl_values[lag:] - gl_values[:-lag]
+    diffs = np.abs(diffs)
+    diffs = diffs[~np.isnan(diffs)]
 
-        # Calculate MAG: sum of absolute differences divided by total time in hours
-        total_time_hours = ((len(diffs)) * n) / 60
-        if total_time_hours == 0:
-            return 0.0
-        mag = float(np.sum(diffs) / total_time_hours)
+    # Calculate MAG: sum of absolute differences divided by total time in hours
+    total_time_hours = ((len(diffs)) * n) / 60
+    if total_time_hours == 0:
+        return 0.0
+    mag = float(np.sum(diffs) / total_time_hours)
 
     return mag
