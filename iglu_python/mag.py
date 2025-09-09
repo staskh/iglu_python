@@ -3,12 +3,12 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns, is_iglu_r_compatible
+from .utils import CGMS2DayByDay, check_data_columns
 
 
 def mag(
     data: Union[pd.DataFrame, pd.Series],
-    n: int|None = None, # to match new IGLU-R behavior
+    n: int|None = None, # to match a new IGLU-R behavior
     dt0: Optional[int] = None,
     inter_gap: int = 45,
     tz: str = "",
@@ -28,7 +28,7 @@ def mag(
         DataFrame with columns 'id', 'time', and 'gl', or a Series of glucose values
     n : int|None, default=None
         Integer giving the desired interval in minutes over which to calculate
-        the change in glucose. Default is None - will be automatically set to dt0 
+        the change in glucose. Default is None - will be automatically set to dt0
         (from data collection frequency).
     dt0 : Optional[int], default=None
         Time interval between measurements in minutes. If None, it will be automatically
@@ -86,7 +86,12 @@ def mag(
     return out
 
 
-def mag_single(gl: pd.Series, n: int|None = None, dt0: Optional[int] = None, inter_gap: int = 45, tz: str = "") -> float:
+def mag_single(
+    gl: pd.Series,
+    n: int|None = None, # to match a new IGLU-R behavior
+    dt0: Optional[int] = None,
+    inter_gap: int = 45,
+    tz: str = "") -> float:
     """Calculate MAG for a single subject"""
     # Convert data to day-by-day format
     data_ip = CGMS2DayByDay(gl, dt0=dt0, inter_gap=inter_gap, tz=tz)
