@@ -61,11 +61,7 @@ def grade(data: Union[pd.DataFrame, pd.Series]) -> pd.DataFrame:
     data = check_data_columns(data)
 
     # Calculate GRADE score for each subject
-    result = (
-        data.groupby("id")
-        .apply(lambda x: np.mean(_grade_formula(x["gl"].dropna())), include_groups=False)
-        .reset_index()
-    )
+    result = data.groupby("id")[["gl"]].apply(lambda x: np.mean(_grade_formula(x["gl"].dropna()))).reset_index()
     result.columns = ["id", "GRADE"]
 
     return result

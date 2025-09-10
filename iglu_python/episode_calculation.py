@@ -292,7 +292,7 @@ def episode_single(
 
     # Classify events for each segment
     ep_per_seg = (
-        segment_data.groupby("segment")
+        segment_data.groupby("segment")[["gl"]]
         .apply(
             lambda x: pd.DataFrame(
                 {
@@ -302,8 +302,7 @@ def episode_single(
                     "lv2_hyper": event_class(x, "hyper", lv2_hyper, dur_idx, end_idx),
                     "ext_hypo": event_class(x, "hypo", lv1_hypo, int(120 / dt0) + 1, end_idx),
                 }
-            ),
-            include_groups=False,
+            )
         )
         .reset_index()
         .drop(columns=["level_1"])
@@ -383,7 +382,7 @@ def event_class(
 
     # Group by event and calculate start/end positions
     annotated_grouped = (
-        annotated.groupby("event")
+        annotated.groupby("event")[["level"]]
         .apply(
             lambda x: pd.DataFrame(
                 {
@@ -399,8 +398,7 @@ def event_class(
                         ["end" if (not x["level"].iloc[0] and len(x) >= end_duration) else None] + [None] * (len(x) - 1)
                     ),
                 }
-            ),
-            include_groups=False,
+            )
         )
         .reset_index()
         .drop(columns=["level_1"])
@@ -462,12 +460,16 @@ def lv1_excl(data: pd.DataFrame) -> np.ndarray:
     lv2 = [column for column in data.columns if column.startswith("lv2")]
     lv2_first = lv2[0]
     # Group by segment and lv1
-    grouped = data.groupby(["segment", lv1_first])
+    grouped = data.groupby(["segment", lv1_first])[
+        [
+            lv1_first,
+            lv2_first,
+        ]
+    ]
 
     # Calculate exclusive labels
     excl = grouped.apply(
-        lambda x: pd.DataFrame({"excl": [0 if (x[lv2_first].values > 0).any() else x[lv1_first].iloc[0]] * len(x)}),
-        include_groups=False,
+        lambda x: pd.DataFrame({"excl": [0 if (x[lv2_first].values > 0).any() else x[lv1_first].iloc[0]] * len(x)})
     )
 
     excl = excl.reset_index()
