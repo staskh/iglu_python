@@ -86,8 +86,8 @@ def auc_single(subject_data: pd.DataFrame | pd.Series, tz: str = "") -> float:
     if is_iglu_r_compatible():
         input_data["day"] = input_data["time"].dt.floor("d")
         input_data["gl_next"] = input_data["gl"].shift(-1)
-        each_day_area = input_data.groupby("day").apply(
-            lambda x: np.nansum((dt0 / 60) * (x["gl"].values + x["gl_next"].values) / 2), include_groups=False
+        each_day_area = input_data.groupby("day")[["gl", "gl_next"]].apply(
+            lambda x: np.nansum((dt0 / 60) * (x["gl"].values + x["gl_next"].values) / 2)
         )
         # calculate number of not nan trapezoids in total (number of not nan gl and gl_next)
         n_trapezoids = (~np.isnan(input_data["gl"]) & ~np.isnan(input_data["gl_next"])).sum()
@@ -102,8 +102,8 @@ def auc_single(subject_data: pd.DataFrame | pd.Series, tz: str = "") -> float:
         input_data["gl_next"] = input_data["gl"].shift(-1)
 
         # Calculate AUC for each hour using trapezoidal rule (mg*min/dL)
-        hourly_auc = input_data.groupby("hour").apply(
-            lambda x: np.nansum((dt0 / 60) * (x["gl"].values + x["gl_next"].values) / 2), include_groups=False
+        hourly_auc = input_data.groupby("hour")[["gl", "gl_next"]].apply(
+            lambda x: np.nansum((dt0 / 60) * (x["gl"].values + x["gl_next"].values) / 2)
         )
         # 0 mean no data in this hour, replace with nan
         hourly_auc = hourly_auc.replace(0, np.nan)
