@@ -26,10 +26,22 @@ def localize_naive_timestamp(timestamp: datetime) -> datetime:
     Localize a naive timestamp to the local timezone.
     """
     if timestamp.tzinfo is None:
-        return timestamp.tz_localize(local_tz)
+        # Handle ambiguous times (e.g., DST transitions) by specifying 'ambiguous' argument
+        # Default to 'NaT' for ambiguous times, but you may choose 'raise' or 'infer' as needed
+        return timestamp.tz_localize(local_tz, ambiguous="NaT")
     else:
         return timestamp
 
+def localize_naive_timestamp_to_UTC(timestamp: datetime) -> datetime:
+    """
+    Localize a naive timestamp to the UTC timezone.
+    """
+    if timestamp.tzinfo is None:
+        # Handle ambiguous times (e.g., DST transitions) by specifying 'ambiguous' argument
+        # Default to 'NaT' for ambiguous times, but you may choose 'raise' or 'infer' as needed
+        return timestamp.tz_localize("UTC")
+    else:
+        return timestamp
 
 def set_local_tz(tz: str) -> None:
     """
@@ -56,6 +68,7 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
     tz : str, default=""
         Time zone to use for calculations
         If tz is not "", the time column is converted to the specified timezone
+        if tz is "", the time column is converted to UTC timezone
 
     Returns
     -------
@@ -118,7 +131,10 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
         data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp).dt.tz_convert(tz)
     else:
         # Create a copy to avoid dtype warning
-        data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
+        data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp_to_UTC)
+
+    # Drop rows where 'time' is NaT
+    data = data[~pd.isna(data["time"])]
 
     return data
 
@@ -194,7 +210,11 @@ def CGMS2DayByDay(
     if dt0 is None:
         # Use most common time difference
         time_diffs = data["time"].diff().dropna()
-        dt0 = int(time_diffs.mode().iloc[0].total_seconds() / 60)
+        # Only consider time differences >= 1 minute when computing the mode
+        time_diffs_filtered = time_diffs[time_diffs.dt.total_seconds() >= 60]
+        if len(time_diffs_filtered) == 0:
+            raise ValueError("No time differences >= 1 minute found to compute dt0.")
+        dt0 = int(time_diffs_filtered.mode().iloc[0].total_seconds() / 60)
 
     # Create time grid
     start_time = data["time"].min().floor("D")
@@ -214,6 +234,14 @@ def CGMS2DayByDay(
             gaps.append((i, i + 1))
 
     # Interpolate glucose values
+    # Note: doesn't work right with DST crossings
+    # During DST spring forward (March 12, 2023)
+    # 2:00 AM → 3:00 AM (hour is skipped)
+    # Your current code would try to interpolate:
+    # 2:30 AM → ??? (this time doesn't exist!)
+    # np.interp will linearly interpolate between 2:00 AM and 3:00 AM
+    # giving you a glucose value for a non-existent time
+    # TODO: fix this
     interp_data = np.interp(
         (time_grid - start_time).total_seconds() / 60,
         (data["time"] - start_time).dt.total_seconds() / 60,
