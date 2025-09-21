@@ -4,8 +4,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from .utils import check_data_columns, localize_naive_timestamp
-
+from .utils import check_data_columns
 
 def active_percent(
     data: Union[pd.DataFrame, pd.Series],
@@ -122,7 +121,7 @@ def active_percent_single(
         return {"active_percent": 0, "ndays": 0, "start_date": None, "end_date": None}
 
     # Calculate time differences between consecutive measurements
-    time_diffs = np.array(data.index.diff().total_seconds() / 60)  # Convert to minutes
+    time_diffs = np.array(data.index.to_series().diff().dt.total_seconds() / 60)  # Convert to minutes
 
     # Automatically determine dt0 if not provided
     if dt0 is None:
@@ -151,12 +150,20 @@ def active_percent_single(
     elif range_type == "manual":
         # Handle consistent end date if provided
         if consistent_end_date is not None:
-            end_date = localize_naive_timestamp(pd.to_datetime(consistent_end_date))
+            end_date = pd.to_datetime(consistent_end_date)
         else:
             end_date = data.index.max()
         start_date = end_date - pd.Timedelta(days=int(ndays))
 
         # Filter data to the specified date range
+        # bring timestamps to teh same timezone as start_date
+        tz = data.index.tz
+        # Localize start_date only if it is naive and tz is not None
+        if start_date.tzinfo is None and tz is not None:
+            start_date = start_date.tz_localize(tz)
+        # Localize end_date only if it is naive and tz is not None
+        if end_date.tzinfo is None and tz is not None:
+            end_date = end_date.tz_localize(tz)
         mask = (data.index >= start_date) & (data.index <= end_date)
         data = data[mask]
 
