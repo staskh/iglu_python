@@ -16,7 +16,10 @@ def get_test_scenarios():
     # Load expected results
     with open("tests/expected_results.json", "r") as f:
         expected_results = json.load(f)
-
+ 
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results["config"]["local_tz"])
+ 
     # Filter scenarios for GVP method
     return [
         scenario
