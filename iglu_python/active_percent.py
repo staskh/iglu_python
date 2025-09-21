@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .utils import check_data_columns
+from .utils import get_local_tz
 
 def active_percent(
     data: Union[pd.DataFrame, pd.Series],
@@ -115,6 +116,12 @@ def active_percent_single(
 
     if not isinstance(data.index, pd.DatetimeIndex):
         raise ValueError("Series must have a DatetimeIndex")
+
+    # localize data.index to the timezone if it is not already
+    if data.index.tzinfo is None:
+        if not tz or tz=="":
+            tz = get_local_tz()
+        data.index = data.index.tz_localize(tz)
 
     data = data.dropna()
     if len(data) == 0:

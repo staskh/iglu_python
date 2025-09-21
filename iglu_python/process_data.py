@@ -4,6 +4,9 @@ from typing import Callable, Optional, Union
 import numpy as np
 import pandas as pd
 
+from .utils import localize_naive_timestamp
+
+
 def _validate_input_data(data: Union[pd.DataFrame, pd.Series, list, np.ndarray]) -> None:
     """Validate input data type"""
     if not isinstance(data, (pd.DataFrame, pd.Series, list, np.ndarray)):
@@ -99,7 +102,7 @@ def _process_timestamp_column(
 
         data.insert(1, "time", time_data)
 
-    data["time"] = pd.to_datetime(data["time"])
+    data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
     return data
 
 
