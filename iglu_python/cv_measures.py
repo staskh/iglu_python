@@ -10,6 +10,7 @@ References:
     The American Journal of Medical Sciences 356 .518-527,
     doi:10.1016/j.amjms.2018.09.010.
 """
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -83,6 +84,8 @@ def _calculate_series_cv(subject_data: pd.DataFrame | pd.Series, dt0=None, inter
     # dt0 is the time frequency for interpolation in minutes
 
     # calculate deviation and median for each day
+    # with warnings.catch_warnings():
+    #     warnings.simplefilter("ignore", category=RuntimeWarning)
     daily_deviations = np.apply_along_axis(np.nanstd, 1, gd2d, ddof=1)
     daily_mean = np.apply_along_axis(np.nanmean, 1, gd2d)
 
@@ -93,6 +96,6 @@ def _calculate_series_cv(subject_data: pd.DataFrame | pd.Series, dt0=None, inter
     if len(cv) > 1:
         cv_sd = np.nanstd(cv, ddof=1)
     else:
-        cv_sd = 0.0
+        cv_sd = np.nan
 
     return {"CVmean": cv_mean, "CVsd": cv_sd}
