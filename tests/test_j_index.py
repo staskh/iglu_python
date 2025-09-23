@@ -51,8 +51,8 @@ def test_j_index_iglu_r_compatible(scenario):
 
     # Compare DataFrames with precision to 0.001 for numeric columns
     pd.testing.assert_frame_equal(
-        result_df.round(3),
-        expected_df.round(3),
+        result_df,
+        expected_df,
         check_dtype=False,  # Don't check dtypes since we might have different numeric types
         check_index_type=True,
         check_column_type=True,

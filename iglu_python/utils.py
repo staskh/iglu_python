@@ -172,33 +172,41 @@ def CGMS2DayByDay(
     if isinstance(data, pd.Series):
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series must have a DatetimeIndex")
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data.values),
-                "time": data.index,
-                "gl": data.values,
-            }
-        )
-    # Check data format
-    data = check_data_columns(data, tz)
+    elif isinstance(data, pd.DataFrame):
+        # convert dataframe to series
+        # check that all id's are the same
+        if not data["id"].nunique() == 1:
+            raise ValueError("Multiple subjects detected. Please provide a single subject.")
+        # check that time is datetime
+        if not pd.api.types.is_datetime64_any_dtype(data["time"]):
+            try:
+                data["time"] = pd.to_datetime(data["time"])
+            except Exception as e:
+                raise ValueError("Column 'time' must be datetime") from e
+        # Check data types
+        if not pd.api.types.is_numeric_dtype(data["gl"]):
+            try:
+                data["gl"] = pd.to_numeric(data["gl"])
+            except Exception as e:
+                raise ValueError("Column 'gl' must be numeric") from e
+        # convert dataframe to series
+        data_reset = data.reset_index(drop=True)
+        data = pd.Series(data_reset["gl"].values, index=data_reset["time"].values)
+    else:
+        raise ValueError("Input must be a Series or DataFrame")
 
-    # Get unique subjects
-    subjects = data["id"].unique()
-    if len(subjects) > 1:
-        raise ValueError("Multiple subjects detected. Please provide a single subject.")
-
-    # Sort by time
-    data = data.sort_values("time")
 
     # Calculate time step (dt0)
     if dt0 is None:
         # Use most common time difference
-        time_diffs = data["time"].diff().dropna()
-        dt0 = int(time_diffs.mode().iloc[0].total_seconds() / 60)
+        time_diffs = data.index.diff().dropna()
+        # Pandas TimedeltaIndex does not have a .mode() method directly.
+        # We'll convert to seconds and use pd.Series.mode()
+        dt0 = int(pd.Series(time_diffs.total_seconds() / 60).mode().iloc[0])
 
     # Create time grid
-    start_time = data["time"].min().floor("D")
-    end_time = data["time"].max().ceil("D")
+    start_time = data.index.min().floor("D")
+    end_time = data.index.max().ceil("D")
     time_grid = pd.date_range(start=start_time, end=end_time, freq=f"{dt0}min")
     if is_iglu_r_compatible():
         # remove the first time point
@@ -210,14 +218,14 @@ def CGMS2DayByDay(
     # find gaps in the data (using original data indexes, not time grid)
     gaps = []
     for i in range(len(data) - 1):
-        if (data["time"].iloc[i + 1] - data["time"].iloc[i]).total_seconds() > inter_gap * 60:
+        if (data.index[i + 1] - data.index[i]).total_seconds() > inter_gap * 60:
             gaps.append((i, i + 1))
 
     # Interpolate glucose values
     interp_data = np.interp(
         (time_grid - start_time).total_seconds() / 60,
-        (data["time"] - start_time).dt.total_seconds() / 60,
-        data["gl"],
+        (data.index - start_time).total_seconds() / 60,
+        data.values,
         left=np.nan,
         right=np.nan,
     )
@@ -225,11 +233,11 @@ def CGMS2DayByDay(
     # put nan in the gaps
     for gap in gaps:
         gap_start_idx = gap[0]
-        gap_start_time = data["time"].iloc[gap_start_idx]
+        gap_start_time = data.index[gap_start_idx]
         # find the index of the gap start in the time grid
         gap_start_idx_in_time_grid = int(np.floor((gap_start_time - start_time).total_seconds() / (60 * dt0)))
         gap_end_idx = gap[1]
-        gap_end_time = data["time"].iloc[gap_end_idx]
+        gap_end_time = data.index[gap_end_idx]
         # find the index of the gap end in the time grid
         gap_end_idx_in_time_grid = int(
             # -1sec to indicate time before measurement
@@ -238,10 +246,10 @@ def CGMS2DayByDay(
         # put nan in the gap
         interp_data[gap_start_idx_in_time_grid:gap_end_idx_in_time_grid] = np.nan
 
-    # for compatibility with the R package, set values to nan before data['time'].min() and after data['time'].max()
-    # find index of timegrid before data['time'].min() and after data['time'].max()
-    # head_min_idx = np.where(time_grid >= data['time'].min())[0][0]
-    # tail_max_idx = np.where(time_grid <= data['time'].max())[0][-1] + 1
+    # for compatibility with the R package, set values to nan before data.index.min() and after data.index.max()
+    # find index of timegrid before data.index.min() and after data.index.max()
+    # head_min_idx = np.where(time_grid >= data.index.min())[0][0]
+    # tail_max_idx = np.where(time_grid <= data.index.max())[0][-1] + 1
     # interp_data[:head_min_idx] = np.nan
     # interp_data[tail_max_idx:] = np.nan
 

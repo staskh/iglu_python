@@ -258,5 +258,5 @@ def test_cogi_iglu_r_compatible(scenario):
         check_freq=True,
         check_flags=True,
         check_exact=False,
-        rtol=0.01,
+        rtol=0.001,
     )
