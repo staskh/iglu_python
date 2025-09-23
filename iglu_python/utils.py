@@ -45,7 +45,7 @@ def get_local_tz():
     return local_tz
 
 
-def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFrame:
+def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFrame:  # noqa: C901
     """
     Check if the input DataFrame has the required columns and correct data types.
 
@@ -105,25 +105,26 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
     # if data["gl"].isna().any():
     #     warnings.warn("Data contains missing glucose values")
 
-    # convert time to specified timezone
-    # TODO: check if this is correct (R-implementation compatibility)
-    # if tz and tz != "":
-    #     # First remove timezone information, then localize to specified timezone
-    #     data['time'] = pd.to_datetime(data['time']).dt.tz_localize(None).dt.tz_localize(tz)
-    #
-    # this is implementation compatible with R implementation
-    # but seems incorrect, as it convert time to TZ instead of localizing it to TZ
-    # if tz != "":
-    #     # Create a copy to avoid dtype warning and properly handle timezone conversion
-    #     data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp).dt.tz_convert(tz)
-    # else:
-    #     # Create a copy to avoid dtype warning
-    #     data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
+    if time_check:
+        # convert time to specified timezone
+        # TODO: check if this is correct (R-implementation compatibility)
+        # if tz and tz != "":
+        #     # First remove timezone information, then localize to specified timezone
+        #     data['time'] = pd.to_datetime(data['time']).dt.tz_localize(None).dt.tz_localize(tz)
+        #
+        # this is implementation compatible with R implementation
+        # but seems incorrect, as it convert time to TZ instead of localizing it to TZ
+        if tz and tz != "":
+            # Create a copy to avoid dtype warning and properly handle timezone conversion
+            data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp).dt.tz_convert(tz)
+        else:
+            # Create a copy to avoid dtype warning
+            data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
 
     return data
 
 
-def CGMS2DayByDay(
+def CGMS2DayByDay(  # noqa: C901
     data: pd.DataFrame | pd.Series,
     dt0: Optional[pd.Timestamp] = None,
     inter_gap: int = 45,
@@ -194,12 +195,12 @@ def CGMS2DayByDay(
                 raise ValueError("Column 'gl' must be numeric") from e
         # convert dataframe to series
         data_reset = data.reset_index(drop=True)
-        # convert time to naive timezone (so index would not convert it into UTC with a shift and no DST transition issues in np.interp())
+        # convert time to naive timezone
+        # (so index would not convert it into UTC with a shift and no DST transition issues in np.interp())
         data_reset["time"] = data_reset["time"].dt.tz_localize(None)
         data = pd.Series(data_reset["gl"].values, index=data_reset["time"].values)
     else:
         raise ValueError("Input must be a Series or DataFrame")
-
 
     # Calculate time step (dt0)
     if dt0 is None:
@@ -273,7 +274,7 @@ def CGMS2DayByDay(
     return interp_data, actual_dates, dt0
 
 
-def gd2d_to_df(gd2d, actual_dates, dt0):
+def gd2d_to_df(gd2d, actual_dates, dt0):  # noqa: C901
     """Convert gd2d (CGMS2DayByDay output) to a pandas DataFrame"""
     df = pd.DataFrame({"time": [], "gl": []})
 
