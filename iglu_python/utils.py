@@ -135,6 +135,7 @@ def CGMS2DayByDay(
     The function takes CGM data and interpolates it onto a uniform time grid,
     with each row representing a day and each column representing a time point.
     Missing values are linearly interpolated when close enough to non-missing values.
+    Note: all datetime indexes are converted into naive format to avoid DST transition bugs.
 
     data : pd.DataFrame or pd.Series
         DataFrame with columns 'id', 'time', and 'gl'. Should only be data for 1 subject.
@@ -172,6 +173,8 @@ def CGMS2DayByDay(
     if isinstance(data, pd.Series):
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series must have a DatetimeIndex")
+        # convert time to naive timezone (so no DST transition issues in np.interp())
+        data.index = data.index.tz_localize(None)
     elif isinstance(data, pd.DataFrame):
         # convert dataframe to series
         # check that all id's are the same
@@ -191,6 +194,8 @@ def CGMS2DayByDay(
                 raise ValueError("Column 'gl' must be numeric") from e
         # convert dataframe to series
         data_reset = data.reset_index(drop=True)
+        # convert time to naive timezone (so index would not convert it into UTC with a shift and no DST transition issues in np.interp())
+        data_reset["time"] = data_reset["time"].dt.tz_localize(None)
         data = pd.Series(data_reset["gl"].values, index=data_reset["time"].values)
     else:
         raise ValueError("Input must be a Series or DataFrame")
