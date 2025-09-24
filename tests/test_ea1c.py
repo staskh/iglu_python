@@ -24,12 +24,10 @@ def get_test_scenarios():
         pytest.skip(
             "expected_results.json could not be loaded, skipping eA1C calculation test"
         )
-    # set local timezone if present
-    if "config" in expected_results and "local_tz" in expected_results["config"]:
-        try:
-            iglu.utils.set_local_tz(expected_results["config"]["local_tz"])
-        except Exception:
-            pass
+        
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results["config"]["local_tz"])
+ 
     return [
         scenario
         for scenario in expected_results["test_runs"]
@@ -46,7 +44,7 @@ def test_ea1c_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
-    pd.set_option('future.no_silent_downcasting', True)
+    # pd.set_option('future.no_silent_downcasting', True)
     expected_df = expected_df.replace({None: np.nan})
 
 
@@ -61,8 +59,8 @@ def test_ea1c_iglu_r_compatible(scenario):
 
     # Compare DataFrames with precision to 0.001 for numeric columns
     pd.testing.assert_frame_equal(
-        result_df.round(3),
-        expected_df.round(3),
+        result_df,
+        expected_df,
         check_dtype=False,  # Don't check dtypes since we might have different numeric types
         check_index_type=True,
         check_column_type=True,

@@ -15,6 +15,9 @@ def get_test_scenarios():
     with open("tests/expected_results.json", "r") as f:
         expected_results = json.load(f)
 
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results["config"]["local_tz"])
+    
     # Filter scenarios for GMI method
     return [
         scenario
@@ -33,7 +36,7 @@ def test_gmi_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
-    pd.set_option('future.no_silent_downcasting', True)
+    # pd.set_option('future.no_silent_downcasting', True)
     expected_df = expected_df.replace({None: np.nan})
 
     # Read CSV and convert time column to datetime

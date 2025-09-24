@@ -14,6 +14,9 @@ def get_test_scenarios():
     # Load expected results
     with open("tests/expected_results.json", "r") as f:
         expected_results = json.load(f)
+
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results["config"]["local_tz"])
     # Filter scenarios for modd method
     return [
         scenario
@@ -48,7 +51,7 @@ def test_modd_iglu_r_compatible(scenario):
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
 
-    pd.set_option('future.no_silent_downcasting', True)
+    # pd.set_option('future.no_silent_downcasting', True)
     expected_df = expected_df.replace({None: np.nan})
 
 

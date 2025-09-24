@@ -3,10 +3,10 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns
+from .utils import CGMS2DayByDay, check_data_columns, get_local_tz
 
 
-def roc(
+def roc(  # noqa: C901
     data: Union[pd.DataFrame, pd.Series],
     timelag: int = 15,
     dt0: int = 5,
@@ -137,6 +137,17 @@ def roc(
         subject_data = data[data["id"] == subject].dropna(subset=["gl"])
         if len(subject_data) == 0:
             continue
+
+        # Ensure 'time' is a DatetimeIndex before localizing
+        if not tz or tz == "":
+            tz = get_local_tz()
+        if pd.api.types.is_datetime64_any_dtype(subject_data["time"]):
+            if subject_data["time"].dt.tz is None:
+                subject_data["time"] = subject_data["time"].dt.tz_localize(tz)
+            else:
+                subject_data["time"] = subject_data["time"].dt.tz_convert(tz)
+        else:
+            subject_data["time"] = pd.to_datetime(subject_data["time"]).dt.tz_localize(tz)
 
         roc_values = roc_single(subject_data, timelag, dt0, inter_gap, tz)
 

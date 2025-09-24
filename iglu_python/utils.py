@@ -45,7 +45,7 @@ def get_local_tz():
     return local_tz
 
 
-def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFrame:
+def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFrame:  # noqa: C901
     """
     Check if the input DataFrame has the required columns and correct data types.
 
@@ -90,8 +90,15 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
         except Exception as e:
             raise ValueError("Column 'time' must be datetime") from e
 
-    if not pd.api.types.is_string_dtype(data["id"]):
-        data["id"] = data["id"].astype(str)
+    # Check if id column is string-like (pandas 1.5.x compatible)
+    try:
+        # Try pandas 2.0+ method first
+        if not pd.api.types.is_string_dtype(data["id"]):
+            data["id"] = data["id"].astype(str)
+    except AttributeError:
+        # Fallback for pandas 1.5.x
+        if not isinstance(data["id"].dtype, object):
+            data["id"] = data["id"].astype(str)
 
     # check if data frame empty
     if data.empty:
@@ -105,25 +112,26 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
     # if data["gl"].isna().any():
     #     warnings.warn("Data contains missing glucose values")
 
-    # convert time to specified timezone
-    # TODO: check if this is correct (R-implementation compatibility)
-    # if tz and tz != "":
-    #     # First remove timezone information, then localize to specified timezone
-    #     data['time'] = pd.to_datetime(data['time']).dt.tz_localize(None).dt.tz_localize(tz)
-    #
-    # this is implementation compatible with R implementation
-    # but seems incorrect, as it convert time to TZ instead of localizing it to TZ
-    if tz != "":
-        # Create a copy to avoid dtype warning and properly handle timezone conversion
-        data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp).dt.tz_convert(tz)
-    else:
-        # Create a copy to avoid dtype warning
-        data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
+    if time_check:
+        # convert time to specified timezone
+        # TODO: check if this is correct (R-implementation compatibility)
+        # if tz and tz != "":
+        #     # First remove timezone information, then localize to specified timezone
+        #     data['time'] = pd.to_datetime(data['time']).dt.tz_localize(None).dt.tz_localize(tz)
+        #
+        # this is implementation compatible with R implementation
+        # but seems incorrect, as it convert time to TZ instead of localizing it to TZ
+        if tz and tz != "":
+            # Create a copy to avoid dtype warning and properly handle timezone conversion
+            data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp).dt.tz_convert(tz)
+        else:
+            # Create a copy to avoid dtype warning
+            data["time"] = pd.to_datetime(data["time"]).apply(localize_naive_timestamp)
 
     return data
 
 
-def CGMS2DayByDay(
+def CGMS2DayByDay(  # noqa: C901
     data: pd.DataFrame | pd.Series,
     dt0: Optional[pd.Timestamp] = None,
     inter_gap: int = 45,
@@ -135,6 +143,7 @@ def CGMS2DayByDay(
     The function takes CGM data and interpolates it onto a uniform time grid,
     with each row representing a day and each column representing a time point.
     Missing values are linearly interpolated when close enough to non-missing values.
+    Note: all datetime indexes are converted into naive format to avoid DST transition bugs.
 
     data : pd.DataFrame or pd.Series
         DataFrame with columns 'id', 'time', and 'gl'. Should only be data for 1 subject.
@@ -172,33 +181,60 @@ def CGMS2DayByDay(
     if isinstance(data, pd.Series):
         if not isinstance(data.index, pd.DatetimeIndex):
             raise ValueError("Series must have a DatetimeIndex")
-        data = pd.DataFrame(
-            {
-                "id": ["subject1"] * len(data.values),
-                "time": data.index,
-                "gl": data.values,
-            }
-        )
-    # Check data format
-    data = check_data_columns(data, tz)
-
-    # Get unique subjects
-    subjects = data["id"].unique()
-    if len(subjects) > 1:
-        raise ValueError("Multiple subjects detected. Please provide a single subject.")
-
-    # Sort by time
-    data = data.sort_values("time")
+        # convert time to naive timezone (so no DST transition issues in np.interp())
+        data.index = data.index.tz_localize(None)
+    elif isinstance(data, pd.DataFrame):
+        # convert dataframe to series
+        # check that all id's are the same
+        if not data["id"].nunique() == 1:
+            raise ValueError("Multiple subjects detected. Please provide a single subject.")
+        # check that time is datetime
+        if not pd.api.types.is_datetime64_any_dtype(data["time"]):
+            try:
+                data["time"] = pd.to_datetime(data["time"])
+            except Exception as e:
+                raise ValueError("Column 'time' must be datetime") from e
+        # Check data types
+        if not pd.api.types.is_numeric_dtype(data["gl"]):
+            try:
+                data["gl"] = pd.to_numeric(data["gl"])
+            except Exception as e:
+                raise ValueError("Column 'gl' must be numeric") from e
+        # convert dataframe to series
+        data_reset = data.reset_index(drop=True)
+        # convert time to naive timezone
+        # (so index would not convert it into UTC with a shift and no DST transition issues in np.interp())
+        data_reset["time"] = data_reset["time"].dt.tz_localize(None)
+        data = pd.Series(data_reset["gl"].values, index=data_reset["time"].values)
+    else:
+        raise ValueError("Input must be a Series or DataFrame")
 
     # Calculate time step (dt0)
     if dt0 is None:
-        # Use most common time difference
-        time_diffs = data["time"].diff().dropna()
-        dt0 = int(time_diffs.mode().iloc[0].total_seconds() / 60)
+        # Use most common time difference (for pandas 1.5.x backward compatibility)
+        time_diffs = pd.Series(data.index).diff().dropna()
+        # Pandas TimedeltaIndex does not have a .mode() method directly.
+        # We'll convert to seconds and use pd.Series.mode()
+        # Use .dt accessor for pandas 1.5.x compatibility
+        dt0 = int((time_diffs.dt.total_seconds() / 60).mode().iloc[0])
 
-    # Create time grid
-    start_time = data["time"].min().floor("D")
-    end_time = data["time"].max().ceil("D")
+    # Create time grid (pandas 1.5.x compatible)
+    min_time = data.index.min()
+    max_time = data.index.max()
+
+    # Use compatible floor/ceil methods for pandas 1.5.x
+    if hasattr(min_time, "floor"):
+        start_time = min_time.floor("D")
+    else:
+        # Fallback for pandas 1.5.x
+        start_time = pd.Timestamp(min_time.date())
+
+    if hasattr(max_time, "ceil"):
+        end_time = max_time.ceil("D")
+    else:
+        # Fallback for pandas 1.5.x
+        end_time = pd.Timestamp(max_time.date()) + pd.Timedelta(days=1)
+
     time_grid = pd.date_range(start=start_time, end=end_time, freq=f"{dt0}min")
     if is_iglu_r_compatible():
         # remove the first time point
@@ -210,14 +246,14 @@ def CGMS2DayByDay(
     # find gaps in the data (using original data indexes, not time grid)
     gaps = []
     for i in range(len(data) - 1):
-        if (data["time"].iloc[i + 1] - data["time"].iloc[i]).total_seconds() > inter_gap * 60:
+        if (data.index[i + 1] - data.index[i]).total_seconds() > inter_gap * 60:
             gaps.append((i, i + 1))
 
     # Interpolate glucose values
     interp_data = np.interp(
         (time_grid - start_time).total_seconds() / 60,
-        (data["time"] - start_time).dt.total_seconds() / 60,
-        data["gl"],
+        (data.index - start_time).total_seconds() / 60,
+        data.values,
         left=np.nan,
         right=np.nan,
     )
@@ -225,11 +261,11 @@ def CGMS2DayByDay(
     # put nan in the gaps
     for gap in gaps:
         gap_start_idx = gap[0]
-        gap_start_time = data["time"].iloc[gap_start_idx]
+        gap_start_time = data.index[gap_start_idx]
         # find the index of the gap start in the time grid
         gap_start_idx_in_time_grid = int(np.floor((gap_start_time - start_time).total_seconds() / (60 * dt0)))
         gap_end_idx = gap[1]
-        gap_end_time = data["time"].iloc[gap_end_idx]
+        gap_end_time = data.index[gap_end_idx]
         # find the index of the gap end in the time grid
         gap_end_idx_in_time_grid = int(
             # -1sec to indicate time before measurement
@@ -238,10 +274,10 @@ def CGMS2DayByDay(
         # put nan in the gap
         interp_data[gap_start_idx_in_time_grid:gap_end_idx_in_time_grid] = np.nan
 
-    # for compatibility with the R package, set values to nan before data['time'].min() and after data['time'].max()
-    # find index of timegrid before data['time'].min() and after data['time'].max()
-    # head_min_idx = np.where(time_grid >= data['time'].min())[0][0]
-    # tail_max_idx = np.where(time_grid <= data['time'].max())[0][-1] + 1
+    # for compatibility with the R package, set values to nan before data.index.min() and after data.index.max()
+    # find index of timegrid before data.index.min() and after data.index.max()
+    # head_min_idx = np.where(time_grid >= data.index.min())[0][0]
+    # tail_max_idx = np.where(time_grid <= data.index.max())[0][-1] + 1
     # interp_data[:head_min_idx] = np.nan
     # interp_data[tail_max_idx:] = np.nan
 
@@ -260,7 +296,7 @@ def CGMS2DayByDay(
     return interp_data, actual_dates, dt0
 
 
-def gd2d_to_df(gd2d, actual_dates, dt0):
+def gd2d_to_df(gd2d, actual_dates, dt0):  # noqa: C901
     """Convert gd2d (CGMS2DayByDay output) to a pandas DataFrame"""
     df = pd.DataFrame({"time": [], "gl": []})
 

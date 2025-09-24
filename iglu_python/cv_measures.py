@@ -82,7 +82,9 @@ def _calculate_series_cv(subject_data: pd.DataFrame | pd.Series, dt0=None, inter
     # active_days is a list of days that have at least 2 non-missing values
     # dt0 is the time frequency for interpolation in minutes
 
-    # calculate devioation and median for each day
+    # calculate deviation and median for each day
+    # with warnings.catch_warnings():
+    #     warnings.simplefilter("ignore", category=RuntimeWarning)
     daily_deviations = np.apply_along_axis(np.nanstd, 1, gd2d, ddof=1)
     daily_mean = np.apply_along_axis(np.nanmean, 1, gd2d)
 
@@ -90,6 +92,9 @@ def _calculate_series_cv(subject_data: pd.DataFrame | pd.Series, dt0=None, inter
 
     # calculate mean of daily deviations
     cv_mean = np.nanmean(cv)
-    cv_sd = np.nanstd(cv, ddof=1)
+    if len(cv) > 1:
+        cv_sd = np.nanstd(cv, ddof=1)
+    else:
+        cv_sd = np.nan
 
     return {"CVmean": cv_mean, "CVsd": cv_sd}

@@ -34,7 +34,7 @@ def test_active_percent_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
-    pd.set_option('future.no_silent_downcasting', True)
+    # pd.set_option('future.no_silent_downcasting', True)
     expected_df = expected_df.replace({None: np.nan})
 
 
@@ -69,7 +69,7 @@ def test_active_percent_iglu_r_compatible(scenario):
         check_freq=True,
         check_flags=True,
         check_exact=False,
-        rtol=0.01,
+        rtol=0.001,
     )
 
 

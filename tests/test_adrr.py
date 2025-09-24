@@ -41,14 +41,14 @@ def test_adrr_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
-    pd.set_option('future.no_silent_downcasting', True)
+    # pd.set_option('future.no_silent_downcasting', True)
     expected_df = expected_df.replace({None: np.nan})
 
 
     # Compare DataFrames with precision to 0.001 for numeric columns
     pd.testing.assert_frame_equal(
-        result_df.round(3),
-        expected_df.round(3),
+        result_df.round(5),
+        expected_df.round(5),
         check_dtype=False,  # Don't check dtypes since we might have different numeric types
         check_index_type=True,
         check_column_type=True,
@@ -60,6 +60,8 @@ def test_adrr_iglu_r_compatible(scenario):
         check_like=True,
         check_freq=True,
         check_flags=True,
+    
+        rtol=0.001,
     )
 
 def test_adrr_series_with_datetime_index():

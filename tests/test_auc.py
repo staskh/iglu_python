@@ -41,14 +41,14 @@ def test_auc_iglu_r_compatible(scenario):
     expected_results = scenario["results"]
     expected_df = pd.DataFrame(expected_results)
     expected_df = expected_df.reset_index(drop=True)
-    pd.set_option('future.no_silent_downcasting', True)
+    # pd.set_option('future.no_silent_downcasting', True)
     expected_df = expected_df.replace({None: np.nan})
 
     result_df = iglu.auc(df, **kwargs)
 
     assert result_df is not None
 
-    # Compare DataFrames with precision to 0.001 for numeric columns
+    # Compare DataFrames with precision to 0.01 for numeric columns
     pd.testing.assert_frame_equal(
         result_df,
         expected_df,

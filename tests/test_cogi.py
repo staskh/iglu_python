@@ -213,12 +213,10 @@ def get_cogi_test_scenarios():
         pytest.skip(
             "expected_results.json could not be loaded, skipping COGI calculation test"
         )
-    # set local timezone if present
-    if "config" in expected_results and "local_tz" in expected_results["config"]:
-        try:
-            iglu.utils.set_local_tz(expected_results["config"]["local_tz"])
-        except Exception:
-            pass
+
+    # set local timezone
+    iglu.utils.set_local_tz(expected_results["config"]["local_tz"])
+ 
     return [
         scenario
         for scenario in expected_results["test_runs"]
@@ -260,5 +258,5 @@ def test_cogi_iglu_r_compatible(scenario):
         check_freq=True,
         check_flags=True,
         check_exact=False,
-        rtol=0.01,
+        rtol=0.001,
     )
