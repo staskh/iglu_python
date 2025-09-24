@@ -221,20 +221,20 @@ def CGMS2DayByDay(  # noqa: C901
     # Create time grid (pandas 1.5.x compatible)
     min_time = data.index.min()
     max_time = data.index.max()
-    
+
     # Use compatible floor/ceil methods for pandas 1.5.x
-    if hasattr(min_time, 'floor'):
+    if hasattr(min_time, "floor"):
         start_time = min_time.floor("D")
     else:
         # Fallback for pandas 1.5.x
         start_time = pd.Timestamp(min_time.date())
-    
-    if hasattr(max_time, 'ceil'):
+
+    if hasattr(max_time, "ceil"):
         end_time = max_time.ceil("D")
     else:
         # Fallback for pandas 1.5.x
         end_time = pd.Timestamp(max_time.date()) + pd.Timedelta(days=1)
-        
+
     time_grid = pd.date_range(start=start_time, end=end_time, freq=f"{dt0}min")
     if is_iglu_r_compatible():
         # remove the first time point
