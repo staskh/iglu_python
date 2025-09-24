@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "iglu_python"
-version = "0.3.5"
+version = "0.3.8"
 description = "Python implementation of the iglu package for continuous glucose monitoring data analysis"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -29,8 +29,6 @@ dependencies = [
     "tzlocal",
     "openpyxl",
     "matplotlib",
-    "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
 ]
 
 [project.urls]
@@ -41,13 +39,31 @@ Issues = "https://github.com/staskh/iglu_python/issues"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
     "black>=25.1.0",
     "isort>=5.0.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
     "pre-commit>=3.0.0",
+    "hatch>=1.14.1",
+    "twine>=6.2.0",
+    "pyarrow>=21.0.0",
+]
+test = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+]
+lint = [
+    "black>=25.1.0",
+    "isort>=5.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "pre-commit>=3.0.0",
+]
+build = [
+    "hatch>=1.14.1",
+    "twine>=6.2.0",
 ]
 
 [tool.hatch.build.targets.wheel]

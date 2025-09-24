@@ -90,8 +90,15 @@ def check_data_columns(data: pd.DataFrame, time_check=False, tz="") -> pd.DataFr
         except Exception as e:
             raise ValueError("Column 'time' must be datetime") from e
 
-    if not pd.api.types.is_string_dtype(data["id"]):
-        data["id"] = data["id"].astype(str)
+    # Check if id column is string-like (pandas 1.5.x compatible)
+    try:
+        # Try pandas 2.0+ method first
+        if not pd.api.types.is_string_dtype(data["id"]):
+            data["id"] = data["id"].astype(str)
+    except AttributeError:
+        # Fallback for pandas 1.5.x
+        if not isinstance(data["id"].dtype, object):
+            data["id"] = data["id"].astype(str)
 
     # check if data frame empty
     if data.empty:
@@ -204,15 +211,30 @@ def CGMS2DayByDay(  # noqa: C901
 
     # Calculate time step (dt0)
     if dt0 is None:
-        # Use most common time difference
-        time_diffs = data.index.diff().dropna()
+        # Use most common time difference (for pandas 1.5.x backward compatibility)
+        time_diffs = pd.Series(data.index).diff().dropna()
         # Pandas TimedeltaIndex does not have a .mode() method directly.
         # We'll convert to seconds and use pd.Series.mode()
-        dt0 = int(pd.Series(time_diffs.total_seconds() / 60).mode().iloc[0])
+        # Use .dt accessor for pandas 1.5.x compatibility
+        dt0 = int((time_diffs.dt.total_seconds() / 60).mode().iloc[0])
 
-    # Create time grid
-    start_time = data.index.min().floor("D")
-    end_time = data.index.max().ceil("D")
+    # Create time grid (pandas 1.5.x compatible)
+    min_time = data.index.min()
+    max_time = data.index.max()
+    
+    # Use compatible floor/ceil methods for pandas 1.5.x
+    if hasattr(min_time, 'floor'):
+        start_time = min_time.floor("D")
+    else:
+        # Fallback for pandas 1.5.x
+        start_time = pd.Timestamp(min_time.date())
+    
+    if hasattr(max_time, 'ceil'):
+        end_time = max_time.ceil("D")
+    else:
+        # Fallback for pandas 1.5.x
+        end_time = pd.Timestamp(max_time.date()) + pd.Timedelta(days=1)
+        
     time_grid = pd.date_range(start=start_time, end=end_time, freq=f"{dt0}min")
     if is_iglu_r_compatible():
         # remove the first time point
