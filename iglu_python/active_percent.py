@@ -4,8 +4,8 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-from .utils import check_data_columns
-from .utils import get_local_tz
+from .utils import check_data_columns, get_local_tz
+
 
 def active_percent(
     data: Union[pd.DataFrame, pd.Series],
@@ -99,7 +99,7 @@ def active_percent(
     return df
 
 
-def active_percent_single(
+def active_percent_single(  # noqa: C901
     data: pd.Series,
     dt0: Optional[int] = None,
     tz: str = "",
@@ -119,7 +119,7 @@ def active_percent_single(
 
     # localize data.index to the timezone if it is not already
     if data.index.tzinfo is None:
-        if not tz or tz=="":
+        if not tz or tz == "":
             tz = get_local_tz()
         data.index = data.index.tz_localize(tz)
 

@@ -3,11 +3,10 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from .utils import CGMS2DayByDay, check_data_columns
-from .utils import get_local_tz
+from .utils import CGMS2DayByDay, check_data_columns, get_local_tz
 
 
-def roc(
+def roc(  # noqa: C901
     data: Union[pd.DataFrame, pd.Series],
     timelag: int = 15,
     dt0: int = 5,

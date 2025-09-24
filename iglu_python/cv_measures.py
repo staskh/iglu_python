@@ -10,7 +10,6 @@ References:
     The American Journal of Medical Sciences 356 .518-527,
     doi:10.1016/j.amjms.2018.09.010.
 """
-import warnings
 
 import numpy as np
 import pandas as pd
