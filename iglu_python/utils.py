@@ -213,6 +213,8 @@ def CGMS2DayByDay(  # noqa: C901
     if dt0 is None:
         # Use most common time difference (for pandas 1.5.x backward compatibility)
         time_diffs = pd.Series(data.index).diff().dropna()
+        if time_diffs.empty:
+            raise ValueError("Not enough data to calculate time step")
         # Pandas TimedeltaIndex does not have a .mode() method directly.
         # We'll convert to seconds and use pd.Series.mode()
         # Use .dt accessor for pandas 1.5.x compatibility
