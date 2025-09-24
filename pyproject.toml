@@ -28,8 +28,7 @@ dependencies = [
     "pandas",
     "tzlocal",
     "openpyxl",
-    "matplotlib",
-    "pyarrow>=21.0.0",
+    "matplotlib"
 ]
 
 [project.urls]
