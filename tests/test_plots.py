@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from iglu_python.extension.plots import plot_daily, plot_statistics
 from iglu_python import load_libre
 
+import matplotlib
+matplotlib.use('Agg')
 
 @pytest.fixture(scope="module")
 def sample_cgm_data():
