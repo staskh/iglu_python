@@ -1,11 +1,13 @@
 import os
 import tempfile
 from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import pytest
 import matplotlib.pyplot as plt
+import pytz
 
 # Import the module to test
 from iglu_python.extension.plots import plot_daily, plot_statistics
@@ -355,6 +357,315 @@ def test_plot_daily_very_high_glucose_values():
     ax = fig.axes[0]
     ylim = ax.get_ylim()
     assert ylim[1] >= 1700  # Should accommodate the highest value
+    
+    plt.close(fig)
+
+
+def test_plot_daily_missing_dates():
+    """Test plot_daily with timeseries that has missing dates (non-continuous)"""
+    # Create data for Jan 1 and Jan 3, but skip Jan 2 (missing date)
+    day1_start = pd.Timestamp('2023-01-01 00:00:00')
+    day1_end = pd.Timestamp('2023-01-01 23:59:59')
+    day1_index = pd.date_range(start=day1_start, end=day1_end, freq='2h')
+    
+    day3_start = pd.Timestamp('2023-01-03 00:00:00')
+    day3_end = pd.Timestamp('2023-01-03 23:59:59')
+    day3_index = pd.date_range(start=day3_start, end=day3_end, freq='2h')
+    
+    # Combine indices (note: Jan 2 is missing)
+    time_index = day1_index.union(day3_index)
+    
+    # Create glucose values
+    np.random.seed(42)
+    glucose_values = 120 + np.random.normal(0, 20, len(time_index))
+    glucose_values = np.clip(glucose_values, 50, 400)
+    
+    data_with_missing_dates = pd.Series(glucose_values, index=time_index)
+    
+    # Verify that the data indeed has missing dates
+    all_dates = pd.date_range(start='2023-01-01', end='2023-01-03', freq='D')
+    dates_in_data = set(data_with_missing_dates.index.date)
+    dates_in_range = set(all_dates.date)
+    missing_dates = dates_in_range - dates_in_data
+    assert len(missing_dates) > 0, "Test data should have missing dates"
+    
+    # Test that plot_daily handles missing dates correctly
+    fig = plot_daily(data_with_missing_dates)
+    
+    assert isinstance(fig, plt.Figure)
+    
+    # Should only plot days that have data (2 days: Jan 1 and Jan 3)
+    assert len(fig.axes) == 2, "Should have 2 subplots for 2 days with data"
+    
+    # Check that the subplots have the expected dates
+    expected_dates = ['2023-01-01', '2023-01-03']
+    for i, ax in enumerate(fig.axes):
+        assert f'Day: {expected_dates[i]}' in ax.get_title()
+    
+    # Verify that each subplot has data
+    for ax in fig.axes:
+        lines = ax.get_lines()
+        assert len(lines) > 0, "Each subplot should have at least one line"
+        # Check that the line has data points
+        for line in lines:
+            x_data = line.get_xdata()
+            y_data = line.get_ydata()
+            assert len(x_data) > 0, "Line should have x data"
+            assert len(y_data) > 0, "Line should have y data"
+    
+    plt.close(fig)
+
+
+def test_plot_daily_missing_dates_multiple_gaps():
+    """Test plot_daily with timeseries that has multiple missing dates"""
+    # Create data for Jan 1, Jan 3, and Jan 5, skipping Jan 2 and Jan 4
+    day1_index = pd.date_range(start='2023-01-01 00:00:00', end='2023-01-01 23:59:59', freq='3h')
+    day3_index = pd.date_range(start='2023-01-03 00:00:00', end='2023-01-03 23:59:59', freq='3h')
+    day5_index = pd.date_range(start='2023-01-05 00:00:00', end='2023-01-05 23:59:59', freq='3h')
+    
+    # Combine indices (Jan 2 and Jan 4 are missing)
+    time_index = day1_index.union(day3_index).union(day5_index)
+    
+    # Create glucose values
+    np.random.seed(123)
+    glucose_values = 120 + np.random.normal(0, 20, len(time_index))
+    glucose_values = np.clip(glucose_values, 50, 400)
+    
+    data_with_multiple_gaps = pd.Series(glucose_values, index=time_index)
+    
+    # Test that plot_daily handles multiple missing dates correctly
+    fig = plot_daily(data_with_multiple_gaps)
+    
+    assert isinstance(fig, plt.Figure)
+    
+    # Should only plot days that have data (3 days: Jan 1, Jan 3, Jan 5)
+    assert len(fig.axes) == 3, "Should have 3 subplots for 3 days with data"
+    
+    # Check that the subplots have the expected dates
+    expected_dates = ['2023-01-01', '2023-01-03', '2023-01-05']
+    for i, ax in enumerate(fig.axes):
+        assert f'Day: {expected_dates[i]}' in ax.get_title()
+    
+    plt.close(fig)
+
+
+def test_plot_daily_missing_dates_single_day_in_middle():
+    """Test plot_daily with timeseries that has data only for one day in the middle of a range"""
+    # Create data only for Jan 2, but the timeseries spans from Jan 1 to Jan 3
+    day2_index = pd.date_range(start='2023-01-02 00:00:00', end='2023-01-02 23:59:59', freq='4h')
+    
+    # Create glucose values
+    np.random.seed(456)
+    glucose_values = 120 + np.random.normal(0, 20, len(day2_index))
+    glucose_values = np.clip(glucose_values, 50, 400)
+    
+    data_single_day = pd.Series(glucose_values, index=day2_index)
+    
+    # Test that plot_daily handles this correctly
+    fig = plot_daily(data_single_day)
+    
+    assert isinstance(fig, plt.Figure)
+    
+    # Should only plot the one day that has data
+    assert len(fig.axes) == 1, "Should have 1 subplot for 1 day with data"
+    
+    # Check that the subplot has the expected date
+    ax = fig.axes[0]
+    assert 'Day: 2023-01-02' in ax.get_title()
+    
+    plt.close(fig)
+
+
+def test_plot_daily_timezone_aware():
+    """Test plot_daily with timezone-aware (non-UTC) timeseries"""
+    # Use US/Eastern timezone (UTC-5 or UTC-4 depending on DST)
+    tz = pytz.timezone('US/Eastern')
+    
+    # Create data for 2 days in summer (EDT, UTC-4)
+    # Day 1: June 15, 2024
+    day1_timestamps = [
+        tz.localize(datetime(2024, 6, 15, 0, 0)),   # Midnight EDT
+        tz.localize(datetime(2024, 6, 15, 6, 0)),   # 6 AM EDT
+        tz.localize(datetime(2024, 6, 15, 12, 0)),  # Noon EDT
+        tz.localize(datetime(2024, 6, 15, 18, 0)),  # 6 PM EDT
+    ]
+    
+    # Day 2: June 16, 2024
+    day2_timestamps = [
+        tz.localize(datetime(2024, 6, 16, 0, 0)),   # Midnight EDT
+        tz.localize(datetime(2024, 6, 16, 6, 0)),   # 6 AM EDT
+        tz.localize(datetime(2024, 6, 16, 12, 0)),  # Noon EDT
+        tz.localize(datetime(2024, 6, 16, 18, 0)),  # 6 PM EDT
+    ]
+    
+    # Combine timestamps
+    all_timestamps = day1_timestamps + day2_timestamps
+    
+    # Create glucose values
+    np.random.seed(789)
+    glucose_values = 120 + np.random.normal(0, 20, len(all_timestamps))
+    glucose_values = np.clip(glucose_values, 50, 400)
+    
+    # Create timezone-aware Series
+    data_tz_aware = pd.Series(glucose_values, index=all_timestamps)
+    
+    # Verify timezone awareness
+    assert data_tz_aware.index.tz is not None, "Index should be timezone-aware"
+    assert str(data_tz_aware.index.tz) == 'US/Eastern', "Index should be in US/Eastern timezone"
+    
+    # Test that plot_daily handles timezone-aware data correctly
+    fig = plot_daily(data_tz_aware)
+    
+    assert isinstance(fig, plt.Figure)
+    
+    # Should plot 2 days
+    assert len(fig.axes) == 2, "Should have 2 subplots for 2 days"
+    
+    # Check that the subplots have the expected dates (in local timezone)
+    expected_dates = ['2024-06-15', '2024-06-16']
+    for i, ax in enumerate(fig.axes):
+        assert f'Day: {expected_dates[i]}' in ax.get_title()
+    
+    # Verify that each subplot has data
+    for ax in fig.axes:
+        lines = ax.get_lines()
+        assert len(lines) > 0, "Each subplot should have at least one line"
+        for line in lines:
+            x_data = line.get_xdata()
+            y_data = line.get_ydata()
+            assert len(x_data) > 0, "Line should have x data"
+            assert len(y_data) > 0, "Line should have y data"
+    
+    plt.close(fig)
+
+
+def test_plot_daily_dst_spring_forward():
+    """Test plot_daily with timezone-aware timeseries during DST spring forward (losing an hour)"""
+    # US/Eastern: DST spring forward happens on March 10, 2024 at 2:00 AM
+    # Clocks jump from 1:59 AM EST to 3:00 AM EDT (losing 1 hour)
+    tz = pytz.timezone('US/Eastern')
+    
+    # Create data spanning the DST transition
+    # Before DST: March 10, 2024 1:00 AM EST (UTC-5)
+    # After DST: March 10, 2024 3:00 AM EDT (UTC-4) - note: 2:00 AM doesn't exist!
+    timestamps = [
+        tz.localize(datetime(2024, 3, 10, 0, 0)),   # 12:00 AM EST
+        tz.localize(datetime(2024, 3, 10, 0, 30)),  # 12:30 AM EST
+        tz.localize(datetime(2024, 3, 10, 1, 0)),   # 1:00 AM EST
+        tz.localize(datetime(2024, 3, 10, 1, 30)),  # 1:30 AM EST
+        # Note: 2:00 AM EST doesn't exist - it becomes 3:00 AM EDT
+        tz.localize(datetime(2024, 3, 10, 3, 0)),   # 3:00 AM EDT (spring forward)
+        tz.localize(datetime(2024, 3, 10, 3, 30)),  # 3:30 AM EDT
+        tz.localize(datetime(2024, 3, 10, 12, 0)),  # Noon EDT
+        tz.localize(datetime(2024, 3, 10, 18, 0)),  # 6 PM EDT
+    ]
+    
+    # Create glucose values
+    np.random.seed(101)
+    glucose_values = 120 + np.random.normal(0, 20, len(timestamps))
+    glucose_values = np.clip(glucose_values, 50, 400)
+    
+    # Create timezone-aware Series
+    data_dst_spring = pd.Series(glucose_values, index=timestamps)
+    
+    # Verify timezone awareness and that we have the DST transition
+    assert data_dst_spring.index.tz is not None, "Index should be timezone-aware"
+    
+    # Verify that timestamps are monotonically increasing (even with DST transition)
+    assert data_dst_spring.index.is_monotonic_increasing, "Timestamps should be monotonically increasing"
+    
+    # Check that we have both EST and EDT timestamps
+    offsets = [ts.utcoffset().total_seconds() / 3600 for ts in timestamps]
+    assert -5.0 in offsets, "Should have EST timestamps (UTC-5)"
+    assert -4.0 in offsets, "Should have EDT timestamps (UTC-4)"
+    
+    # Test that plot_daily handles DST spring forward correctly
+    fig = plot_daily(data_dst_spring)
+    
+    assert isinstance(fig, plt.Figure)
+    
+    # Should plot 1 day (all data is on March 10, even with DST transition)
+    assert len(fig.axes) == 1, "Should have 1 subplot for 1 day (DST transition within same day)"
+    
+    # Check that the subplot has the expected date
+    ax = fig.axes[0]
+    assert 'Day: 2024-03-10' in ax.get_title()
+    
+    # Verify that the subplot has data
+    lines = ax.get_lines()
+    assert len(lines) > 0, "Subplot should have at least one line"
+    for line in lines:
+        x_data = line.get_xdata()
+        y_data = line.get_ydata()
+        assert len(x_data) > 0, "Line should have x data"
+        assert len(y_data) > 0, "Line should have y data"
+    
+    plt.close(fig)
+
+
+def test_plot_daily_dst_fall_back():
+    """Test plot_daily with timezone-aware timeseries during DST fall back (gaining an hour)"""
+    # US/Eastern: DST fall back happens on November 3, 2024 at 2:00 AM
+    # Clocks jump from 1:59 AM EDT back to 1:00 AM EST (gaining 1 hour)
+    tz = pytz.timezone('US/Eastern')
+    
+    # Create data spanning the DST transition
+    # Before DST: November 3, 2024 1:00 AM EDT (UTC-4)
+    # After DST: November 3, 2024 1:00 AM EST (UTC-5) - note: 1:00 AM happens twice!
+    # Important: The first 1:00 AM EDT (5:00 AM UTC) comes BEFORE the second 1:00 AM EST (6:00 AM UTC)
+    timestamps = [
+        tz.localize(datetime(2024, 11, 3, 0, 0)),   # 12:00 AM EDT (4:00 AM UTC)
+        tz.localize(datetime(2024, 11, 3, 0, 30)),  # 12:30 AM EDT (4:30 AM UTC)
+        tz.localize(datetime(2024, 11, 3, 1, 0), is_dst=True),   # 1:00 AM EDT (5:00 AM UTC) - first occurrence
+        tz.localize(datetime(2024, 11, 3, 1, 30), is_dst=True),  # 1:30 AM EDT (5:30 AM UTC)
+        # Note: 2:00 AM EDT becomes 1:00 AM EST (fall back)
+        # The second 1:00 AM EST (6:00 AM UTC) comes after the first 1:00 AM EDT
+        tz.localize(datetime(2024, 11, 3, 1, 0), is_dst=False),  # 1:00 AM EST (6:00 AM UTC) - second occurrence after fall back
+        tz.localize(datetime(2024, 11, 3, 1, 30), is_dst=False),  # 1:30 AM EST (6:30 AM UTC)
+        tz.localize(datetime(2024, 11, 3, 12, 0), is_dst=False),  # Noon EST (17:00 AM UTC)
+        tz.localize(datetime(2024, 11, 3, 18, 0), is_dst=False),  # 6 PM EST (23:00 AM UTC)
+    ]
+    
+    # Create glucose values
+    np.random.seed(202)
+    glucose_values = 120 + np.random.normal(0, 20, len(timestamps))
+    glucose_values = np.clip(glucose_values, 50, 400)
+    
+    # Create timezone-aware Series
+    data_dst_fall = pd.Series(glucose_values, index=timestamps)
+    
+    # Verify timezone awareness and that we have the DST transition
+    assert data_dst_fall.index.tz is not None, "Index should be timezone-aware"
+    
+    # Verify that timestamps are monotonically increasing (even with DST transition)
+    # Note: The timestamps should be in chronological order (UTC time)
+    assert data_dst_fall.index.is_monotonic_increasing, "Timestamps should be monotonically increasing"
+    
+    # Check that we have both EDT and EST timestamps
+    offsets = [ts.utcoffset().total_seconds() / 3600 for ts in timestamps]
+    assert -4.0 in offsets, "Should have EDT timestamps (UTC-4)"
+    assert -5.0 in offsets, "Should have EST timestamps (UTC-5)"
+    
+    # Test that plot_daily handles DST fall back correctly
+    fig = plot_daily(data_dst_fall)
+    
+    assert isinstance(fig, plt.Figure)
+    
+    # Should plot 1 day (all data is on November 3, even with DST transition)
+    assert len(fig.axes) == 1, "Should have 1 subplot for 1 day (DST transition within same day)"
+    
+    # Check that the subplot has the expected date
+    ax = fig.axes[0]
+    assert 'Day: 2024-11-03' in ax.get_title()
+    
+    # Verify that the subplot has data
+    lines = ax.get_lines()
+    assert len(lines) > 0, "Subplot should have at least one line"
+    for line in lines:
+        x_data = line.get_xdata()
+        y_data = line.get_ydata()
+        assert len(x_data) > 0, "Line should have x data"
+        assert len(y_data) > 0, "Line should have y data"
     
     plt.close(fig)
 
