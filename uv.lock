@@ -621,14 +621,13 @@ wheels = [
 
 [[package]]
 name = "iglu-python"
-version = "0.4.2"
+version = "0.4.3"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "openpyxl" },
     { name = "pandas" },
-    { name = "pyarrow" },
     { name = "tzlocal" },
 ]
 
@@ -677,7 +676,6 @@ requires-dist = [
     { name = "pandas" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.0.0" },
     { name = "pre-commit", marker = "extra == 'lint'", specifier = ">=3.0.0" },
-    { name = "pyarrow", specifier = ">=21.0.0" },
     { name = "pyarrow", marker = "extra == 'dev'", specifier = ">=21.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.2" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.2" },

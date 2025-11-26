@@ -22,8 +22,12 @@ def plot_daily(cgm_timeseries: pd.Series, lower: int = 70, upper: int = 140) -> 
         plt.Figure object
     """
     # divide cgm_timeseries into list of daily series
-    cgm_daily_group = cgm_timeseries.resample("D")
-    cgm_timeseries_daily = {day: cgm_daily_group.get_group(day) for day in cgm_daily_group.groups}
+    # Group by date (normalize to date for grouping) and only include days with data
+    cgm_timeseries_daily = {}
+    for date, day_data in cgm_timeseries.groupby(cgm_timeseries.index.normalize()):
+        if len(day_data) > 0:
+            # Use the date as a Timestamp at midnight for consistency
+            cgm_timeseries_daily[date] = day_data
 
     # plot each day separately
     # Create one figure with subplots for each day
