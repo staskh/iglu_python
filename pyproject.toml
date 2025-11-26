@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "iglu_python"
-version = "0.4.0"
+version = "0.4.2"
 description = "Python implementation of the iglu package for continuous glucose monitoring data analysis"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -28,7 +28,7 @@ dependencies = [
     "pandas",
     "tzlocal",
     "openpyxl",
-    "matplotlib",
+    "matplotlib"
 ]
 
 [project.urls]

@@ -184,3 +184,4 @@ tests/data/day5.csv
 # Other virtual environments
 .venv-*
 venv-*
+notebooks/test.ipynb
